@@ -6,14 +6,16 @@ from joint import Joint
 
 class Manipulator:
 
-    def __init__(self, teensy_port, arduino_port, baud):
+    def __init__(self, teensy_port, arduino_port, baud, number_of_joints):
+        self.command = None
         self.ACC_dur = 15
         self.ACC_spd = 10
         self.DEC_dur = 20
         self.DEC_spd = 5
         self.JogStepsStat = False
         self.joint_jog_degrees = 10
-        self.joints = [Joint(i + 1) for i in range(6)]
+        self.jointsList = []
+        [self.jointsList.append(Joint(1, 2, 3, 4)) for _ in range(number_of_joints)]
 
         try:
 
@@ -30,13 +32,13 @@ class Manipulator:
 
     def Jjog(self, joint: Joint, speed, degrees):
         # global JogStepsStat
-        global J1StepCur
-        global J2StepCur
-        global J3StepCur
-        global J4StepCur
-        global J5StepCur
-        global J6StepCur
-        global J1AngCur
+        # global J1StepCur
+        # global J2StepCur
+        # global J3StepCur
+        # global J4StepCur
+        # global J5StepCur
+        # global J6StepCur
+        # global J1AngCur
         # joint_jog_degrees
         if not self.JogStepsStat:  # JogStepsStat показывает, в каких единицах мы будем передвигать джойнт, либо в шагах, либо в градусах
             j_jog_steps = int(
@@ -52,8 +54,8 @@ class Manipulator:
                 joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step))
             # save_position_data() TODO:ДОдлЕАТЬ save_position_data() и calculate_direct_kinematics_problem()
             # calculate_direct_kinematics_problem()
-            command = f"MJ{joint}{drive_direction}{j_jog_steps}S{speed}G{ACCdur}H{ACCspd}I{DECdur}K{DECspd}U{J1StepCur}V{J2StepCur}" \
-                      f"W{J3StepCur}X{J4StepCur}Y{J5StepCur}Z{J6StepCur}\n"
+            command = f"MJ{joint.get_name}{drive_direction}{j_jog_steps}S{speed}G{self.ACC_dur}H{self.ACC_spd}I{self.DEC_dur}" \
+                      f"K{self.DEC_spd}U{self.jointsList[1].current_joint_step}V{self.jointsList[2].current_joint_step}W{self.jointsList[3].current_joint_step}X{self.jointsList[4].current_joint_step}Y{self.jointsList[5].current_joint_step}Z{self.jointsList[6].current_joint_step}\n"
             self.teensy_push(command)
             logger.debug(f"Write to teensy: {command}")
             self.serial_teensy.flushInput()
@@ -66,9 +68,9 @@ class Manipulator:
             logger.warning(f"Joint {joint.number_joint} AXIS LIMIT")
 
     def teensy_push(self, command):
-        self.serial_teensy.write(command.encode())
+        self.serial_teensy.write(self.command.encode())
 
-    def arduino_push(self):
+    def arduino_push(self, command):
         self.serial_arduino.write(self.command.encode())
 
     # def save_position_data():
