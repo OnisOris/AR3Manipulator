@@ -13,8 +13,18 @@ c3 = "MJA10B01109C11D00E00F01T10S25G15H10I20K5U10663V4975W3916X7023Y1627Z3163\n"
 c4 = "MJA01775B11110C00D10E0218F00T10S25G15H10I20K5U8888V6085W3916X7023Y1409Z3163\n"
 
 robot = Manipulator(teensy_port, arduino_port, baud)
-print(robot.joints[0].current_joint_step)
-robot.joints[0].current_joint_step = 100
-print(robot.joints[0].current_joint_step)
+J1StepCur = 1
+J1AngCur = 2
+calibration = {'J1StepCur': J1StepCur, 'J1AngCur': J1AngCur}
+#robot.Jjog()
+# try:
+#     with open("./program_files/Robot_calibration_data.cal", "rb") as calibration_file:
+#         calibration_data = pickle.load(calibration_file)
+# except FileNotFoundError:
+#     calibration_data = "0"
+#     write_calibration_data(calibration_data)
+#
+# for item in calibration_data:
+#     calibration.insert(tk.END, item)
 # if robot.serial_arduino and robot.serial_teensy:
 #     robot.move_to(c1)
