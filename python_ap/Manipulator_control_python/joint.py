@@ -3,11 +3,8 @@ from loguru import logger
 
 class Joint:
 
-    # def __init__(self, number_joint, positive_angle_limit, negative_angle_limit, step_limit):
     def __init__(self, number_joint, positive_angle_limit, negative_angle_limit, step_limit):
         self.name_joint = None
-        self.positive_angle_limit = None
-        self.negative_angle_limit = None
         self.motor_direction = 0
         self.number_joint = number_joint
         self.positive_angle_limit = float(positive_angle_limit)
@@ -35,5 +32,8 @@ class Joint:
 
     def get_name_joint(self) -> str:
         return self.name_joint
+
+    def __str__(self):
+        return f'Joint_{self.number_joint}({self.get_name_joint()})'
 
 
