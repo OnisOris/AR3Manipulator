@@ -27,15 +27,6 @@ class Manipulator:
         self.serial_teensy.write(command.encode())
 
     def jog_joint(self, joint: Joint, speed, degrees):
-        # global JogStepsStat
-        # global J1StepCur
-        # global J2StepCur
-        # global J3StepCur
-        # global J4StepCur
-        # global J5StepCur
-        # global J6StepCur
-        # global J1AngCur
-        # joint_jog_degrees
         if not self.JogStepsStat:  # JogStepsStat показывает, в каких единицах мы будем передвигать джойнт, либо в шагах, либо в градусах
             j_jog_steps = int(
                 degrees / joint.degrees_per_step)  # высчитываем количенство шагов, joint.degrees_per_step -
@@ -48,7 +39,7 @@ class Manipulator:
             joint.current_joint_step += int(j_jog_steps)
             joint.current_joint_angle = round(
                 joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step))
-            self.save_position_data()  # TODO:ДОдлЕАТЬ save_position_data() и calculate_direct_kinematics_problem()
+            self.save_data()  # TODO:ДОдлЕАТЬ save_position_data() и calculate_direct_kinematics_problem()
             # calculate_direct_kinematics_problem()
             command = f"MJ{joint.get_name_joint()}{drive_direction}{j_jog_steps}S{speed}G{self.ACC_dur}H{self.ACC_spd}" \
                       f"I{self.DEC_dur}K{self.DEC_spd}U{self.joints[0].current_joint_step}" \
@@ -72,7 +63,7 @@ class Manipulator:
     def arduino_push(self, command):
         self.serial_arduino.write(command.encode())
 
-    def save_position_data(self):
+    def save_data(self):
         DEFAULT_SETTINGS['teensy_port'] = self.serial_teensy.port
         DEFAULT_SETTINGS['arduino_port'] = self.serial_arduino.port
 
@@ -120,7 +111,7 @@ class Manipulator:
         for i in range(6):
             DEFAULT_SETTINGS[f'DH_t_{i + 1}'] = None
 
-        DEFAULT_SETTINGS['Cal_Dir'] = None
+        DEFAULT_SETTINGS['calculated_direction'] = None
         DEFAULT_SETTINGS['Mot_Dir'] = None
 
         DEFAULT_SETTINGS['Track_current'] = None
