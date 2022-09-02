@@ -109,7 +109,7 @@ class Manipulator:
         DEFAULT_SETTINGS['TF_ry'] = None
         DEFAULT_SETTINGS['TF_rz'] = None
 
-        DEFAULT_SETTINGS['fine_cal'] = None
+        DEFAULT_SETTINGS['fine_cal_position'] = None
 
         for i in range(6):
             DEFAULT_SETTINGS[f'DH_r_{i + 1}'] = None
@@ -153,6 +153,10 @@ class Manipulator:
 
         for joint, joint_name in zip(joints, joints_name):
             joint.set_name_joint(joint_name)
+
+        for i, joint in enumerate(joints):
+            joint.current_joint_step = DEFAULT_SETTINGS[f'J{i + 1}_current_step']
+            joint.current_joint_angle = DEFAULT_SETTINGS[f'J{i + 1}_current_angle']
 
         return joints
 
