@@ -1,5 +1,6 @@
 import serial
 import time
+import math
 from loguru import logger
 from joint import Joint
 from config import DEFAULT_SETTINGS
@@ -156,7 +157,10 @@ class Manipulator:
             if joint.get_current_joint_angle() == 0:
                 joint.current_joint_angle = 0.0001
 
-        if self.joints[4].current_joint_angle > 0:
-            WC = "F"
-        else:
-            WC = "N"
+        wrist_config = "F" if self.joints[4].current_joint_angle > 0 else "N"
+        C4 = math.radians(float(self.joints[1].current_joint_angle) + DEFAULT_SETTINGS['DH_t_1'])
+        C5 = math.radians(float(self.joints[2].current_joint_angle) + DEFAULT_SETTINGS['DH_t_2'])
+        C6 = math.radians(float(self.joints[3].current_joint_angle) + DEFAULT_SETTINGS['DH_t_3'])
+        C7 = math.radians(float(self.joints[4].current_joint_angle) + DEFAULT_SETTINGS['DH_t_4'])
+        C8 = math.radians(float(self.joints[5].current_joint_angle) + DEFAULT_SETTINGS['DH_t_5'])
+        C9 = math.radians(float(self.joints[6].current_joint_angle) + DEFAULT_SETTINGS['DH_t_6'])
