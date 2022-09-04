@@ -10,6 +10,7 @@ class Joint:
         self.positive_angle_limit = float(positive_angle_limit)
         self.negative_angle_limit = float(negative_angle_limit)
         self.step_limit = float(step_limit)
+        self.open_loop_stat = False
         # TODO: Исправить значение current_joint_step на значение из файла калибровок (и остальных ниже)
         self.current_joint_step = 0
         self.current_joint_angle = 0

@@ -104,11 +104,10 @@ DEFAULT_SETTINGS = {
     'VisEndXmm': 28.4,
     'VisEndYpix': 449,
     'VisEndYmm': 461.9,
-    'J1OpenLoopVal': 0,
-    'J2OpenLoopVal': 0,
-    'J3OpenLoopVal': 0,
-    'J4OpenLoopVal': 0,
-    'J5OpenLoopVal': 0,
-    'J6OpenLoopVal': 0,
-
+    'J1_open_loop_val': 0,
+    'J2_open_loop_val': 0,
+    'J3_open_loop_val': 0,
+    'J4_open_loop_val': 0,
+    'J5_open_loop_val': 0,
+    'J6_open_loop_val': 0,
 }

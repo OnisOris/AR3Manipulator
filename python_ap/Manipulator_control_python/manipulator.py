@@ -51,12 +51,46 @@ class Manipulator:
             logger.debug(f"Write to teensy: {command}")
             self.serial_teensy.flushInput()
             time.sleep(.2)
-            # robot_code = str(self.serial_teensy.readline())
-            # pcode = robot_code[2:4]  # TODO: разобраться с pcode
-            # if pcode == "01":
-            #     apply_robot_calibration(robot_code)
+            robot_code = str(self.serial_teensy.readline())
+            logger.info(robot_code)
+            # TODO: разобраться с pcode
+            if robot_code[2:4] == "01":
+                self.apply_robot_calibration(robot_code)
         else:
             logger.warning(f"Joint {joint.number_joint} AXIS LIMIT")
+
+    def apply_robot_calibration(self, robot_code: str):
+        faults = [
+            robot_code[4],
+            robot_code[5],
+            robot_code[6],
+            robot_code[7],
+            robot_code[8],
+            robot_code[9]
+        ]
+        joint_name_indexes = [
+            robot_code.find('A'),
+            robot_code.find('B'),
+            robot_code.find('C'),
+            robot_code.find('D'),
+            robot_code.find('E'),
+            robot_code.find('F')
+        ]
+
+        for i, joint in self.joints:
+            if not joint.open_loop_stat and faults[i] == '1':
+                logger.error(f'{joint.get_name_joint()} COLLISION OR OUT OF CALIBRATION')
+
+                if i < 5:
+                    joint.current_joint_step = int(robot_code[joint_name_indexes[i] + 1: joint_name_indexes[i + 1]])
+                else:
+                    joint.current_joint_step = int(robot_code[joint_name_indexes[i] + 1:])
+
+                joint.current_joint_angle = round(joint.negative_angle_limit + (joint.current_joint_step *
+                                                                                joint.degrees_per_step), 2)
+                # self.stop_program()
+        self.calculate_direct_kinematics_problem()
+        self.save_data()
 
     def teensy_push(self, command):
         self.serial_teensy.write(command.encode())
@@ -74,6 +108,7 @@ class Manipulator:
             DEFAULT_SETTINGS[f'J{index + 1}_negative_angle_limit'] = joint.negative_angle_limit
             DEFAULT_SETTINGS[f'J{index + 1}_positive_angle_limit'] = joint.positive_angle_limit
             DEFAULT_SETTINGS[f'J{index + 1}_step_limit'] = joint.step_limit
+            DEFAULT_SETTINGS[f'J{index + 1}_open_loop_val'] = joint.open_loop_stat
 
         DEFAULT_SETTINGS['servo_0_on'] = None
         DEFAULT_SETTINGS['servo_0_off'] = None
@@ -130,9 +165,6 @@ class Manipulator:
         DEFAULT_SETTINGS['Vis_Pic_XME'] = None
         DEFAULT_SETTINGS['Vis_Pic_YPE'] = None
         DEFAULT_SETTINGS['Vis_Pic_YME'] = None
-
-        for i in range(6):
-            DEFAULT_SETTINGS[f'J{i + 1}Open_loop_val'] = None
 
     @staticmethod
     def create_joints():
