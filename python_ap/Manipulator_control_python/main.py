@@ -15,11 +15,8 @@ c4 = "MJA01775B11110C00D10E0218F00T10S25G15H10I20K5U8888V6085W3916X7023Y1409Z316
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 if robot.is_connected:
-    robot.jog_joint(robot.joints[0], 20, 30)
-
-# for key, value in DEFAULT_SETTINGS.items():
+    robot.calculate_direct_kinematics_problem()
 #     print(f'{key} -- {value}')
-robot.calculate_direct_kinematics_problem()
 
 # print('Значение в массиве равно ' + str(calibration['J1StepCur']))
 # print(robot.joints[0].get_name_joint())

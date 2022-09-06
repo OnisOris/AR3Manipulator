@@ -1,6 +1,6 @@
 import serial
 import time
-import math
+from math import pi, cos, sin
 from loguru import logger
 from joint import Joint
 from config import DEFAULT_SETTINGS
@@ -197,19 +197,14 @@ class Manipulator:
         # C7 = math.radians(float(self.joints[4].current_joint_angle) + DEFAULT_SETTINGS['DH_t_4'])
         # C8 = math.radians(float(self.joints[5].current_joint_angle) + DEFAULT_SETTINGS['DH_t_5'])
         # C9 = math.radians(float(self.joints[6].current_joint_angle) + DEFAULT_SETTINGS['DH_t_6'])
-        def cos(angle) -> float:
-            return math.cos(angle)
 
-        def sin(angle) -> float:
-            return math.sin(angle)
+        cja_1 = float(self.joints[0].current_joint_angle)
+        cja_2 = float(self.joints[1].current_joint_angle)
+        cja_3 = float(self.joints[2].current_joint_angle)
+        cja_4 = float(self.joints[3].current_joint_angle)
+        cja_5 = float(self.joints[4].current_joint_angle)
+        cja_6 = float(self.joints[5].current_joint_angle)
 
-        cja_1 = float(self.joints[1].current_joint_angle)
-        cja_2 = float(self.joints[2].current_joint_angle)
-        cja_3 = float(self.joints[3].current_joint_angle)
-        cja_4 = float(self.joints[4].current_joint_angle)
-        cja_5 = float(self.joints[5].current_joint_angle)
-        cja_6 = float(self.joints[6].current_joint_angle)
-        pi = math.pi
         TS = {'a_1': 64.20, 'a_2': 0, 'a_3': 0, 'a_4': 0, 'a_5': 0, 'a_6': 0,
               'alpha_1': pi / 2, 'alpha_2': 0, 'alpha_3': pi / 2, 'alpha_4': -pi / 2, 'alpha_5': pi / 2, 'alpha_6': 0,
               'd_1': 169.77, 'd_2': 0, 'd_3': 0, 'd_4': 222.63, 'd_5': 0, 'd_6': 36.25,
