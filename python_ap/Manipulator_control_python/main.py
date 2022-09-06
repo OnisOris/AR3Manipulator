@@ -17,8 +17,9 @@ robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 if robot.is_connected:
     robot.jog_joint(robot.joints[0], 20, 30)
 
-for key, value in DEFAULT_SETTINGS.items():
-    print(f'{key} -- {value}')
+# for key, value in DEFAULT_SETTINGS.items():
+#     print(f'{key} -- {value}')
+robot.calculate_direct_kinematics_problem()
 
 # print('Значение в массиве равно ' + str(calibration['J1StepCur']))
 # print(robot.joints[0].get_name_joint())
