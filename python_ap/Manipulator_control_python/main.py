@@ -1,5 +1,6 @@
 from manipulator import Manipulator
 from config import DEFAULT_SETTINGS
+import numpy as np
 
 ############## Настройки программы ##############
 baud = 115200
@@ -16,14 +17,23 @@ c4 = "MJA01775B11110C00D10E0218F00T10S25G15H10I20K5U8888V6085W3916X7023Y1409Z316
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 if robot.is_connected:
     robot.jog_joint(robot.joints[0], 20, 30)
-
+# a = np.array([[2, 3],
+#               [4, 6]])
+# b = np.array([[43, 7],
+#               [11, 19]])
+# c = np.array([[24, 32],
+#               [46, 65]])
+#
+# a2 = np.dot(a, b)
+# f = np.dot(a2, c)
+# print(f)
 # for key, value in DEFAULT_SETTINGS.items():
 #     print(f'{key} -- {value}')
 robot.calculate_direct_kinematics_problem()
 
 # print('Значение в массиве равно ' + str(calibration['J1StepCur']))
 # print(robot.joints[0].get_name_joint())
-#robot.Jjog()
+# robot.Jjog()
 # try:
 #     with open("./program_files/Robot_calibration_data.cal", "rb") as calibration_file:
 #         calibration_data = pickle.load(calibration_file)

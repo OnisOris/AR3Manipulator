@@ -1,6 +1,8 @@
+import numpy
 import serial
 import time
 import math
+from math import (sin, cos, pi)
 from loguru import logger
 from joint import Joint
 from config import DEFAULT_SETTINGS
@@ -189,61 +191,31 @@ class Manipulator:
         # for joint in self.joints:
         #     if joint.get_current_joint_angle() == 0:
         #         joint.current_joint_angle = 0.0001
-        #
-        # wrist_config = "F" if self.joints[4].current_joint_angle > 0 else "N"
-        # C4 = math.radians(float(self.joints[1].current_joint_angle) + DEFAULT_SETTINGS['DH_t_1'])
-        # C5 = math.radians(float(self.joints[2].current_joint_angle) + DEFAULT_SETTINGS['DH_t_2'])
-        # C6 = math.radians(float(self.joints[3].current_joint_angle) + DEFAULT_SETTINGS['DH_t_3'])
-        # C7 = math.radians(float(self.joints[4].current_joint_angle) + DEFAULT_SETTINGS['DH_t_4'])
-        # C8 = math.radians(float(self.joints[5].current_joint_angle) + DEFAULT_SETTINGS['DH_t_5'])
-        # C9 = math.radians(float(self.joints[6].current_joint_angle) + DEFAULT_SETTINGS['DH_t_6'])
-        def cos(angle) -> float:
-            return math.cos(angle)
+        Transform_matrix = self.matrix_create()
 
-        def sin(angle) -> float:
-            return math.sin(angle)
-
-        cja_1 = float(self.joints[1].current_joint_angle)
-        cja_2 = float(self.joints[2].current_joint_angle)
-        cja_3 = float(self.joints[3].current_joint_angle)
-        cja_4 = float(self.joints[4].current_joint_angle)
-        cja_5 = float(self.joints[5].current_joint_angle)
-        cja_6 = float(self.joints[6].current_joint_angle)
-        pi = math.pi
+    def matrix_create(self):
+        cja = [float(self.joints[0].current_joint_angle), float(self.joints[1].current_joint_angle),
+               float(self.joints[2].current_joint_angle),
+               float(self.joints[3].current_joint_angle), float(self.joints[4].current_joint_angle),
+               float(self.joints[5].current_joint_angle)]
         TS = {'a_1': 64.20, 'a_2': 0, 'a_3': 0, 'a_4': 0, 'a_5': 0, 'a_6': 0,
-              'alpha_1': pi / 2, 'alpha_2': 0, 'alpha_3': pi / 2, 'alpha_4': -pi / 2, 'alpha_5': pi / 2, 'alpha_6': 0,
+              'alpha_1': math.pi / 2, 'alpha_2': 0, 'alpha_3': math.pi / 2, 'alpha_4': -math.pi / 2,
+              'alpha_5': math.pi / 2, 'alpha_6': 0,
               'd_1': 169.77, 'd_2': 0, 'd_3': 0, 'd_4': 222.63, 'd_5': 0, 'd_6': 36.25,
-              'displacement_theta_3': pi / 2}
-        T0_1 = np.array(
-            [[cos(cja_1), -sin(cja_1) * cos(TS['alpha_1']), sin(cja_1) * sin(TS['alpha_1']), TS['a_1'] * cos(cja_1)],
-             [sin(cja_1), cos(cja_1) * cos(TS['alpha_1']), -cos(cja_1) * sin(TS['alpha_1']), TS['a_1'] * sin(cja_1)],
-             [0, sin(cja_1), cos(cja_1), TS['d_1']],
-             [0, 0, 0, 1]])
-        T1_2 = np.array(
-            [[cos(cja_2), -sin(cja_2) * cos(TS['alpha_2']), sin(cja_2) * sin(TS['alpha_2']), TS['a_2'] * cos(cja_2)],
-             [sin(cja_2), cos(cja_2) * cos(TS['alpha_2']), -cos(cja_2) * sin(TS['alpha_2']), TS['a_2'] * sin(cja_2)],
-             [0, sin(cja_2), cos(cja_2), TS['d_2']],
-             [0, 0, 0, 1]])
-        T2_3 = np.array(
-            [[cos(cja_3), -sin(cja_3) * cos(TS['alpha_3']), sin(cja_3) * sin(TS['alpha_3']), TS['a_3'] * cos(cja_3)],
-             [sin(cja_3), cos(cja_3) * cos(TS['alpha_3']), -cos(cja_3) * sin(TS['alpha_3']), TS['a_3'] * sin(cja_3)],
-             [0, sin(cja_3), cos(cja_3), TS['d_3']],
-             [0, 0, 0, 1]])
-        T3_4 = np.array(
-            [[cos(cja_4), -sin(cja_4) * cos(TS['alpha_4']), sin(cja_4) * sin(TS['alpha_4']), TS['a_4'] * cos(cja_4)],
-             [sin(cja_4), cos(cja_4) * cos(TS['alpha_4']), -cos(cja_4) * sin(TS['alpha_4']), TS['a_4'] * sin(cja_4)],
-             [0, sin(cja_4), cos(cja_4), TS['d_4']],
-             [0, 0, 0, 1]])
-        T4_5 = np.array(
-            [[cos(cja_5), -sin(cja_5) * cos(TS['alpha_5']), sin(cja_5) * sin(TS['alpha_5']), TS['a_5'] * cos(cja_5)],
-             [sin(cja_5), cos(cja_5) * cos(TS['alpha_5']), -cos(cja_5) * sin(TS['alpha_5']), TS['a_5'] * sin(cja_5)],
-             [0, sin(cja_5), cos(cja_5), TS['d_5']],
-             [0, 0, 0, 1]])
-        T5_6 = np.array(
-            [[cos(cja_6), -sin(cja_6) * cos(TS['alpha_6']), sin(cja_6) * sin(TS['alpha_6']), TS['a_6'] * cos(cja_6)],
-             [sin(cja_6), cos(cja_6) * cos(TS['alpha_6']), -cos(cja_6) * sin(TS['alpha_6']), TS['a_6'] * sin(cja_6)],
-             [0, sin(cja_6), cos(cja_6), TS['d_6']],
-             [0, 0, 0, 1]])
-
-        T0_6 = np.dot(T5_6, np.dot(T4_5, np.dot(T3_4, np.dot(T2_3, np.dot(T0_1, T1_2)))))
+              'displacement_theta_3': math.pi / 2}
+        T = []
+        for i in range(0, 6):
+            T.append(np.array(
+                [[cos(cja[i]), -sin(cja[i]) * cos(TS[f'alpha_{i + 1}']), sin(cja[i]) * sin(TS[f'alpha_{i + 1}']),
+                  TS[f'a_{i + 1}'] * cos(cja[i])],
+                 [sin(cja[i]), cos(cja[i]) * cos(TS[f'alpha_{i + 1}']), -cos(cja[i]) * sin(TS[f'alpha_{i + 1}']),
+                  TS[f'a_{i + 1}'] * sin(cja[i])],
+                 [0, sin(cja[i]), cos(cja[i]), TS[f'd_{i + 1}']],
+                 [0, 0, 0, 1]]))
+            #print(T[i])
+        return self.matrix_dot_all(T)
+    def matrix_dot_all(self, array_matrix):
+        T0_6 = np.dot(array_matrix[5], np.dot(array_matrix[4], np.dot(array_matrix[3], np.dot(array_matrix[2], np.dot(array_matrix[0], array_matrix[1])))))
         print(T0_6)
+        return T0_6
+
