@@ -1,8 +1,7 @@
-import numpy
 import serial
 import time
 import math
-from math import (sin, cos, pi)
+from math import (sin, cos, pi, atan2, sqrt)
 from loguru import logger
 from joint import Joint
 from config import DEFAULT_SETTINGS
@@ -191,7 +190,11 @@ class Manipulator:
         # for joint in self.joints:
         #     if joint.get_current_joint_angle() == 0:
         #         joint.current_joint_angle = 0.0001
-        Transform_matrix = self.matrix_create()
+        transform_matrix = self.matrix_create()
+        # eye = np.eye(4)
+        # print(eye)
+        print(transform_matrix)
+        print(self.angular_Euler_calculation(transform_matrix))
 
     def matrix_create(self):
         cja = [float(self.joints[0].current_joint_angle), float(self.joints[1].current_joint_angle),
@@ -212,10 +215,38 @@ class Manipulator:
                   TS[f'a_{i + 1}'] * sin(cja[i])],
                  [0, sin(cja[i]), cos(cja[i]), TS[f'd_{i + 1}']],
                  [0, 0, 0, 1]]))
-            #print(T[i])
+            # print(T[i])
         return self.matrix_dot_all(T)
+
     def matrix_dot_all(self, array_matrix):
         T0_6 = np.dot(array_matrix[5], np.dot(array_matrix[4], np.dot(array_matrix[3], np.dot(array_matrix[2], np.dot(array_matrix[0], array_matrix[1])))))
-        print(T0_6)
+        # print(T0_6)
         return T0_6
+
+    def angular_Euler_calculation(self, transform_matrix):
+        #global theta, fi, psi
+        rotation_matrix = transform_matrix[0:3, 0:3]
+        r3_3 = transform_matrix[2, 2]
+        r2_3 = transform_matrix[1, 2]
+        r1_3 = transform_matrix[0, 2]
+        r3_2 = transform_matrix[2, 1]
+        r3_1 = transform_matrix[2, 0]
+        r1_1 = transform_matrix[0, 0]
+        r2_1 = transform_matrix[1, 0]
+        r1_2 = transform_matrix[0, 1]
+        if r3_3 != 1 or -1:
+            theta = atan2(sqrt(1 - r3_3 ** 2), r3_3)
+            fi = atan2(r2_3, r1_3)
+            psi = atan2(r3_2, -r3_1)
+        if r3_3 == 1:
+            theta = 0
+            fi = atan2(r2_1, r1_1)
+            psi = 0
+        if r3_3 == -1:
+            theta = pi
+            fi = atan2(-r1_2, -r1_1)
+            psi = 0
+
+        return [theta, fi, psi]
+
 
