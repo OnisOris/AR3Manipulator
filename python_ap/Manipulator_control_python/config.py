@@ -89,8 +89,8 @@ DEFAULT_SETTINGS = {
     'DH_t_5': 0,
     'DH_t_6': 180,
 
-    'calculated_direction': '001001',
-    'Mot_Dir': '000000',
+    'calibration_direction': '001001',
+    'motor_direction': '000000',
     'TrackcurPos': 201.5,
     'TrackLength': 403,
     'TrackStepLim': 10100,

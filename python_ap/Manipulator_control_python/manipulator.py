@@ -1,6 +1,5 @@
 import serial
 import time
-import math
 from math import (sin, cos, pi, atan2, sqrt)
 from loguru import logger
 from joint import Joint
@@ -18,6 +17,8 @@ class Manipulator:
         self.JogStepsStat = False
         self.joint_jog_degrees = 10
         self.joints = self.create_joints()
+        self.calibration_direction = DEFAULT_SETTINGS['calibration_direction']
+        self.motor_direction = DEFAULT_SETTINGS['motor_direction']
 
         try:
             self.serial_teensy: serial.Serial = serial.Serial(teensy_port, baud)
@@ -79,7 +80,7 @@ class Manipulator:
             robot_code.find('F')
         ]
 
-        for i, joint in self.joints:
+        for i, joint in enumerate(self.joints):
             if not joint.open_loop_stat and faults[i] == '1':
                 logger.error(f'{joint.get_name_joint()} COLLISION OR OUT OF CALIBRATION')
 
@@ -149,7 +150,7 @@ class Manipulator:
         for i in range(6):
             DEFAULT_SETTINGS[f'DH_t_{i + 1}'] = None
 
-        DEFAULT_SETTINGS['calculated_direction'] = None
+        DEFAULT_SETTINGS['calibration_direction'] = None
         DEFAULT_SETTINGS['Mot_Dir'] = None
 
         DEFAULT_SETTINGS['Track_current'] = None
@@ -186,6 +187,93 @@ class Manipulator:
 
         return joints
 
+    def get_calibration_drive(self):
+        calibration_drive = []
+        for cd, md in zip(self.calibration_direction, self.motor_direction):
+            if cd == md:
+                calibration_drive.append('0')
+            else:
+                calibration_drive.append('1')
+        return calibration_drive
+
+    def calibrate(self, calibration_axes: str, speed: str):
+        axes = [axis for axis in calibration_axes]
+
+        steps = []
+        for i, axis in enumerate(axes):
+            if axis == '1':
+                steps.append(self.joints[i].step_limit)
+            else:
+                steps.append(0)
+
+        calibration_drive = self.get_calibration_drive()
+
+        joint_calibration_drive_and_step = [f"{joint.get_name_joint()}{cd}{step}"
+                                            for joint, cd, step in zip(self.joints, calibration_drive, steps)]
+        command = f"LL{''.join(joint_calibration_drive_and_step)}S{speed}\n"
+        self.teensy_push(command)
+        logger.debug(f"Write to teensy: {command}")
+
+        self.serial_teensy.flushInput()
+        calibration_value = self.serial_teensy.read()
+        # TODO: нужно добавить calibration_status в поле manipulitor
+        if calibration_value == b'P':
+            # calibration_status = 1
+            for joint, cd, axis in zip(self.joints, self.calibration_direction, axes):
+                if axis == '1':
+                    if cd == '0':
+                        joint.current_joint_step = 0
+                        joint.current_joint_angle = joint.negative_angle_limit
+                    else:
+                        joint.current_joint_step = joint.step_limit
+                        joint.current_joint_angle = joint.positive_angle_limit
+            logger.success('CALIBRATION SUCCESSFUL')
+        elif calibration_value == b'F':
+            # calibration_status = 0
+            logger.error('CALIBRATION FAILED')
+        else:
+            logger.warning('NO CAL FEEDBACK FROM ARDUINO')
+
+        self.calculate_direct_kinematics_problem()
+        self.save_data()
+        joints_current_steps = [f"{joint.get_name_joint()}{joint.current_joint_step}" for joint in self.joints]
+        command = f'LM{"".join(joints_current_steps)}\n'
+        self.teensy_push(command)
+        logger.debug(f"Write to teensy: {command}")
+        self.serial_teensy.flushInput()
+
+    def auto_calibrate(self):
+        # TODO: узнать, что такое blockEncPosCal
+        # blockEncPosCal = 1
+        calibration_axes = "111110"
+        speed = '50'
+        self.calibrate(calibration_axes, speed)
+        cd = self.get_calibration_drive()
+        command = f"MJA{cd[0]}500B{cd[1]}500C{cd[2]}500D{cd[3]}500E{cd[4]}500F{cd[5]}0" \
+                  f"S15G10H10I10K10\n"
+        self.teensy_push(command)
+        logger.debug(f"Write to teensy: {command}")
+        self.serial_teensy.flushInput()
+        speed = '8'
+        time.sleep(2.5)
+        self.calibrate(calibration_axes, speed)
+        # gotoRestPos()
+
+        calibration_axes = '000001'
+        speed = '50'
+        self.calibrate(calibration_axes, speed)
+        command = f"MJA{cd[0]}0B{cd[1]}0C{cd[2]}0D{cd[3]}0E{cd[4]}0F{cd[5]}500" \
+                  f"S15G10H10I10K10\n"
+        self.teensy_push(command)
+        logger.debug(f"Write to teensy: {command}")
+        self.serial_teensy.flushInput()
+        speed = '8'
+        time.sleep(1)
+        self.calibrate(calibration_axes, speed)
+        # gotoRestPos()
+        logger.success('CALIBRATION SUCCESSFUL')
+        # blockEncPosCal = 1
+
     def calculate_direct_kinematics_problem(self):
         # for joint in self.joints:
         #     if joint.get_current_joint_angle() == 0:
@@ -202,12 +290,12 @@ class Manipulator:
                float(self.joints[3].current_joint_angle), float(self.joints[4].current_joint_angle),
                float(self.joints[5].current_joint_angle)]
         TS = {'a_1': 64.20, 'a_2': 0, 'a_3': 0, 'a_4': 0, 'a_5': 0, 'a_6': 0,
-              'alpha_1': math.pi / 2, 'alpha_2': 0, 'alpha_3': math.pi / 2, 'alpha_4': -math.pi / 2,
-              'alpha_5': math.pi / 2, 'alpha_6': 0,
+              'alpha_1': pi / 2, 'alpha_2': 0, 'alpha_3': pi / 2, 'alpha_4': -pi / 2,
+              'alpha_5': pi / 2, 'alpha_6': 0,
               'd_1': 169.77, 'd_2': 0, 'd_3': 0, 'd_4': 222.63, 'd_5': 0, 'd_6': 36.25,
-              'displacement_theta_3': math.pi / 2}
+              'displacement_theta_3': pi / 2}
         T = []
-        for i in range(0, 6):
+        for i in range(6):
             T.append(np.array(
                 [[cos(cja[i]), -sin(cja[i]) * cos(TS[f'alpha_{i + 1}']), sin(cja[i]) * sin(TS[f'alpha_{i + 1}']),
                   TS[f'a_{i + 1}'] * cos(cja[i])],
@@ -248,5 +336,3 @@ class Manipulator:
             psi = 0
 
         return [theta, fi, psi]
-
-
