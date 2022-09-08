@@ -1,10 +1,12 @@
-import serial
 import time
 from math import (sin, cos, pi, atan2, sqrt)
-from loguru import logger
-from joint import Joint
-from config import DEFAULT_SETTINGS
+
 import numpy as np
+import serial
+from loguru import logger
+
+from config import DEFAULT_SETTINGS
+from joint import Joint
 
 
 class Manipulator:
@@ -254,6 +256,7 @@ class Manipulator:
         self.teensy_push(command)
         logger.debug(f"Write to teensy: {command}")
         self.serial_teensy.flushInput()
+
         speed = '8'
         time.sleep(2.5)
         self.calibrate(calibration_axes, speed)
@@ -267,6 +270,7 @@ class Manipulator:
         self.teensy_push(command)
         logger.debug(f"Write to teensy: {command}")
         self.serial_teensy.flushInput()
+
         speed = '8'
         time.sleep(1)
         self.calibrate(calibration_axes, speed)
