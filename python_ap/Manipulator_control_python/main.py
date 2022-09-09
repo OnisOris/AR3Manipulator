@@ -15,7 +15,7 @@ c3 = "MJA10B01109C11D00E00F01T10S25G15H10I20K5U10663V4975W3916X7023Y1627Z3163\n"
 c4 = "MJA01775B11110C00D10E0218F00T10S25G15H10I20K5U8888V6085W3916X7023Y1409Z3163\n"
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
-robot.calibrate("010001", "40")
+#robot.calibrate("010001", "40")
 # if robot.is_connected:
 #     robot.jog_joint(robot.joints[0], 20, 30)
 # a = np.array([[2, 3],
@@ -30,7 +30,10 @@ robot.calibrate("010001", "40")
 # print(f)
 # for key, value in DEFAULT_SETTINGS.items():
 #     print(f'{key} -- {value}')
-# robot.calculate_direct_kinematics_problem()
+T0_6 = robot.calculate_direct_kinematics_problem()
+#print(T0_6)
+#print(robot.calculate_inverse_kinematics_problem(robot.matrix_create()))
+
 
 # print('Значение в массиве равно ' + str(calibration['J1StepCur']))
 # print(robot.joints[0].get_name_joint())

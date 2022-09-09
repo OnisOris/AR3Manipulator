@@ -285,8 +285,10 @@ class Manipulator:
         transform_matrix = self.matrix_create()
         # eye = np.eye(4)
         # print(eye)
-        print(transform_matrix)
-        print(self.angular_Euler_calculation(transform_matrix))
+        # print(transform_matrix)
+        # print(self.angular_Euler_calculation(transform_matrix))
+        self.calculate_inverse_kinematics_problem(transform_matrix)
+        return transform_matrix
 
     def matrix_create(self):
         cja = [float(self.joints[0].current_joint_angle), float(self.joints[1].current_joint_angle),
@@ -308,15 +310,18 @@ class Manipulator:
                  [0, sin(cja[i]), cos(cja[i]), TS[f'd_{i + 1}']],
                  [0, 0, 0, 1]]))
             # print(T[i])
-        return self.matrix_dot_all(T)
+        return T
 
     def matrix_dot_all(self, array_matrix):
-        T0_6 = np.dot(array_matrix[5], np.dot(array_matrix[4], np.dot(array_matrix[3], np.dot(array_matrix[2], np.dot(array_matrix[0], array_matrix[1])))))
+        T0_6 = np.dot(array_matrix[5], np.dot(array_matrix[4], np.dot(array_matrix[3], np.dot(array_matrix[2],
+                                                                                              np.dot(array_matrix[0],
+                                                                                                     array_matrix[
+                                                                                                         1])))))
         # print(T0_6)
         return T0_6
 
     def angular_Euler_calculation(self, transform_matrix):
-        #global theta, fi, psi
+        # global theta, fi, psi
         rotation_matrix = transform_matrix[0:3, 0:3]
         r3_3 = transform_matrix[2, 2]
         r2_3 = transform_matrix[1, 2]
@@ -340,3 +345,15 @@ class Manipulator:
             psi = 0
 
         return [theta, fi, psi]
+
+    def calculate_inverse_kinematics_problem(self, array_matrix):
+        # print(array_matrix)
+        T0_4 = np.dot(array_matrix[4],
+                      np.dot(array_matrix[3], np.dot(array_matrix[2], np.dot(array_matrix[0], array_matrix[1]))))
+        p = np.array(T0_4[0:3, 3])  # вектор p4, который содержит координаты пересечения осей поворота двух последних
+        # звеньев
+        #A =
+
+        print(T0_4)
+        print("T_04 \n")
+        print(p)
