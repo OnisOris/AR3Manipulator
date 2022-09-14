@@ -320,6 +320,15 @@ class Manipulator:
         # print(T0_6)
         return T0_6
 
+    def matrix_dot(self, array_matrix, num1, num2):
+        if num1 == 0:
+            if num1 == 1:
+                matrix = array_matrix[0].dot(array_matrix[1])
+            if num1 == 2:
+                matrix = (array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])
+
+        return matrix
+
     def angular_Euler_calculation(self, transform_matrix):
         # global theta, fi, psi
         rotation_matrix = transform_matrix[0:3, 0:3]
@@ -348,12 +357,27 @@ class Manipulator:
 
     def calculate_inverse_kinematics_problem(self, array_matrix):
         # print(array_matrix)
+        T0_1 = np.dot(array_matrix[0], array_matrix[1])
         T0_4 = np.dot(array_matrix[4],
                       np.dot(array_matrix[3], np.dot(array_matrix[2], np.dot(array_matrix[0], array_matrix[1]))))
-        p = np.array(T0_4[0:3, 3])  # вектор p4, который содержит координаты пересечения осей поворота двух последних
-        # звеньев
-        #A =
 
+        p4 = np.array(T0_4[0:3, 3])  # вектор p4, который содержит координаты пересечения осей поворота двух последних
+        # звеньев
+        p1 = np.array(T0_1[0:3, 3]) # вектор p1, для нахождения начала координат первого сочленения
+
+        a_length = self.length_vector(p1, p4) # Длина вектора a
+        x0_4 = None # ToDo: Дописать
+        y0_4 = None
+        c = sqrt((x0_4) ** 2+(y0_4) ** 2)
+        a = sqrt(x1_4 ** 2 + y1_4 ** 2 + z1_4 ** 2)
         print(T0_4)
         print("T_04 \n")
-        print(p)
+        print(a_length)
+
+    def length_vector(self, point_A, point_B):
+        length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
+        return length
+    def take_coordinate(self, xyz, number_of_matrix1, number_of_matrix2):
+        T = self.matrix_create()
+
+

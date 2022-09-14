@@ -15,6 +15,8 @@ c3 = "MJA10B01109C11D00E00F01T10S25G15H10I20K5U10663V4975W3916X7023Y1627Z3163\n"
 c4 = "MJA01775B11110C00D10E0218F00T10S25G15H10I20K5U8888V6085W3916X7023Y1409Z3163\n"
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
+a = robot.matrix_dot(robot.matrix_create(), 0, 1)
+print(a)
 #robot.calibrate("010001", "40")
 # if robot.is_connected:
 #     robot.jog_joint(robot.joints[0], 20, 30)
