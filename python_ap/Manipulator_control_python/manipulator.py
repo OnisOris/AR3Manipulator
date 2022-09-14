@@ -321,12 +321,58 @@ class Manipulator:
         return T0_6
 
     def matrix_dot(self, array_matrix, num1, num2):
+        #global matrix
+        matrix = None
         if num1 == 0:
-            if num1 == 1:
+            if num2 == 1:
                 matrix = array_matrix[0].dot(array_matrix[1])
-            if num1 == 2:
+            if num2 == 2:
                 matrix = (array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])
-
+            if num2 == 3:
+                matrix = ((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])
+            if num2 == 4:
+                matrix = (((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])
+            if num2 == 5:
+                matrix = ((((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])).dot(array_matrix[5])
+            if num2 == 6:
+                matrix = (((((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])).dot(array_matrix[5])).dot(array_matrix[6])
+        elif num1 == 1:
+            if num2 == 2:
+                matrix = array_matrix[1].dot(array_matrix[2])
+            if num2 == 3:
+                matrix = (array_matrix[1].dot(array_matrix[2])).dot(array_matrix[3])
+            if num2 == 4:
+                matrix = ((array_matrix[1].dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])
+            if num2 == 5:
+                matrix = (((array_matrix[1].dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])).dot(array_matrix[5])
+            if num2 == 6:
+                matrix = ((((array_matrix[1].dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])).dot(array_matrix[5])).dot(array_matrix[6])
+        elif num1 == 2:
+            if num2 == 3:
+                matrix = array_matrix[2].dot(array_matrix[3])
+            if num2 == 4:
+                matrix = (array_matrix[2].dot(array_matrix[3])).dot(array_matrix[4])
+            if num2 == 5:
+                matrix = ((array_matrix[2].dot(array_matrix[3])).dot(array_matrix[4])).dot(array_matrix[5])
+            if num2 == 6:
+                matrix = (((array_matrix[2].dot(array_matrix[3])).dot(array_matrix[4])).dot(array_matrix[5])).dot(array_matrix[6])
+        elif num1 == 3:
+            if num2 == 4:
+                matrix = array_matrix[3].dot(array_matrix[4])
+            if num2 == 5:
+                matrix = (array_matrix[3].dot(array_matrix[4])).dot(array_matrix[5])
+            if num2 == 6:
+                matrix = ((array_matrix[3].dot(array_matrix[4])).dot(array_matrix[5])).dot(array_matrix[6])
+        elif num1 == 4:
+            if num2 == 5:
+                matrix = array_matrix[4].dot(array_matrix[5])
+            if num2 == 6:
+                matrix = (array_matrix[4].dot(array_matrix[5])).dot(array_matrix[6])
+        elif num1 == 5:
+            if num2 == 6:
+                matrix = array_matrix[5].dot(array_matrix[6])
+        else:
+            matrix = "Error: "
         return matrix
 
     def angular_Euler_calculation(self, transform_matrix):
@@ -357,9 +403,8 @@ class Manipulator:
 
     def calculate_inverse_kinematics_problem(self, array_matrix):
         # print(array_matrix)
-        T0_1 = np.dot(array_matrix[0], array_matrix[1])
-        T0_4 = np.dot(array_matrix[4],
-                      np.dot(array_matrix[3], np.dot(array_matrix[2], np.dot(array_matrix[0], array_matrix[1]))))
+        T0_1 = self.matrix_dot(array_matrix, 0, 1)
+        T0_4 = self.matrix_dot(array_matrix, 0, 4)
 
         p4 = np.array(T0_4[0:3, 3])  # вектор p4, который содержит координаты пересечения осей поворота двух последних
         # звеньев
@@ -368,11 +413,11 @@ class Manipulator:
         a_length = self.length_vector(p1, p4) # Длина вектора a
         x0_4 = None # ToDo: Дописать
         y0_4 = None
-        c = sqrt((x0_4) ** 2+(y0_4) ** 2)
-        a = sqrt(x1_4 ** 2 + y1_4 ** 2 + z1_4 ** 2)
-        print(T0_4)
-        print("T_04 \n")
-        print(a_length)
+        #c = sqrt((x0_4) ** 2+(y0_4) ** 2)
+        #a = sqrt(x1_4 ** 2 + y1_4 ** 2 + z1_4 ** 2)
+       # print(T0_4)
+        #print("T_04 \n")
+       # print(a_length)
 
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
