@@ -399,30 +399,28 @@ class Manipulator:
             fi = atan2(-r1_2, -r1_1)
             psi = 0
 
-        return [theta, fi, psi]
+        return [theta, fi, psi] # TODO: углов ведь должно быть 6?
 
     def calculate_inverse_kinematics_problem(self, array_matrix):
-        # print(array_matrix)
-        T0_1 = self.matrix_dot(array_matrix, 0, 1)
-        T0_4 = self.matrix_dot(array_matrix, 0, 4)
+        p0_4 = self.take_coordinate(array_matrix, 0, 4) #np.array(T0_4[0:3, 3])  # вектор p0_4, который содержит координаты пересечения осей поворота двух последних # звеньев
+        p0_1 = self.take_coordinate(array_matrix, 0, 1) #np.array(T0_1[0:3, 3]) # вектор p0_1, для нахождения начала координат первого сочленения
 
-        p4 = np.array(T0_4[0:3, 3])  # вектор p4, который содержит координаты пересечения осей поворота двух последних
-        # звеньев
-        p1 = np.array(T0_1[0:3, 3]) # вектор p1, для нахождения начала координат первого сочленения
-
-        a_length = self.length_vector(p1, p4) # Длина вектора a
-        x0_4 = None # ToDo: Дописать
-        y0_4 = None
-        #c = sqrt((x0_4) ** 2+(y0_4) ** 2)
-        #a = sqrt(x1_4 ** 2 + y1_4 ** 2 + z1_4 ** 2)
-       # print(T0_4)
-        #print("T_04 \n")
-       # print(a_length)
-
+        a_length = self.length_vector(p0_1, p0_4) # Длина вектора a
+        x0_4 = p0_4[0]
+        y0_4 = p0_4[1]
+        c = sqrt((x0_4) ** 2+(y0_4) ** 2)
+        p1_4 = self.take_coordinate(array_matrix, 1, 4)
+        a = sqrt(p1_4[0] ** 2 + p1_4[1] ** 2 + p1_4[2] ** 2)
+        d4 = self.length_vector(self.take_coordinate(array_matrix, 0, 2), self.take_coordinate(array_matrix, 0, 4))
+        a2 = self.length_vector(self.take_coordinate(array_matrix, 0, 1), self.take_coordinate(array_matrix, 0, 2))
+        #theta2 =
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
         return length
-    def take_coordinate(self, xyz, number_of_matrix1, number_of_matrix2):
-        T = self.matrix_create()
 
+    def take_coordinate(self, array_matrix, number_of_matrix1, number_of_matrix2):
+        # T = self.matrix_create()
+        matrix = self.matrix_dot(array_matrix, number_of_matrix1, number_of_matrix2)
+        vector_xyz = matrix[0:3, 3]
+        return vector_xyz
 
