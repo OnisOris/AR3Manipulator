@@ -15,15 +15,19 @@ c3 = "MJA10B01109C11D00E00F01T10S25G15H10I20K5U10663V4975W3916X7023Y1627Z3163\n"
 c4 = "MJA01775B11110C00D10E0218F00T10S25G15H10I20K5U8888V6085W3916X7023Y1409Z3163\n"
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
-a = robot.matrix_dot(robot.matrix_create(), 3, 4)
-print(a)
+robot.calculate_inverse_kinematics_problem(robot.matrix_create(), [[13],
+                                                                   [34],
+                                                                   [23]])
+# a = robot.matrix_dot(robot.matrix_create(), 3, 4)
+# print(a)
 #robot.calibrate("010001", "40")
 # if robot.is_connected:
 #     robot.jog_joint(robot.joints[0], 20, 30)
-# a = np.array([[2, 3],
-#               [4, 6]])
-# b = np.array([[43, 7],
-#               [11, 19]])
+# a = np.array([[1, 1],
+#               [1, 1]])
+# b = np.array([[1, 1],
+#               [1, 1]])
+# print(a+b)
 # c = np.array([[24, 32],
 #               [46, 65]])
 #

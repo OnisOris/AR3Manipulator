@@ -287,7 +287,7 @@ class Manipulator:
         # print(eye)
         # print(transform_matrix)
         # print(self.angular_Euler_calculation(transform_matrix))
-        self.calculate_inverse_kinematics_problem(transform_matrix)
+        # self.calculate_inverse_kinematics_problem(transform_matrix)
         return transform_matrix
 
     def matrix_create(self):
@@ -295,7 +295,7 @@ class Manipulator:
                float(self.joints[2].current_joint_angle),
                float(self.joints[3].current_joint_angle), float(self.joints[4].current_joint_angle),
                float(self.joints[5].current_joint_angle)]
-        TS = {'a_1': 64.20, 'a_2': 0, 'a_3': 0, 'a_4': 0, 'a_5': 0, 'a_6': 0,
+        TS = {'a_1': 64.20, 'a_2': 0, 'a_3': 0, 'a_4': 0, 'a_5': 0, 'a_6': 0, # TODO: поменять на сбор парамеров с файла
               'alpha_1': pi / 2, 'alpha_2': 0, 'alpha_3': pi / 2, 'alpha_4': -pi / 2,
               'alpha_5': pi / 2, 'alpha_6': 0,
               'd_1': 169.77, 'd_2': 0, 'd_3': 0, 'd_4': 222.63, 'd_5': 0, 'd_6': 36.25,
@@ -399,21 +399,37 @@ class Manipulator:
             fi = atan2(-r1_2, -r1_1)
             psi = 0
 
-        return [theta, fi, psi] # TODO: углов ведь должно быть 6?
+        return [theta, fi, psi] # углы Эйлера схвата в главной системе координат
 
-    def calculate_inverse_kinematics_problem(self, array_matrix):
-        p0_4 = self.take_coordinate(array_matrix, 0, 4) #np.array(T0_4[0:3, 3])  # вектор p0_4, который содержит координаты пересечения осей поворота двух последних # звеньев
-        p0_1 = self.take_coordinate(array_matrix, 0, 1) #np.array(T0_1[0:3, 3]) # вектор p0_1, для нахождения начала координат первого сочленения
+    def calculate_inverse_kinematics_problem(self, p0_6, array_matrix):
+        # p0_4 = p0_6 - d6 * R0_6 * [0, 0, 1]', где p_04 = [x0_4, y0_4, z0_4]
+        TS = {'a_1': 64.20, 'a_2': 0, 'a_3': 0, 'a_4': 0, 'a_5': 0, 'a_6': 0, # TODO: поменять на сбор парамеров с файла
+              'alpha_1': pi / 2, 'alpha_2': 0, 'alpha_3': pi / 2, 'alpha_4': -pi / 2,
+              'alpha_5': pi / 2, 'alpha_6': 0,
+              'd_1': 169.77, 'd_2': 0, 'd_3': 0, 'd_4': 222.63, 'd_5': 0, 'd_6': 36.25,
+              'displacement_theta_3': pi / 2}
 
-        a_length = self.length_vector(p0_1, p0_4) # Длина вектора a
+        # Расчет обратной задачи кинематики по положению: расчет theta1, theta2, theta3
+        R0_6 = self.take_rotation_matrix(array_matrix, 0, 5)
+        p0_4 = np.array(p0_6) - (np.dot(TS['d_6'], R0_6)).dot(np.array([[0],
+                                                                        [0],
+                                                                        [1]]))
+        # вектор p0_4, который содержит координаты пересечения осей поворота двух последних # звеньев
+        print(p0_4)
         x0_4 = p0_4[0]
         y0_4 = p0_4[1]
         c = sqrt((x0_4) ** 2+(y0_4) ** 2)
         p1_4 = self.take_coordinate(array_matrix, 1, 4)
-        a = sqrt(p1_4[0] ** 2 + p1_4[1] ** 2 + p1_4[2] ** 2)
-        d4 = self.length_vector(self.take_coordinate(array_matrix, 0, 2), self.take_coordinate(array_matrix, 0, 4))
-        a2 = self.length_vector(self.take_coordinate(array_matrix, 0, 1), self.take_coordinate(array_matrix, 0, 2))
-        #theta2 =
+        b = p0_4[2] - TS['d_1']
+        a = sqrt(p1_4[0]**2 + p1_4[1]**2 + p1_4[2]**2)
+        d4 = TS['d_4']
+        a2 = TS['a_2']#self.length_vector(self.take_coordinate(array_matrix, 0, 1), self.take_coordinate(array_matrix, 0, 2))
+        cos_theta3 = (b**2 + c**2 - a2**2 - d4**2)/(2*a2*d4)
+        theta3 = atan2(sqrt(1-cos_theta3**2), cos_theta3)
+        theta2 = atan2(b, c) - atan2(d4 * sin(theta3), a2 + d4 * cos(theta3))
+        theta1 = atan2(y0_4, x0_4)
+        return [theta1, theta2, theta3]
+        # Расчет обратной задачи кинематики:
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
         return length
@@ -423,4 +439,10 @@ class Manipulator:
         matrix = self.matrix_dot(array_matrix, number_of_matrix1, number_of_matrix2)
         vector_xyz = matrix[0:3, 3]
         return vector_xyz
+
+
+    def take_rotation_matrix(self, array_matrix, number_of_matrix1, number_of_matrix2):
+        matrix = self.matrix_dot(array_matrix, number_of_matrix1, number_of_matrix2)
+        rotation_matrix = matrix[0:3, 0:3]
+        return rotation_matrix
 
