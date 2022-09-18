@@ -283,12 +283,10 @@ class Manipulator:
         #     if joint.get_current_joint_angle() == 0:
         #         joint.current_joint_angle = 0.0001
         transform_matrix = self.matrix_create()
-        # eye = np.eye(4)
-        # print(eye)
-        # print(transform_matrix)
-        # print(self.angular_Euler_calculation(transform_matrix))
-        # self.calculate_inverse_kinematics_problem(transform_matrix)
-        return transform_matrix
+        p = self.take_coordinate(transform_matrix, 0, 6)
+        angles = self.angular_Euler_calculation(self.matrix_dot(transform_matrix, 0, 6))  # theta, fi, psi
+        x_y_z_theta_phi_psi = np.hstack([p, angles])
+        return x_y_z_theta_phi_psi
 
     def matrix_create(self):
         cja = [float(self.joints[0].current_joint_angle), float(self.joints[1].current_joint_angle),
@@ -323,69 +321,65 @@ class Manipulator:
     def matrix_dot(self, array_matrix, num1, num2):
         #global matrix
         matrix = None
-        if num1 == 0:
-            if num2 == 1:
+        if num1 == 0: # T1 * T{num2}, то есть, если num1 = 0, а num2 = 1, то T1*T2 or num2 = 5, то T1*T6
+            if num2 == 1:  # T0_1 = T1
+                matrix = array_matrix[0]
+            if num2 == 2:  # T0_2 = T1*T2
                 matrix = array_matrix[0].dot(array_matrix[1])
-            if num2 == 2:
+            if num2 == 3:  # T0_3 = T1*T2*T3
                 matrix = (array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])
-            if num2 == 3:
+            if num2 == 4:  # T0_4 = T1*T2*T3*T4
                 matrix = ((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])
-            if num2 == 4:
+            if num2 == 5:  # T0_5 = T1*T2*T3*T4*T5
                 matrix = (((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])
-            if num2 == 5:
+            if num2 == 6:  # T0_6 = T1*T2*T3*T4*T5*T6
                 matrix = ((((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])).dot(array_matrix[5])
-            if num2 == 6:
-                matrix = (((((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])).dot(array_matrix[5])).dot(array_matrix[6])
         elif num1 == 1:
-            if num2 == 2:
+            if num2 == 2:  # T1_2 =  T2
+                matrix = array_matrix[1]
+            if num2 == 3:  # T1_3 = T2*T3
                 matrix = array_matrix[1].dot(array_matrix[2])
-            if num2 == 3:
+            if num2 == 4:  # T1_4 = T2*T3*T4
                 matrix = (array_matrix[1].dot(array_matrix[2])).dot(array_matrix[3])
-            if num2 == 4:
+            if num2 == 5:  # T1_5 = T2*T3*T4*T5
                 matrix = ((array_matrix[1].dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])
-            if num2 == 5:
-                matrix = (((array_matrix[1].dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])).dot(array_matrix[5])
-            if num2 == 6:
-                matrix = ((((array_matrix[1].dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])).dot(array_matrix[5])).dot(array_matrix[6])
         elif num1 == 2:
-            if num2 == 3:
+            if num2 == 3:  # T2_3 = T3
+                matrix = array_matrix[2]
+            if num2 == 4:  # T2_4 = T3*T4
                 matrix = array_matrix[2].dot(array_matrix[3])
-            if num2 == 4:
+            if num2 == 5:  # T2_5 = T3*T4*T5
                 matrix = (array_matrix[2].dot(array_matrix[3])).dot(array_matrix[4])
-            if num2 == 5:
+            if num2 == 6:  # T2_6 = T3*T4*T5*T6
                 matrix = ((array_matrix[2].dot(array_matrix[3])).dot(array_matrix[4])).dot(array_matrix[5])
-            if num2 == 6:
-                matrix = (((array_matrix[2].dot(array_matrix[3])).dot(array_matrix[4])).dot(array_matrix[5])).dot(array_matrix[6])
         elif num1 == 3:
-            if num2 == 4:
+            if num2 == 4:  # T3_4 = T4
+                matrix = array_matrix[3]
+            if num2 == 5:  # T3_5 = T4*T5
                 matrix = array_matrix[3].dot(array_matrix[4])
-            if num2 == 5:
+            if num2 == 6:  # T3_6 = T4*T5*T6
                 matrix = (array_matrix[3].dot(array_matrix[4])).dot(array_matrix[5])
-            if num2 == 6:
-                matrix = ((array_matrix[3].dot(array_matrix[4])).dot(array_matrix[5])).dot(array_matrix[6])
         elif num1 == 4:
-            if num2 == 5:
+            if num2 == 5:  # T4_5 = T5
+                matrix = array_matrix[4]
+            if num2 == 6:  # T4_6 = T5*T6
                 matrix = array_matrix[4].dot(array_matrix[5])
-            if num2 == 6:
-                matrix = (array_matrix[4].dot(array_matrix[5])).dot(array_matrix[6])
         elif num1 == 5:
-            if num2 == 6:
-                matrix = array_matrix[5].dot(array_matrix[6])
-        else:
-            matrix = "Error: "
+            if num2 == 6:  # T5_6 = T6
+                matrix = array_matrix[5]
         return matrix
 
-    def angular_Euler_calculation(self, transform_matrix):
+    def angular_Euler_calculation(self, transform_matrix0_6):
         # global theta, fi, psi
-        rotation_matrix = transform_matrix[0:3, 0:3]
-        r3_3 = transform_matrix[2, 2]
-        r2_3 = transform_matrix[1, 2]
-        r1_3 = transform_matrix[0, 2]
-        r3_2 = transform_matrix[2, 1]
-        r3_1 = transform_matrix[2, 0]
-        r1_1 = transform_matrix[0, 0]
-        r2_1 = transform_matrix[1, 0]
-        r1_2 = transform_matrix[0, 1]
+        rotation_matrix = transform_matrix0_6[0:3, 0:3]
+        r3_3 = transform_matrix0_6[2, 2]
+        r2_3 = transform_matrix0_6[1, 2]
+        r1_3 = transform_matrix0_6[0, 2]
+        r3_2 = transform_matrix0_6[2, 1]
+        r3_1 = transform_matrix0_6[2, 0]
+        r1_1 = transform_matrix0_6[0, 0]
+        r2_1 = transform_matrix0_6[1, 0]
+        r1_2 = transform_matrix0_6[0, 1]
         if r3_3 != 1 or -1:
             theta = atan2(sqrt(1 - r3_3 ** 2), r3_3)
             fi = atan2(r2_3, r1_3)
@@ -401,26 +395,28 @@ class Manipulator:
 
         return [theta, fi, psi] # углы Эйлера схвата в главной системе координат
 
-    def calculate_inverse_kinematics_problem(self, p0_6, array_matrix):
+    def calculate_inverse_kinematic_problem(self, p0_6):
         # p0_4 = p0_6 - d6 * R0_6 * [0, 0, 1]', где p_04 = [x0_4, y0_4, z0_4]
-        TS = {'a_1': 64.20, 'a_2': 0, 'a_3': 0, 'a_4': 0, 'a_5': 0, 'a_6': 0, # TODO: поменять на сбор парамеров с файла
+        TS = {'a_1': 64.20, 'a_2': 305, 'a_3': 0, 'a_4': 0, 'a_5': 0, 'a_6': 0, # TODO: поменять на сбор парамеров с файла
               'alpha_1': pi / 2, 'alpha_2': 0, 'alpha_3': pi / 2, 'alpha_4': -pi / 2,
               'alpha_5': pi / 2, 'alpha_6': 0,
               'd_1': 169.77, 'd_2': 0, 'd_3': 0, 'd_4': 222.63, 'd_5': 0, 'd_6': 36.25,
               'displacement_theta_3': pi / 2}
-
+        array_matrix = self.matrix_create()
         # Расчет обратной задачи кинематики по положению: расчет theta1, theta2, theta3
-        R0_6 = self.take_rotation_matrix(array_matrix, 0, 5)
+        R0_6 = self.take_rotation_matrix(array_matrix, 0, 6)
         p0_4 = np.array(p0_6) - (np.dot(TS['d_6'], R0_6)).dot(np.array([[0],
                                                                         [0],
                                                                         [1]]))
         # вектор p0_4, который содержит координаты пересечения осей поворота двух последних # звеньев
-        print(p0_4)
+        #print(p0_4)
         x0_4 = p0_4[0]
         y0_4 = p0_4[1]
+        z0_4 = p0_4[2]
         c = sqrt((x0_4) ** 2+(y0_4) ** 2)
+        # T1_4 = (np.linalg.inv(array_matrix[0])).dot(self.matrix_dot(array_matrix, 0, 4))
         p1_4 = self.take_coordinate(array_matrix, 1, 4)
-        b = p0_4[2] - TS['d_1']
+        b = z0_4 - TS['d_1']
         a = sqrt(p1_4[0]**2 + p1_4[1]**2 + p1_4[2]**2)
         d4 = TS['d_4']
         a2 = TS['a_2']#self.length_vector(self.take_coordinate(array_matrix, 0, 1), self.take_coordinate(array_matrix, 0, 2))
