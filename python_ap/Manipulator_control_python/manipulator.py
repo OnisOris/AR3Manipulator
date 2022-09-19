@@ -1,3 +1,4 @@
+import math
 import time
 from math import (sin, cos, pi, atan2, sqrt)
 
@@ -10,6 +11,28 @@ from joint import Joint
 
 
 class Manipulator:
+    DH = {
+        'a_1': 0.0642,
+        'a_2': 0.305,
+        'a_3': 0,
+        'a_4': 0,
+        'a_5': 0,
+        'a_6': 0,
+        'alpha_1': pi / 2,
+        'alpha_2': 0,
+        'alpha_3': pi / 2,
+        'alpha_4': -pi / 2,
+        'alpha_5': pi / 2,
+        'alpha_6': 0,
+        'd_1': 0.16977,
+        'd_2': 0,
+        'd_3': 0,
+        'd_4': 0.22263,
+        'd_5': 0,
+        'd_6': 0.03625,
+        'displacement_theta_3': pi / 2
+    }
+
     def __init__(self, teensy_port, arduino_port, baud):
         self.is_connected = False
         self.ACC_dur = 15
@@ -45,7 +68,7 @@ class Manipulator:
             joint.current_joint_step += int(j_jog_steps)
             joint.current_joint_angle = round(
                 joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step))
-            self.save_data()  # TODO:ДОдлЕАТЬ save_position_data() и calculate_direct_kinematics_problem()
+            self.save_data()
             # calculate_direct_kinematics_problem()
             command = f"MJ{joint.get_name_joint()}{drive_direction}{j_jog_steps}S{speed}G{self.ACC_dur}H{self.ACC_spd}" \
                       f"I{self.DEC_dur}K{self.DEC_spd}U{self.joints[0].current_joint_step}" \
@@ -293,20 +316,27 @@ class Manipulator:
                float(self.joints[2].current_joint_angle),
                float(self.joints[3].current_joint_angle), float(self.joints[4].current_joint_angle),
                float(self.joints[5].current_joint_angle)]
-        TS = {'a_1': 64.20, 'a_2': 0, 'a_3': 0, 'a_4': 0, 'a_5': 0, 'a_6': 0, # TODO: поменять на сбор парамеров с файла
-              'alpha_1': pi / 2, 'alpha_2': 0, 'alpha_3': pi / 2, 'alpha_4': -pi / 2,
-              'alpha_5': pi / 2, 'alpha_6': 0,
-              'd_1': 169.77, 'd_2': 0, 'd_3': 0, 'd_4': 222.63, 'd_5': 0, 'd_6': 36.25,
-              'displacement_theta_3': pi / 2}
+        print('градус')
+        print(cja)
+        cja = list(map(math.radians, cja))
+        print('rad')
+        print(cja)
         T = []
+        displacement_theta_3 = self.DH['displacement_theta_3']
         for i in range(6):
+            d = 0
+            if i == 2:
+                d = displacement_theta_3
             T.append(np.array(
-                [[cos(cja[i]), -sin(cja[i]) * cos(TS[f'alpha_{i + 1}']), sin(cja[i]) * sin(TS[f'alpha_{i + 1}']),
-                  TS[f'a_{i + 1}'] * cos(cja[i])],
-                 [sin(cja[i]), cos(cja[i]) * cos(TS[f'alpha_{i + 1}']), -cos(cja[i]) * sin(TS[f'alpha_{i + 1}']),
-                  TS[f'a_{i + 1}'] * sin(cja[i])],
-                 [0, sin(cja[i]), cos(cja[i]), TS[f'd_{i + 1}']],
+                [[cos(cja[i]+d), -sin(cja[i]+d) * cos(self.DH[f'alpha_{i + 1}']), sin(cja[i]+d) * sin(self.DH[f'alpha_{i + 1}']),
+                  self.DH[f'a_{i + 1}'] * cos(cja[i]+d)],
+                 [sin(cja[i]+d), cos(cja[i]+d) * cos(self.DH[f'alpha_{i + 1}']), -cos(cja[i]+d) * sin(self.DH[f'alpha_{i + 1}']),
+                  self.DH[f'a_{i + 1}'] * sin(cja[i]+d)],
+                 [0, sin(self.DH[f'alpha_{i+1}']), cos(self.DH[f'alpha_{i+1}']), self.DH[f'd_{i + 1}']],
                  [0, 0, 0, 1]]))
+            # print(i)
+            # print(cja[i])
+            d = 0
             # print(T[i])
         return T
 
@@ -397,15 +427,10 @@ class Manipulator:
 
     def calculate_inverse_kinematic_problem(self, p0_6):
         # p0_4 = p0_6 - d6 * R0_6 * [0, 0, 1]', где p_04 = [x0_4, y0_4, z0_4]
-        TS = {'a_1': 64.20, 'a_2': 305, 'a_3': 0, 'a_4': 0, 'a_5': 0, 'a_6': 0, # TODO: поменять на сбор парамеров с файла
-              'alpha_1': pi / 2, 'alpha_2': 0, 'alpha_3': pi / 2, 'alpha_4': -pi / 2,
-              'alpha_5': pi / 2, 'alpha_6': 0,
-              'd_1': 169.77, 'd_2': 0, 'd_3': 0, 'd_4': 222.63, 'd_5': 0, 'd_6': 36.25,
-              'displacement_theta_3': pi / 2}
         array_matrix = self.matrix_create()
         # Расчет обратной задачи кинематики по положению: расчет theta1, theta2, theta3
         R0_6 = self.take_rotation_matrix(array_matrix, 0, 6)
-        p0_4 = np.array(p0_6) - (np.dot(TS['d_6'], R0_6)).dot(np.array([[0],
+        p0_4 = np.array(p0_6) - (np.dot(self.DH['d_6'], R0_6)).dot(np.array([[0],
                                                                         [0],
                                                                         [1]]))
         # вектор p0_4, который содержит координаты пересечения осей поворота двух последних # звеньев
@@ -416,10 +441,10 @@ class Manipulator:
         c = sqrt((x0_4) ** 2+(y0_4) ** 2)
         # T1_4 = (np.linalg.inv(array_matrix[0])).dot(self.matrix_dot(array_matrix, 0, 4))
         p1_4 = self.take_coordinate(array_matrix, 1, 4)
-        b = z0_4 - TS['d_1']
+        b = z0_4 - self.DH['d_1']
         a = sqrt(p1_4[0]**2 + p1_4[1]**2 + p1_4[2]**2)
-        d4 = TS['d_4']
-        a2 = TS['a_2']#self.length_vector(self.take_coordinate(array_matrix, 0, 1), self.take_coordinate(array_matrix, 0, 2))
+        d4 = self.DH['d_4']
+        a2 = self.DH['a_2']#self.length_vector(self.take_coordinate(array_matrix, 0, 1), self.take_coordinate(array_matrix, 0, 2))
         cos_theta3 = (b**2 + c**2 - a2**2 - d4**2)/(2*a2*d4)
         theta3 = atan2(sqrt(1-cos_theta3**2), cos_theta3)
         theta2 = atan2(b, c) - atan2(d4 * sin(theta3), a2 + d4 * cos(theta3))
