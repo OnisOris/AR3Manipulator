@@ -1,4 +1,3 @@
-import math
 import time
 from math import (sin, cos, pi, atan2, sqrt)
 
@@ -294,14 +293,7 @@ class Manipulator:
                float(self.joints[2].current_joint_angle),
                float(self.joints[3].current_joint_angle), float(self.joints[4].current_joint_angle),
                float(self.joints[5].current_joint_angle)]
-
-        TS_my = {}
-        for i in range(6):
-            TS_my[f"a_{i + 1}"] = DEFAULT_SETTINGS[f'DH_a_{i + 1}']
-            TS_my[f'alpha_{i + 1}'] = math.radians(DEFAULT_SETTINGS[f'DH_r_{i + 1}'])
-            TS_my[f'd_{i + 1}'] = DEFAULT_SETTINGS[f'DH_d_{i + 1}']
-
-        TS = {'a_1': 64.20, 'a_2': 305, 'a_3': 0, 'a_4': 0, 'a_5': 0, 'a_6': 0, # TODO: поменять на сбор парамеров с файла
+        TS = {'a_1': 64.20, 'a_2': 0, 'a_3': 0, 'a_4': 0, 'a_5': 0, 'a_6': 0, # TODO: поменять на сбор парамеров с файла
               'alpha_1': pi / 2, 'alpha_2': 0, 'alpha_3': pi / 2, 'alpha_4': -pi / 2,
               'alpha_5': pi / 2, 'alpha_6': 0,
               'd_1': 169.77, 'd_2': 0, 'd_3': 0, 'd_4': 222.63, 'd_5': 0, 'd_6': 36.25,
@@ -323,16 +315,11 @@ class Manipulator:
                                                                                               np.dot(array_matrix[0],
                                                                                                      array_matrix[
                                                                                                          1])))))
+        # print(T0_6)
         return T0_6
 
-    # допустимые нидексы для num2 - (0, 1, 2, 3, 4, 5) в шестизвенном манипуляторе
     def matrix_dot(self, array_matrix, num1, num2):
         #global matrix
-        # slice_matrix = array_matrix[num1 : num2]
-        # TODO: matrix = reduce(np.dot, slice_matrix) - переделать все покороче с помощью этого метода
-        if num1 < 0 or num1 > 5 or num2 < 1 or num2 > 6:
-            logger.error("Недопустимая индексация в аргументе функции, 0 <= num1 <= 4, 1 <= num2 <= 5")
-            return None
         matrix = None
         if num1 == 0: # T1 * T{num2}, то есть, если num1 = 0, а num2 = 1, то T1*T2 or num2 = 5, то T1*T6
             if num2 == 1:  # T0_1 = T1
@@ -437,24 +424,8 @@ class Manipulator:
         theta3 = atan2(sqrt(1-cos_theta3**2), cos_theta3)
         theta2 = atan2(b, c) - atan2(d4 * sin(theta3), a2 + d4 * cos(theta3))
         theta1 = atan2(y0_4, x0_4)
-       # print(theta3, theta2, theta1)
-        # return [theta1, theta2, theta3]
-        # Расчет обратной задачи кинематики по ориентации:
-        R0_3 = self.take_rotation_matrix(array_matrix, 0, 3)
-        R0_3_inv = np.linalg.inv(R0_3)
-        R3_6 = np.dot(R0_3_inv, R0_6)
-        theta = atan2(sqrt(1 - R3_6[2, 2] ** 2), R3_6[2, 2])
-
-        if R3_6[2, 2] == abs(1):
-            if theta == 0:
-                theta == 0.001
-            if theta == pi:
-                theta = pi + 0.001
-
-        phi = atan2(R3_6[1, 2], R3_6[0, 2])
-        psi = atan2(R3_6[2, 1], R3_6[2, 0])
-        return [theta1, theta2, theta3, theta, phi, psi]
-
+        return [theta1, theta2, theta3]
+        # Расчет обратной задачи кинематики:
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
         return length
