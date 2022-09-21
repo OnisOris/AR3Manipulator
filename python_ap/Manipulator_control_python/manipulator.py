@@ -301,9 +301,9 @@ class Manipulator:
         # blockEncPosCal = 1
 
     def calculate_direct_kinematics_problem(self):
-        # for joint in self.joints:
-        #     if joint.get_current_joint_angle() == 0:
-        #         joint.current_joint_angle = 0.0001
+        for joint in self.joints:
+            if joint.get_current_joint_angle() == 0:
+                joint.current_joint_angle = 0.0001
         transform_matrix = self.matrix_create()
         p = self.take_coordinate(transform_matrix, 0, 6)
         angles = self.angular_Euler_calculation(self.matrix_dot(transform_matrix, 0, 6))  # theta, fi, psi
@@ -315,11 +315,7 @@ class Manipulator:
                float(self.joints[2].current_joint_angle),
                float(self.joints[3].current_joint_angle), float(self.joints[4].current_joint_angle),
                float(self.joints[5].current_joint_angle)]
-        print('градус')
-        print(cja)
         cja = list(map(radians, cja))
-        print('rad')
-        print(cja)
         T = []
         displacement_theta_3 = self.DH['displacement_theta_3']
         for i in range(6):
@@ -333,10 +329,6 @@ class Manipulator:
                   self.DH[f'a_{i + 1}'] * sin(cja[i]+d)],
                  [0, sin(self.DH[f'alpha_{i+1}']), cos(self.DH[f'alpha_{i+1}']), self.DH[f'd_{i + 1}']],
                  [0, 0, 0, 1]]))
-            # print(i)
-            # print(cja[i])
-            d = 0
-            # print(T[i])
         return T
 
     def matrix_dot_all(self, array_matrix):
@@ -344,7 +336,6 @@ class Manipulator:
                                                                                               np.dot(array_matrix[0],
                                                                                                      array_matrix[
                                                                                                          1])))))
-        # print(T0_6)
         return T0_6
 
     def matrix_dot(self, array_matrix, num1, num2):
