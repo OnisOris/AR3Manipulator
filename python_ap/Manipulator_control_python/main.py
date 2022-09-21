@@ -17,17 +17,3 @@ print(robot.calculate_direct_kinematics_problem())
 
 
 
-# print('Значение в массиве равно ' + str(calibration['J1StepCur']))
-# print(robot.joints[0].get_name_joint())
-# robot.Jjog()
-# try:
-#     with open("./program_files/Robot_calibration_data.cal", "rb") as calibration_file:
-#         calibration_data = pickle.load(calibration_file)
-# except FileNotFoundError:
-#     calibration_data = "0"
-#     write_calibration_data(calibration_data)
-#
-# for item in calibration_data:
-#     calibration.insert(tk.END, item)
-# if robot.serial_arduino and robot.serial_teensy:
-#     robot.move_to(c1)
