@@ -54,21 +54,22 @@ class Manipulator:
     def move_to(self, command):
         self.serial_teensy.write(command.encode())
 
-    def jog_joint(self, joint: Joint, speed, degrees):
+    def jog_joint(self, joint: Joint, speed, degrees): # degrees - то, на сколько градусов мы двигаем Джойнт
         if not self.JogStepsStat:  # JogStepsStat показывает, в каких единицах мы будем передвигать джойнт, либо в шагах, либо в градусах
             j_jog_steps = int(
                 degrees / joint.degrees_per_step)  # высчитываем количенство шагов, joint.degrees_per_step -
         else:
             # switch from degs to steps
-            j_jog_steps = degrees
-            degrees *= joint.degrees_per_step
+            j_jog_steps = degrees # [град]
+            degrees *= joint.degrees_per_step # [град] * [град]/[шаг]
         drive_direction = 1 if joint.motor_direction == 0 else 0  #
         if degrees <= (joint.positive_angle_limit - joint.current_joint_angle):
             joint.current_joint_step += int(j_jog_steps)
             joint.current_joint_angle = round(
                 joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step))
             self.save_data()
-            # calculate_direct_kinematics_problem()
+            print(f"Новые координаты: {self.calculate_direct_kinematics_problem()}")
+
             command = f"MJ{joint.get_name_joint()}{drive_direction}{j_jog_steps}S{speed}G{self.ACC_dur}H{self.ACC_spd}" \
                       f"I{self.DEC_dur}K{self.DEC_spd}U{self.joints[0].current_joint_step}" \
                       f"V{self.joints[1].current_joint_step}W{self.joints[2].current_joint_step}" \
@@ -79,7 +80,7 @@ class Manipulator:
             self.serial_teensy.flushInput()
             time.sleep(.2)
             robot_code = str(self.serial_teensy.readline())
-            logger.info(robot_code)
+            #logger.info(robot_code)
             # TODO: разобраться с pcode
             if robot_code[2:4] == "01":
                 self.apply_robot_calibration(robot_code)
@@ -439,8 +440,23 @@ class Manipulator:
         theta3 = atan2(sqrt(1-cos_theta3**2), cos_theta3)
         theta2 = atan2(b, c) - atan2(d4 * sin(theta3), a2 + d4 * cos(theta3))
         theta1 = atan2(y0_4, x0_4)
-        return [theta1, theta2, theta3]
         # Расчет обратной задачи кинематики:
+
+    # Расчет обратной задачи кинематики по ориентации:
+        R0_3 = self.take_rotation_matrix(array_matrix, 0, 3)
+        R0_3_inv = np.linalg.inv(R0_3)
+        R3_6 = np.dot(R0_3_inv, R0_6)
+        theta = atan2(sqrt(1 - R3_6[2, 2] ** 2), R3_6[2, 2])
+
+        if R3_6[2, 2] == abs(1):
+            if theta == 0:
+                theta == 0.001
+            if theta == pi:
+                theta = pi + 0.001
+
+        phi = atan2(R3_6[1, 2], R3_6[0, 2])
+        psi = atan2(R3_6[2, 1], R3_6[2, 0])
+        return [theta1, theta2, theta3, theta, phi, psi]
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
         return length
