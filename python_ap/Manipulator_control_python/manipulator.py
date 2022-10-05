@@ -1,4 +1,5 @@
 import time
+import math
 from math import (sin, cos, pi, atan2, sqrt, radians)
 
 import numpy as np
@@ -10,6 +11,27 @@ from joint import Joint
 
 
 class Manipulator:
+    # DH = {
+    #     'a_1': 0.0642,
+    #     'a_2': 0.305,
+    #     'a_3': 0,
+    #     'a_4': 0,
+    #     'a_5': 0,
+    #     'a_6': 0,
+    #     'alpha_1': pi / 2,
+    #     'alpha_2': 0,
+    #     'alpha_3': pi / 2,
+    #     'alpha_4': -pi / 2,
+    #     'alpha_5': pi / 2,
+    #     'alpha_6': 0,
+    #     'd_1': 0.16977,
+    #     'd_2': 0,
+    #     'd_3': 0,
+    #     'd_4': 0.22263,
+    #     'd_5': 0,
+    #     'd_6': 0.03625,
+    #     'displacement_theta_3': pi / 2
+    # }
     DH = {
         'a_1': 0.0642,
         'a_2': 0.305,
@@ -17,7 +39,7 @@ class Manipulator:
         'a_4': 0,
         'a_5': 0,
         'a_6': 0,
-        'alpha_1': pi / 2,
+        'alpha_1': - pi / 2,
         'alpha_2': 0,
         'alpha_3': pi / 2,
         'alpha_4': -pi / 2,
@@ -26,10 +48,15 @@ class Manipulator:
         'd_1': 0.16977,
         'd_2': 0,
         'd_3': 0,
-        'd_4': 0.22263,
+        'd_4': -0.22263,
         'd_5': 0,
-        'd_6': 0.03625,
-        'displacement_theta_3': pi / 2
+        'd_6': -0.03625,
+        'displacement_theta_1': 0,
+        'displacement_theta_2': 0,
+        'displacement_theta_3': - pi / 2,
+        'displacement_theta_4': 0,
+        'displacement_theta_5': 0,
+        'displacement_theta_6': 2*pi
     }
 
     def __init__(self, teensy_port, arduino_port, baud):
@@ -54,15 +81,27 @@ class Manipulator:
     def move_to(self, command):
         self.serial_teensy.write(command.encode())
 
-    def jog_joint(self, joint: Joint, speed, degrees): # degrees - то, на сколько градусов мы двигаем Джойнт
+    def jog_joint(self, joint: Joint, speed, degrees):  # degrees - то, на сколько градусов мы двигаем Джойнт
+        # Задача направления движения джойнта и отлов ошибок
+        if not type(degrees) is int:
+            raise TypeError("Only integer are allowed")
+        if degrees < 0:
+            drive_direction = 0
+            degrees = abs(degrees)
+        elif degrees > 0:
+            drive_direction = 1
+        else:
+            raise NameError('Нет смысла двигаться на 0 градусов')
+            #raise NameError('Число, задающее направление должно быть равно 1 или 0!')
+
         if not self.JogStepsStat:  # JogStepsStat показывает, в каких единицах мы будем передвигать джойнт, либо в шагах, либо в градусах
             j_jog_steps = int(
                 degrees / joint.degrees_per_step)  # высчитываем количенство шагов, joint.degrees_per_step -
         else:
             # switch from degs to steps
-            j_jog_steps = degrees # [град]
-            degrees *= joint.degrees_per_step # [град] * [град]/[шаг]
-        drive_direction = 1 if joint.motor_direction == 0 else 0  #
+            j_jog_steps = degrees  # [град]
+            degrees *= joint.degrees_per_step  # [град] * [град]/[шаг]
+        # drive_direction = 1 if joint.motor_direction == 0 else 0  #
         if degrees <= (joint.positive_angle_limit - joint.current_joint_angle):
             joint.current_joint_step += int(j_jog_steps)
             joint.current_joint_angle = round(
@@ -80,7 +119,7 @@ class Manipulator:
             self.serial_teensy.flushInput()
             time.sleep(.2)
             robot_code = str(self.serial_teensy.readline())
-            #logger.info(robot_code)
+            # logger.info(robot_code)
             # TODO: разобраться с pcode
             if robot_code[2:4] == "01":
                 self.apply_robot_calibration(robot_code)
@@ -107,7 +146,8 @@ class Manipulator:
 
         for i, joint in enumerate(self.joints):
             if not joint.open_loop_stat and faults[i] == '1':
-                logger.error(f'{joint.get_name_joint()} COLLISION OR OUT OF CALIBRATION')
+                logger.error(
+                    f'{joint.get_name_joint()} COLLISION OR OUT OF CALIBRATION')  # TODO: Ошибка выскакиевает при калибровке четвертого звена
 
                 if i < 5:
                     joint.current_joint_step = int(robot_code[joint_name_indexes[i] + 1: joint_name_indexes[i + 1]])
@@ -127,8 +167,8 @@ class Manipulator:
         self.serial_arduino.write(command.encode())
 
     def save_data(self):
-        DEFAULT_SETTINGS['teensy_port'] = self.serial_teensy.port
-        DEFAULT_SETTINGS['arduino_port'] = self.serial_arduino.port
+        #DEFAULT_SETTINGS['teensy_port'] = self.serial_teensy. #  TODO: разобраться со стандартными настройками здесь
+        #DEFAULT_SETTINGS['arduino_port'] = self.serial_arduino.port
 
         for index, joint in enumerate(self.joints):
             DEFAULT_SETTINGS[f'J{index + 1}_current_step'] = joint.current_joint_step
@@ -223,6 +263,7 @@ class Manipulator:
 
     def calibrate(self, calibration_axes: str, speed: str):
         axes = [axis for axis in calibration_axes]
+        # print(axes)
 
         steps = []
         for i, axis in enumerate(axes):
@@ -257,7 +298,7 @@ class Manipulator:
             # calibration_status = 0
             logger.error('CALIBRATION FAILED')
         else:
-            logger.warning('NO CAL FEEDBACK FROM ARDUINO')
+            logger.warning('NO CAL FEEDBACK FROM ARDUINO')  # может быть ошибка
 
         self.calculate_direct_kinematics_problem()
         self.save_data()
@@ -320,15 +361,18 @@ class Manipulator:
         T = []
         displacement_theta_3 = self.DH['displacement_theta_3']
         for i in range(6):
-            d = 0
-            if i == 2:
-                d = displacement_theta_3
+            #d = 0
+            # if i == 2:
+            #     d = displacement_theta_3
+            d = self.DH[f'displacement_theta_{i+1}']
             T.append(np.array(
-                [[cos(cja[i]+d), -sin(cja[i]+d) * cos(self.DH[f'alpha_{i + 1}']), sin(cja[i]+d) * sin(self.DH[f'alpha_{i + 1}']),
-                  self.DH[f'a_{i + 1}'] * cos(cja[i]+d)],
-                 [sin(cja[i]+d), cos(cja[i]+d) * cos(self.DH[f'alpha_{i + 1}']), -cos(cja[i]+d) * sin(self.DH[f'alpha_{i + 1}']),
-                  self.DH[f'a_{i + 1}'] * sin(cja[i]+d)],
-                 [0, sin(self.DH[f'alpha_{i+1}']), cos(self.DH[f'alpha_{i+1}']), self.DH[f'd_{i + 1}']],
+                [[cos(cja[i] + d), -sin(cja[i] + d) * cos(self.DH[f'alpha_{i + 1}']),
+                  sin(cja[i] + d) * sin(self.DH[f'alpha_{i + 1}']),
+                  self.DH[f'a_{i + 1}'] * cos(cja[i] + d)],
+                 [sin(cja[i] + d), cos(cja[i] + d) * cos(self.DH[f'alpha_{i + 1}']),
+                  -cos(cja[i] + d) * sin(self.DH[f'alpha_{i + 1}']),
+                  self.DH[f'a_{i + 1}'] * sin(cja[i] + d)],
+                 [0, sin(self.DH[f'alpha_{i + 1}']), cos(self.DH[f'alpha_{i + 1}']), self.DH[f'd_{i + 1}']],
                  [0, 0, 0, 1]]))
         return T
 
@@ -340,9 +384,9 @@ class Manipulator:
         return T0_6
 
     def matrix_dot(self, array_matrix, num1, num2):
-        #global matrix
+        # global matrix
         matrix = None
-        if num1 == 0: # T1 * T{num2}, то есть, если num1 = 0, а num2 = 1, то T1*T2 or num2 = 5, то T1*T6
+        if num1 == 0:  # T1 * T{num2}, то есть, если num1 = 0, а num2 = 1, то T1*T2 or num2 = 5, то T1*T6
             if num2 == 1:  # T0_1 = T1
                 matrix = array_matrix[0]
             if num2 == 2:  # T0_2 = T1*T2
@@ -352,9 +396,11 @@ class Manipulator:
             if num2 == 4:  # T0_4 = T1*T2*T3*T4
                 matrix = ((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])
             if num2 == 5:  # T0_5 = T1*T2*T3*T4*T5
-                matrix = (((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])
+                matrix = (((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(
+                    array_matrix[4])
             if num2 == 6:  # T0_6 = T1*T2*T3*T4*T5*T6
-                matrix = ((((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(array_matrix[4])).dot(array_matrix[5])
+                matrix = ((((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(
+                    array_matrix[4])).dot(array_matrix[5])
         elif num1 == 1:
             if num2 == 2:  # T1_2 =  T2
                 matrix = array_matrix[1]
@@ -414,7 +460,7 @@ class Manipulator:
             fi = atan2(-r1_2, -r1_1)
             psi = 0
 
-        return [theta, fi, psi] # углы Эйлера схвата в главной системе координат
+        return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат
 
     def calculate_inverse_kinematic_problem(self, p0_6):
         # p0_4 = p0_6 - d6 * R0_6 * [0, 0, 1]', где p_04 = [x0_4, y0_4, z0_4]
@@ -422,27 +468,28 @@ class Manipulator:
         # Расчет обратной задачи кинематики по положению: расчет theta1, theta2, theta3
         R0_6 = self.take_rotation_matrix(array_matrix, 0, 6)
         p0_4 = np.array(p0_6) - (np.dot(self.DH['d_6'], R0_6)).dot(np.array([[0],
-                                                                        [0],
-                                                                        [1]]))
+                                                                             [0],
+                                                                             [1]]))
         # вектор p0_4, который содержит координаты пересечения осей поворота двух последних # звеньев
-        #print(p0_4)
+        # print(p0_4)
         x0_4 = p0_4[0]
         y0_4 = p0_4[1]
         z0_4 = p0_4[2]
-        c = sqrt((x0_4) ** 2+(y0_4) ** 2)
+        c = sqrt((x0_4) ** 2 + (y0_4) ** 2)
         # T1_4 = (np.linalg.inv(array_matrix[0])).dot(self.matrix_dot(array_matrix, 0, 4))
         p1_4 = self.take_coordinate(array_matrix, 1, 4)
         b = z0_4 - self.DH['d_1']
-        a = sqrt(p1_4[0]**2 + p1_4[1]**2 + p1_4[2]**2)
+        a = sqrt(p1_4[0] ** 2 + p1_4[1] ** 2 + p1_4[2] ** 2)
         d4 = self.DH['d_4']
-        a2 = self.DH['a_2']#self.length_vector(self.take_coordinate(array_matrix, 0, 1), self.take_coordinate(array_matrix, 0, 2))
-        cos_theta3 = (b**2 + c**2 - a2**2 - d4**2)/(2*a2*d4)
-        theta3 = atan2(sqrt(1-cos_theta3**2), cos_theta3)
+        a2 = self.DH[
+            'a_2']  # self.length_vector(self.take_coordinate(array_matrix, 0, 1), self.take_coordinate(array_matrix, 0, 2))
+        cos_theta3 = (b ** 2 + c ** 2 - a2 ** 2 - d4 ** 2) / (2 * a2 * d4)
+        theta3 = atan2(sqrt(1 - cos_theta3 ** 2), cos_theta3)
         theta2 = atan2(b, c) - atan2(d4 * sin(theta3), a2 + d4 * cos(theta3))
         theta1 = atan2(y0_4, x0_4)
         # Расчет обратной задачи кинематики:
 
-    # Расчет обратной задачи кинематики по ориентации:
+        # Расчет обратной задачи кинематики по ориентации:
         R0_3 = self.take_rotation_matrix(array_matrix, 0, 3)
         R0_3_inv = np.linalg.inv(R0_3)
         R3_6 = np.dot(R0_3_inv, R0_6)
@@ -457,6 +504,7 @@ class Manipulator:
         phi = atan2(R3_6[1, 2], R3_6[0, 2])
         psi = atan2(R3_6[2, 1], R3_6[2, 0])
         return [theta1, theta2, theta3, theta, phi, psi]
+
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
         return length
@@ -467,9 +515,7 @@ class Manipulator:
         vector_xyz = matrix[0:3, 3]
         return vector_xyz
 
-
     def take_rotation_matrix(self, array_matrix, number_of_matrix1, number_of_matrix2):
         matrix = self.matrix_dot(array_matrix, number_of_matrix1, number_of_matrix2)
         rotation_matrix = matrix[0:3, 0:3]
         return rotation_matrix
-
