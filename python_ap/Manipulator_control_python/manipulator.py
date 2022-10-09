@@ -54,8 +54,8 @@ class Manipulator:
         'displacement_theta_1': 0,
         'displacement_theta_2': 0,
         'displacement_theta_3': - pi / 2,
-        'displacement_theta_4': 0,
-        'displacement_theta_5': 0,
+        'displacement_theta_4': pi/2,
+        'displacement_theta_5': pi,
         'displacement_theta_6': 2*pi
     }
 
@@ -345,10 +345,14 @@ class Manipulator:
     def calculate_direct_kinematics_problem(self):
         for joint in self.joints:
             if joint.get_current_joint_angle() == 0:
-                joint.current_joint_angle = 0.0001
+                joint.current_joint_angle = 0.0000000000001 # TODO: разобраться с необходимостью данных операций upd. Влияет на знак в углах эйлера, пока не понятно как
         transform_matrix = self.matrix_create()
         p = self.take_coordinate(transform_matrix, 0, 6)
         angles = self.angular_Euler_calculation(self.matrix_dot(transform_matrix, 0, 6))  # theta, fi, psi
+        # print("Углы внутри функции cdkp")
+        # print(self.matrix_dot_all(transform_matrix))
+        # for angle in angles:
+        #     if angle
         x_y_z_theta_phi_psi = np.hstack([p, angles])
         return x_y_z_theta_phi_psi
 
@@ -359,7 +363,7 @@ class Manipulator:
                float(self.joints[5].current_joint_angle)]
         cja = list(map(radians, cja))
         T = []
-        displacement_theta_3 = self.DH['displacement_theta_3']
+        #displacement_theta_3 = self.DH['displacement_theta_3']
         for i in range(6):
             #d = 0
             # if i == 2:
@@ -377,10 +381,8 @@ class Manipulator:
         return T
 
     def matrix_dot_all(self, array_matrix):
-        T0_6 = np.dot(array_matrix[5], np.dot(array_matrix[4], np.dot(array_matrix[3], np.dot(array_matrix[2],
-                                                                                              np.dot(array_matrix[0],
-                                                                                                     array_matrix[
-                                                                                                         1])))))
+        T0_6 = ((((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(
+                    array_matrix[4])).dot(array_matrix[5])
         return T0_6
 
     def matrix_dot(self, array_matrix, num1, num2):
@@ -460,7 +462,7 @@ class Manipulator:
             fi = atan2(-r1_2, -r1_1)
             psi = 0
 
-        return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат
+        return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат TODO: точно такой порядок углов???
 
     def calculate_inverse_kinematic_problem(self, p0_6):
         # p0_4 = p0_6 - d6 * R0_6 * [0, 0, 1]', где p_04 = [x0_4, y0_4, z0_4]

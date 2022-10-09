@@ -1,4 +1,5 @@
 from manipulator import Manipulator
+import numpy as np
 from math import (pi)
 
 ############## Настройки программы ##############
@@ -15,12 +16,20 @@ robot.joints[0].current_joint_angle = 0.0
 robot.joints[1].current_joint_angle = -90.01
 robot.joints[2].current_joint_angle = 1.05
 robot.joints[3].current_joint_angle = 0.0
-robot.joints[4].current_joint_angle = 0.0
+robot.joints[4].current_joint_angle = 0
 robot.joints[5].current_joint_angle = 0
+#[178.96 180.   180.  ]
+# print(robot.matrix_dot_all(robot.matrix_create()))
+# print("----------------------------------------------")
+# print(robot.matrix_dot(robot.matrix_create(), 0, 6))
+
 #robot.matrix_create()
-print(robot.matrix_dot(robot.matrix_create(), 0, 5))
-#print(robot.matrix_create()[5])
-#print(robot.calculate_direct_kinematics_problem())
+#print(np.around(robot.matrix_create()[5], 5))
+print(np.around(np.dot(robot.angular_Euler_calculation(robot.matrix_dot(robot.matrix_create(), 0, 6)), 180/pi), 3))
+#print(robot.angular_Euler_calculation(robot.matrix_dot_all(robot.matrix_create())))
+# print("-------------------------------------------------------------------")
+#print(np.around(robot.matrix_create()[5], 5))
+#print(robot.matrix_dot_all(robot.matrix_create()))
 #robot.jog_joint(robot.joints[1], 10, 10)
 # robot.calibrate("100000", "20")
 #
@@ -41,6 +50,18 @@ print(robot.matrix_dot(robot.matrix_create(), 0, 5))
 
 #robot.auto_calibrate()
 #robot.jog_joint(robot.joints[2], 20, 20)
+
+
+
+# print(robot.matrix_dot_all(robot.matrix_create()))
+# print("-----------------")
+# print(robot.matrix_dot(robot.matrix_create(), 0, 6))
+
+# print(robot.matrix_dot_all(robot.matrix_create()))
+# print("-----------------")
+print(robot.calculate_direct_kinematics_problem())
+
+
 robot.serial_teensy.close()
 robot.serial_arduino.close()
 
