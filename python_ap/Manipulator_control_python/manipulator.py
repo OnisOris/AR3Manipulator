@@ -54,9 +54,9 @@ class Manipulator:
         'displacement_theta_1': 0,
         'displacement_theta_2': 0,
         'displacement_theta_3': - pi / 2,
-        'displacement_theta_4': pi/2,
-        'displacement_theta_5': pi,
-        'displacement_theta_6': 2*pi
+        'displacement_theta_4': 0,
+        'displacement_theta_5': 0,
+        'displacement_theta_6': pi
     }
 
     def __init__(self, teensy_port, arduino_port, baud):
@@ -465,27 +465,42 @@ class Manipulator:
         return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат TODO: точно такой порядок углов???
 
     def calculate_inverse_kinematic_problem(self, p0_6):
+        self.anti_zero()
         # p0_4 = p0_6 - d6 * R0_6 * [0, 0, 1]', где p_04 = [x0_4, y0_4, z0_4]
         array_matrix = self.matrix_create()
         # Расчет обратной задачи кинематики по положению: расчет theta1, theta2, theta3
         R0_6 = self.take_rotation_matrix(array_matrix, 0, 6)
+       # print('aboba')
+      #  print((np.dot(self.DH['d_6'], R0_6)).dot(np.array([[0],
+                                                     #      [0],
+                                                       #    [1]])))
         p0_4 = np.array(p0_6) - (np.dot(self.DH['d_6'], R0_6)).dot(np.array([[0],
                                                                              [0],
                                                                              [1]]))
+       # print(p0_4)
         # вектор p0_4, который содержит координаты пересечения осей поворота двух последних # звеньев
         # print(p0_4)
         x0_4 = p0_4[0]
         y0_4 = p0_4[1]
         z0_4 = p0_4[2]
-        c = sqrt((x0_4) ** 2 + (y0_4) ** 2)
+        c = sqrt((x0_4) ** 2 + (y0_4) ** 2) #?????
+        print(f'c = {c}')
         # T1_4 = (np.linalg.inv(array_matrix[0])).dot(self.matrix_dot(array_matrix, 0, 4))
         p1_4 = self.take_coordinate(array_matrix, 1, 4)
+        print(f'p1_4 = {p1_4}')
         b = z0_4 - self.DH['d_1']
+        print(f'b = {b}')
         a = sqrt(p1_4[0] ** 2 + p1_4[1] ** 2 + p1_4[2] ** 2)
-        d4 = self.DH['d_4']
+        print(f'a = {a}')
+        d4 = -self.DH['d_4']
+        print(f'd4 = {d4}')
         a2 = self.DH[
             'a_2']  # self.length_vector(self.take_coordinate(array_matrix, 0, 1), self.take_coordinate(array_matrix, 0, 2))
-        cos_theta3 = (b ** 2 + c ** 2 - a2 ** 2 - d4 ** 2) / (2 * a2 * d4)
+        print(f'a2 = {a2}')
+        #cos_theta3 = (b ** 2 + c ** 2 - a2 ** 2 - d4 ** 2) / (2 * a2 * d4)
+        #cos_theta3 = (d4**2+a2**2-a**2)/(2*d4*a2)
+        cos_theta3 = (a ** 2 - d4 ** 2 - a2 ** 2) / (2 * d4 * a2)
+        print(f'cos_theta3 = {cos_theta3}')
         theta3 = atan2(sqrt(1 - cos_theta3 ** 2), cos_theta3)
         theta2 = atan2(b, c) - atan2(d4 * sin(theta3), a2 + d4 * cos(theta3))
         theta1 = atan2(y0_4, x0_4)
@@ -505,7 +520,7 @@ class Manipulator:
 
         phi = atan2(R3_6[1, 2], R3_6[0, 2])
         psi = atan2(R3_6[2, 1], R3_6[2, 0])
-        return [theta1, theta2, theta3, theta, phi, psi]
+        return [theta1, theta2, theta3, phi, theta, psi]
 
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
@@ -521,3 +536,9 @@ class Manipulator:
         matrix = self.matrix_dot(array_matrix, number_of_matrix1, number_of_matrix2)
         rotation_matrix = matrix[0:3, 0:3]
         return rotation_matrix
+
+    def anti_zero(self):
+        for joint in self.joints:
+            if joint.current_joint_angle == 0:
+                joint.current_joint_angle = 0.00001
+
