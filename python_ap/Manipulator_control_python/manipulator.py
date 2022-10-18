@@ -345,7 +345,7 @@ class Manipulator:
     def calculate_direct_kinematics_problem(self):
         for joint in self.joints:
             if joint.get_current_joint_angle() == 0:
-                joint.current_joint_angle = 0.0000000000001 # TODO: разобраться с необходимостью данных операций upd. Влияет на знак в углах эйлера, пока не понятно как
+                joint.current_joint_angle = 0.000000000001 # TODO: разобраться с необходимостью данных операций upd. Влияет на знак в углах эйлера, пока не понятно как
         transform_matrix = self.matrix_create()
         p = self.take_coordinate(transform_matrix, 0, 6)
         angles = self.angular_Euler_calculation(self.matrix_dot(transform_matrix, 0, 6))  # theta, fi, psi
@@ -484,23 +484,23 @@ class Manipulator:
         y0_4 = p0_4[1]
         z0_4 = p0_4[2]
         c = sqrt((x0_4) ** 2 + (y0_4) ** 2) #?????
-        print(f'c = {c}')
+        #print(f'c = {c}')
         # T1_4 = (np.linalg.inv(array_matrix[0])).dot(self.matrix_dot(array_matrix, 0, 4))
         p1_4 = self.take_coordinate(array_matrix, 1, 4)
-        print(f'p1_4 = {p1_4}')
+        #print(f'p1_4 = {p1_4}')
         b = z0_4 - self.DH['d_1']
-        print(f'b = {b}')
+        #print(f'b = {b}')
         a = sqrt(p1_4[0] ** 2 + p1_4[1] ** 2 + p1_4[2] ** 2)
-        print(f'a = {a}')
+        #print(f'a = {a}')
         d4 = -self.DH['d_4']
-        print(f'd4 = {d4}')
+        #print(f'd4 = {d4}')
         a2 = self.DH[
             'a_2']  # self.length_vector(self.take_coordinate(array_matrix, 0, 1), self.take_coordinate(array_matrix, 0, 2))
-        print(f'a2 = {a2}')
+        #print(f'a2 = {a2}')
         #cos_theta3 = (b ** 2 + c ** 2 - a2 ** 2 - d4 ** 2) / (2 * a2 * d4)
         #cos_theta3 = (d4**2+a2**2-a**2)/(2*d4*a2)
         cos_theta3 = (a ** 2 - d4 ** 2 - a2 ** 2) / (2 * d4 * a2)
-        print(f'cos_theta3 = {cos_theta3}')
+        #print(f'cos_theta3 = {cos_theta3}')
         theta3 = atan2(sqrt(1 - cos_theta3 ** 2), cos_theta3)
         theta2 = atan2(b, c) - atan2(d4 * sin(theta3), a2 + d4 * cos(theta3))
         theta1 = atan2(y0_4, x0_4)
@@ -520,7 +520,7 @@ class Manipulator:
 
         phi = atan2(R3_6[1, 2], R3_6[0, 2])
         psi = atan2(R3_6[2, 1], R3_6[2, 0])
-        return [theta1, theta2, theta3, phi, theta, psi]
+        return [theta1, -theta2, theta3, phi, theta, -psi]
 
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
@@ -542,3 +542,7 @@ class Manipulator:
             if joint.current_joint_angle == 0:
                 joint.current_joint_angle = 0.00001
 
+
+    def move_xyz(self, vector):
+        coordinate_array = np.array([[vector[0]], [vector[1]], [vector[2]]])
+        self.calculate_inverse_kinematic_problem(coordinate_array)

@@ -14,7 +14,7 @@ robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 # print(robot.calculate_inverse_kinematic_problem([[0.1],
 #                                                  [0.1],
 #                                                  [0.1]]))
-robot.joints[0].current_joint_angle = 40
+robot.joints[0].current_joint_angle = 90
 robot.joints[1].current_joint_angle = 50#-90.01
 robot.joints[2].current_joint_angle = 5#1.05
 robot.joints[3].current_joint_angle = 6.0
@@ -22,6 +22,9 @@ robot.joints[4].current_joint_angle = 50
 robot.joints[5].current_joint_angle = 30
 #robot.calibrate('100000', '10')
 #time.sleep(3)
+print(f'Координаты: {robot.calculate_direct_kinematics_problem()}')
+
+
 #robot.jog_joint(robot.joints[0], 20, 90)
 
 #[178.96 180.   180.  ]
@@ -34,14 +37,20 @@ robot.joints[5].current_joint_angle = 30
 #print(np.around(np.dot(robot.angular_Euler_calculation(robot.matrix_dot(robot.matrix_create(), 0, 6)), 180/pi), 3))
 #print(robot.take_coordinate(robot.matrix_create(), 0, 6))
 #print('------------------')
-coordinate_array = np.array(robot.take_coordinate(robot.matrix_create(), 0, 6))
-coordinate_array = np.array([[coordinate_array[0]], [coordinate_array[1]], [coordinate_array[2]]])
-
-#print(coordinate_array)
-
-#print('------------------')
-
-print(f'Координаты нужных углов {np.round(np.dot(robot.calculate_inverse_kinematic_problem(coordinate_array), 180/pi), 3)}')
+# coordinate_array = np.array(robot.take_coordinate(robot.matrix_create(), 0, 6))
+# coordinate_array = np.array([[coordinate_array[0]], [coordinate_array[1]], [coordinate_array[2]]])
+#
+# print(f'coordinate_array = {coordinate_array}')
+#
+# print(f'Координаты нужных углов {np.round(np.dot(robot.calculate_inverse_kinematic_problem(coordinate_array), 180/pi), 3)}')
+# inverse = robot.calculate_inverse_kinematic_problem(coordinate_array)
+# robot.joints[0].current_joint_angle = inverse[0]*180/pi
+# robot.joints[1].current_joint_angle = inverse[1]*180/pi
+# robot.joints[2].current_joint_angle = inverse[2]*180/pi
+# robot.joints[3].current_joint_angle = inverse[3]*180/pi
+# robot.joints[4].current_joint_angle = inverse[4]*180/pi
+# robot.joints[5].current_joint_angle = inverse[5]*180/pi
+# print(f'Координаты 2: {robot.calculate_direct_kinematics_problem()}')
 #print(robot.angular_Euler_calculation(robot.matrix_dot_all(robot.matrix_create())))
 # print("-------------------------------------------------------------------")
 #print(np.around(robot.matrix_create()[5], 5))
