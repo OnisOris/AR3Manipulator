@@ -102,12 +102,85 @@ class Manipulator:
             j_jog_steps = degrees  # [град]
             degrees *= joint.degrees_per_step  # [град] * [град]/[шаг]
         # drive_direction = 1 if joint.motor_direction == 0 else 0  #
-        if degrees <= (joint.positive_angle_limit - joint.current_joint_angle):
+        if drive_direction == 1:
+            if degrees <= (joint.positive_angle_limit - joint.current_joint_angle):
+                joint.current_joint_step += int(j_jog_steps)
+                joint.current_joint_angle = round(
+                    joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step))
+                self.save_data()
+                print(f"Новые координаты: {np.round(np.dot(self.calculate_direct_kinematics_problem(), 180/pi), 3)}")
+                j_jog_steps = int(round(j_jog_steps))
+                print(f'{j_jog_steps=}')
+                command = f"MJ{joint.get_name_joint()}{drive_direction}{j_jog_steps}S{speed}G{self.ACC_dur}H{self.ACC_spd}" \
+                          f"I{self.DEC_dur}K{self.DEC_spd}U{self.joints[0].current_joint_step}" \
+                          f"V{self.joints[1].current_joint_step}W{self.joints[2].current_joint_step}" \
+                          f"X{self.joints[3].current_joint_step}Y{self.joints[4].current_joint_step}" \
+                          f"Z{self.joints[5].current_joint_step}\n"
+                self.teensy_push(command)
+                logger.debug(f"Write to teensy: {command}")
+                self.serial_teensy.flushInput()
+                time.sleep(.2)
+                robot_code = str(self.serial_teensy.readline())
+                # logger.info(robot_code)
+                # TODO: разобраться с pcode
+                if robot_code[2:4] == "01":
+                    self.apply_robot_calibration(robot_code)
+            else:
+                logger.warning(f"Joint {joint.number_joint} AXIS LIMIT")
+        if drive_direction == 0:
+            if degrees <= -(joint.negative_angle_limit - joint.current_joint_angle):
+                joint.current_joint_step -= int(j_jog_steps)
+                joint.current_joint_angle = round(
+                    joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step))
+                self.save_data()
+                print(f"Новые координаты: {np.round(np.dot(self.calculate_direct_kinematics_problem(), 180 / pi), 3)}")
+                j_jog_steps = int(round(j_jog_steps))
+                print(f'{j_jog_steps=}')
+                command = f"MJ{joint.get_name_joint()}{drive_direction}{j_jog_steps}S{speed}G{self.ACC_dur}H{self.ACC_spd}" \
+                          f"I{self.DEC_dur}K{self.DEC_spd}U{self.joints[0].current_joint_step}" \
+                          f"V{self.joints[1].current_joint_step}W{self.joints[2].current_joint_step}" \
+                          f"X{self.joints[3].current_joint_step}Y{self.joints[4].current_joint_step}" \
+                          f"Z{self.joints[5].current_joint_step}\n"
+                self.teensy_push(command)
+                logger.debug(f"Write to teensy: {command}")
+                self.serial_teensy.flushInput()
+                time.sleep(.2)
+                robot_code = str(self.serial_teensy.readline())
+                # logger.info(robot_code)
+                # TODO: разобраться с pcode
+                if robot_code[2:4] == "01":
+                    self.apply_robot_calibration(robot_code)
+            else:
+                logger.warning(f"Joint {joint.number_joint} AXIS LIMIT")
+
+
+    def jog_joint2(self, joint: Joint, speed, degrees):  # degrees - то, на сколько градусов мы двигаем Джойнт
+        # Задача направления движения джойнта и отлов ошибок
+        # if not type(degrees) is int:
+        #     raise TypeError("Only integer are allowed")
+        if degrees < 0:
+            drive_direction = 0
+            degrees = abs(degrees)
+        elif degrees > 0:
+            drive_direction = 1
+        else:
+            raise NameError('Нет смысла двигаться на 0 градусов')
+            #raise NameError('Число, задающее направление должно быть равно 1 или 0!')
+
+        if not self.JogStepsStat:  # JogStepsStat показывает, в каких единицах мы будем передвигать джойнт, либо в шагах, либо в градусах
+            j_jog_steps = int(
+                degrees / joint.degrees_per_step)  # высчитываем количенство шагов, joint.degrees_per_step -
+        else:
+            # switch from degs to steps
+            j_jog_steps = degrees  # [град]
+            degrees *= joint.degrees_per_step  # [град] * [град]/[шаг]
+        # drive_direction = 1 if joint.motor_direction == 0 else 0  #
+        #if degrees <= (joint.positive_angle_limit - joint.current_joint_angle):
             joint.current_joint_step += int(j_jog_steps)
             joint.current_joint_angle = round(
                 joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step))
             self.save_data()
-            print(f"Новые координаты: {self.calculate_direct_kinematics_problem()}")
+            print(f"Новые координаты: {np.round(np.dot(self.calculate_direct_kinematics_problem(), 180/pi), 3)}")
 
             command = f"MJ{joint.get_name_joint()}{drive_direction}{j_jog_steps}S{speed}G{self.ACC_dur}H{self.ACC_spd}" \
                       f"I{self.DEC_dur}K{self.DEC_spd}U{self.joints[0].current_joint_step}" \
@@ -123,8 +196,9 @@ class Manipulator:
             # TODO: разобраться с pcode
             if robot_code[2:4] == "01":
                 self.apply_robot_calibration(robot_code)
-        else:
+       # else:
             logger.warning(f"Joint {joint.number_joint} AXIS LIMIT")
+
 
     def apply_robot_calibration(self, robot_code: str):
         faults = [
@@ -307,16 +381,24 @@ class Manipulator:
         self.teensy_push(command)
         logger.debug(f"Write to teensy: {command}")
         self.serial_teensy.flushInput()
+    def auto_calibrate2(self):
+        calibration_axes = "111110"
+        speed = '40'
+        self.calibrate(calibration_axes, speed)
 
+        calibration_axes = '000001'
+        speed = '50'
+        self.calibrate(calibration_axes, speed)
     def auto_calibrate(self):
         # TODO: узнать, что такое blockEncPosCal
         # blockEncPosCal = 1
         calibration_axes = "111110"
-        speed = '50'
+        speed = '40'
         self.calibrate(calibration_axes, speed)
         cd = self.get_calibration_drive()
         command = f"MJA{cd[0]}500B{cd[1]}500C{cd[2]}500D{cd[3]}500E{cd[4]}500F{cd[5]}0" \
                   f"S15G10H10I10K10\n"
+        logger.debug(command)
         self.teensy_push(command)
         logger.debug(f"Write to teensy: {command}")
         self.serial_teensy.flushInput()
@@ -545,4 +627,6 @@ class Manipulator:
 
     def move_xyz(self, vector):
         coordinate_array = np.array([[vector[0]], [vector[1]], [vector[2]]])
-        self.calculate_inverse_kinematic_problem(coordinate_array)
+        angles = self.calculate_inverse_kinematic_problem(coordinate_array)
+        for i, joint in enumerate(self.joints):
+            self.jog_joint(joint, 10, angles[i])
