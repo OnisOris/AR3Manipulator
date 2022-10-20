@@ -1,7 +1,6 @@
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template
 # Byte-compiled / optimized / DLL files
-python_ap/Manipulator_control_python/__pycache__/
 *.py[cod]
 *$py.class
 
@@ -185,5 +184,7 @@ fabric.properties
 .idea/
 Robot_calibration_data.cal
 ./python_ap/Manipulator_control_python/venv
-./python_ap/Manipulator_control_python/__pycache__
+**/__pycache__/
+*.pyc
+
 ./python_ap/Manipulator_control_python/.idea

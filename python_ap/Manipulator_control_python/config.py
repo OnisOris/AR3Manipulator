@@ -14,8 +14,10 @@ DEFAULT_SETTINGS = {
     'J3_current_step': 3,
     'J3_current_angle': 1.05,
     'J3_positive_angle_limit': 143.7,
+    # 'J3_positive_angle_limit': 253.7,
     'J3_negative_angle_limit': 1,
     'J3_step_limit': 7984,
+    # 'J3_step_limit': 7984,
 
     'J4_current_step': 7599,
     'J4_current_angle': 13.37,

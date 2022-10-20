@@ -3,15 +3,42 @@ import time
 from manipulator import Manipulator
 import numpy as np
 from math import (pi)
+from loguru import logger
 
 ############## Настройки программы ##############
 baud = 115200
-teensy_port = 11
-arduino_port = 13
+teensy_port = 8
+arduino_port = 7
 ################# Конец настроек #################
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
-robot.go_to_rest_position()
+robot.auto_calibrate()
+
+# robot.go_to_rest_position()
+
+robot.jog_joint(robot.joints[0], 20, 170)
+robot.calculate_direct_kinematics_problem()
+logger.info(robot.position)
+
+robot.jog_joint(robot.joints[1], 20, 40)
+robot.calculate_direct_kinematics_problem()
+logger.info(robot.position)
+
+robot.jog_joint(robot.joints[2], 20, -142)
+robot.calculate_direct_kinematics_problem()
+logger.info(robot.position)
+
+robot.jog_joint(robot.joints[3], 20, 164)
+robot.calculate_direct_kinematics_problem()
+logger.info(robot.position)
+
+robot.jog_joint(robot.joints[4], 20, 104)
+robot.calculate_direct_kinematics_problem()
+logger.info(robot.position)
+
+robot.jog_joint(robot.joints[5], 20, -148)
+robot.calculate_direct_kinematics_problem()
+logger.info(robot.position)
 
 # print(robot.calculate_inverse_kinematic_problem([[0.1],
 #                                                  [0.1],
@@ -110,9 +137,7 @@ robot.go_to_rest_position()
 # print("-----------------")
 #print(robot.calculate_direct_kinematics_problem())
 
-
-# robot.serial_teensy.close()
-# robot.serial_arduino.close()
+robot.finish()
 
 
 

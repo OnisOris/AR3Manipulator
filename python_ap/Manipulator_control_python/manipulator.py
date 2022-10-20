@@ -104,6 +104,10 @@ class Manipulator:
         except serial.SerialException:
             logger.error("Serial port not defined")
 
+    def finish(self):
+        self.serial_teensy.close()
+        self.serial_arduino.close()
+
     def move_to(self, command):
         self.serial_teensy.write(command.encode())
 
@@ -148,7 +152,6 @@ class Manipulator:
             self.save_data()
             # print(f"Новые координаты: {np.round(np.dot(self.calculate_direct_kinematics_problem(), 180 / pi), 3)}")
             j_jog_steps = int(round(j_jog_steps))
-            print(f'{j_jog_steps=}')
             command = f"MJ{joint.get_name_joint()}{drive_direction}{j_jog_steps}S{speed}G{self.ACC_dur}H{self.ACC_spd}" \
                       f"I{self.DEC_dur}K{self.DEC_spd}U{self.joints[0].current_joint_step}" \
                       f"V{self.joints[1].current_joint_step}W{self.joints[2].current_joint_step}" \
@@ -298,6 +301,15 @@ class Manipulator:
                 calibration_drive.append('1')
         return calibration_drive
 
+    def get_calibration_drive_auto(self):
+        calibration_drive = []
+        for cd, md in zip(self.calibration_direction, self.motor_direction):
+            if cd == md:
+                calibration_drive.append('1')
+            else:
+                calibration_drive.append('0')
+        return calibration_drive
+
     def calibrate(self, calibration_axes: str, speed: str):
         axes = [axis for axis in calibration_axes]
 
@@ -359,10 +371,9 @@ class Manipulator:
         calibration_axes = "111110"
         speed = '40'
         self.calibrate(calibration_axes, speed)
-        cd = self.get_calibration_drive()
+        cd = self.get_calibration_drive_auto()
         command = f"MJA{cd[0]}500B{cd[1]}500C{cd[2]}500D{cd[3]}500E{cd[4]}500F{cd[5]}0" \
                   f"S15G10H10I10K10\n"
-        logger.debug(command)
         self.teensy_push(command)
         logger.debug(f"Write to teensy: {command.strip()}")
         self.serial_teensy.flushInput()
@@ -371,6 +382,7 @@ class Manipulator:
         time.sleep(2.5)
         self.calibrate(calibration_axes, speed)
         # gotoRestPos()
+        self.go_to_rest_position()
 
         calibration_axes = '000001'
         speed = '50'
@@ -385,6 +397,7 @@ class Manipulator:
         time.sleep(1)
         self.calibrate(calibration_axes, speed)
         # gotoRestPos()
+        self.go_to_rest_position()
         logger.success('CALIBRATION SUCCESSFUL')
         # blockEncPosCal = 1
 
@@ -401,8 +414,10 @@ class Manipulator:
         TCRz = 0
         Code = 0
         # vector = np.array([[float(data['CX'])], [float(data['CY'])], [float(data['CZ'])]])
-        vector = np.array([[0.8], [0.9], [0.8]])
+        vector = np.array([[0.07323478170634413], [0.0], [0.7334922972987035]])
         angles = self.calculate_inverse_kinematic_problem(vector)
+        angles = list(map(math.degrees, angles))
+        logger.debug(f"{angles=}")
 
         joint_commands = []
         joint_angels = []
@@ -428,16 +443,17 @@ class Manipulator:
                 joint_commands.append(f"{joint.get_name_joint()}{direction}{steps}")
                 joint_angels.append(f"{chr(letter + i)}{joint.current_joint_step}")
 
-        commandCalc = f"MJ{''.join(joint_commands)}T{1}{2}S{50}" \
-                      f"G{15}H{10}I{20}K{5}{''.join(joint_angels)}\n"
-        print(commandCalc)
+            commandCalc = f"MJ{''.join(joint_commands)}T{1}{3}S{10}" \
+                          f"G{15}H{10}I{20}K{5}{''.join(joint_angels)}\n"
+            logger.debug(commandCalc.strip())
+            # self.teensy_push(commandCalc)
         self.calculate_direct_kinematics_problem()
         self.save_data()
 
     def _check_axis_limit(self, angles) -> bool:
         axis_limit = False
         for joint, angle in zip(self.joints, angles):
-            if angle < radians(joint.negative_angle_limit) or angle > radians(joint.positive_angle_limit):
+            if angle < joint.negative_angle_limit or angle > joint.positive_angle_limit:
                 logger.error(f'{joint} AXIS LIMIT')
                 axis_limit = True
         return axis_limit
