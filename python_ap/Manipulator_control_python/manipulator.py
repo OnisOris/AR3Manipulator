@@ -8,6 +8,29 @@ from loguru import logger
 
 from config import DEFAULT_SETTINGS
 from joint import Joint
+from dataclasses import dataclass
+from parse import parse
+
+
+@dataclass(init=True)
+class Position:
+    """
+    Class for keeping global position and orientation of manipulitor's wrist
+    """
+    x: float = 0
+    y: float = 0
+    z: float = 0
+    theta: float = 0
+    phi: float = 0
+    psi: float = 0
+
+    def change(self, x, y, z, theta, phi, psi):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.theta = theta
+        self.phi = phi
+        self.psi = psi
 
 
 class Manipulator:
@@ -71,6 +94,9 @@ class Manipulator:
         self.calibration_direction = DEFAULT_SETTINGS['calibration_direction']
         self.motor_direction = DEFAULT_SETTINGS['motor_direction']
 
+        self.position = Position()
+        self.calculate_direct_kinematics_problem()
+
         try:
             self.serial_teensy: serial.Serial = serial.Serial(teensy_port, baud)
             self.serial_arduino: serial.Serial = serial.Serial(arduino_port, baud)
@@ -85,6 +111,7 @@ class Manipulator:
         # Задача направления движения джойнта и отлов ошибок
         if not type(degrees) is int:
             raise TypeError("Only integer are allowed")
+
         if degrees < 0:
             drive_direction = 0
             degrees = abs(degrees)
@@ -92,7 +119,6 @@ class Manipulator:
             drive_direction = 1
         else:
             raise NameError('Нет смысла двигаться на 0 градусов')
-            #raise NameError('Число, задающее направление должно быть равно 1 или 0!')
 
         if not self.JogStepsStat:  # JogStepsStat показывает, в каких единицах мы будем передвигать джойнт, либо в шагах, либо в градусах
             j_jog_steps = int(
@@ -101,104 +127,41 @@ class Manipulator:
             # switch from degs to steps
             j_jog_steps = degrees  # [град]
             degrees *= joint.degrees_per_step  # [град] * [град]/[шаг]
-        # drive_direction = 1 if joint.motor_direction == 0 else 0  #
+
+        axis_limit = False
         if drive_direction == 1:
             if degrees <= (joint.positive_angle_limit - joint.current_joint_angle):
                 joint.current_joint_step += int(j_jog_steps)
-                joint.current_joint_angle = round(
-                    joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step))
-                self.save_data()
-                print(f"Новые координаты: {np.round(np.dot(self.calculate_direct_kinematics_problem(), 180/pi), 3)}")
-                j_jog_steps = int(round(j_jog_steps))
-                print(f'{j_jog_steps=}')
-                command = f"MJ{joint.get_name_joint()}{drive_direction}{j_jog_steps}S{speed}G{self.ACC_dur}H{self.ACC_spd}" \
-                          f"I{self.DEC_dur}K{self.DEC_spd}U{self.joints[0].current_joint_step}" \
-                          f"V{self.joints[1].current_joint_step}W{self.joints[2].current_joint_step}" \
-                          f"X{self.joints[3].current_joint_step}Y{self.joints[4].current_joint_step}" \
-                          f"Z{self.joints[5].current_joint_step}\n"
-                self.teensy_push(command)
-                logger.debug(f"Write to teensy: {command}")
-                self.serial_teensy.flushInput()
-                time.sleep(.2)
-                robot_code = str(self.serial_teensy.readline())
-                # logger.info(robot_code)
-                # TODO: разобраться с pcode
-                if robot_code[2:4] == "01":
-                    self.apply_robot_calibration(robot_code)
             else:
                 logger.warning(f"Joint {joint.number_joint} AXIS LIMIT")
+                axis_limit = True
         if drive_direction == 0:
             if degrees <= -(joint.negative_angle_limit - joint.current_joint_angle):
                 joint.current_joint_step -= int(j_jog_steps)
-                joint.current_joint_angle = round(
-                    joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step))
-                self.save_data()
-                print(f"Новые координаты: {np.round(np.dot(self.calculate_direct_kinematics_problem(), 180 / pi), 3)}")
-                j_jog_steps = int(round(j_jog_steps))
-                print(f'{j_jog_steps=}')
-                command = f"MJ{joint.get_name_joint()}{drive_direction}{j_jog_steps}S{speed}G{self.ACC_dur}H{self.ACC_spd}" \
-                          f"I{self.DEC_dur}K{self.DEC_spd}U{self.joints[0].current_joint_step}" \
-                          f"V{self.joints[1].current_joint_step}W{self.joints[2].current_joint_step}" \
-                          f"X{self.joints[3].current_joint_step}Y{self.joints[4].current_joint_step}" \
-                          f"Z{self.joints[5].current_joint_step}\n"
-                self.teensy_push(command)
-                logger.debug(f"Write to teensy: {command}")
-                self.serial_teensy.flushInput()
-                time.sleep(.2)
-                robot_code = str(self.serial_teensy.readline())
-                # logger.info(robot_code)
-                # TODO: разобраться с pcode
-                if robot_code[2:4] == "01":
-                    self.apply_robot_calibration(robot_code)
             else:
                 logger.warning(f"Joint {joint.number_joint} AXIS LIMIT")
+                axis_limit = True
 
-
-    def jog_joint2(self, joint: Joint, speed, degrees):  # degrees - то, на сколько градусов мы двигаем Джойнт
-        # Задача направления движения джойнта и отлов ошибок
-        # if not type(degrees) is int:
-        #     raise TypeError("Only integer are allowed")
-        if degrees < 0:
-            drive_direction = 0
-            degrees = abs(degrees)
-        elif degrees > 0:
-            drive_direction = 1
-        else:
-            raise NameError('Нет смысла двигаться на 0 градусов')
-            #raise NameError('Число, задающее направление должно быть равно 1 или 0!')
-
-        if not self.JogStepsStat:  # JogStepsStat показывает, в каких единицах мы будем передвигать джойнт, либо в шагах, либо в градусах
-            j_jog_steps = int(
-                degrees / joint.degrees_per_step)  # высчитываем количенство шагов, joint.degrees_per_step -
-        else:
-            # switch from degs to steps
-            j_jog_steps = degrees  # [град]
-            degrees *= joint.degrees_per_step  # [град] * [град]/[шаг]
-        # drive_direction = 1 if joint.motor_direction == 0 else 0  #
-        #if degrees <= (joint.positive_angle_limit - joint.current_joint_angle):
-            joint.current_joint_step += int(j_jog_steps)
+        if not axis_limit:
             joint.current_joint_angle = round(
                 joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step))
             self.save_data()
-            print(f"Новые координаты: {np.round(np.dot(self.calculate_direct_kinematics_problem(), 180/pi), 3)}")
-
+            # print(f"Новые координаты: {np.round(np.dot(self.calculate_direct_kinematics_problem(), 180 / pi), 3)}")
+            j_jog_steps = int(round(j_jog_steps))
+            print(f'{j_jog_steps=}')
             command = f"MJ{joint.get_name_joint()}{drive_direction}{j_jog_steps}S{speed}G{self.ACC_dur}H{self.ACC_spd}" \
                       f"I{self.DEC_dur}K{self.DEC_spd}U{self.joints[0].current_joint_step}" \
                       f"V{self.joints[1].current_joint_step}W{self.joints[2].current_joint_step}" \
                       f"X{self.joints[3].current_joint_step}Y{self.joints[4].current_joint_step}" \
                       f"Z{self.joints[5].current_joint_step}\n"
             self.teensy_push(command)
-            logger.debug(f"Write to teensy: {command}")
+            logger.debug(f"Write to teensy: {command.strip()}")
             self.serial_teensy.flushInput()
             time.sleep(.2)
             robot_code = str(self.serial_teensy.readline())
-            # logger.info(robot_code)
             # TODO: разобраться с pcode
             if robot_code[2:4] == "01":
                 self.apply_robot_calibration(robot_code)
-       # else:
-            logger.warning(f"Joint {joint.number_joint} AXIS LIMIT")
-
 
     def apply_robot_calibration(self, robot_code: str):
         faults = [
@@ -241,8 +204,8 @@ class Manipulator:
         self.serial_arduino.write(command.encode())
 
     def save_data(self):
-        #DEFAULT_SETTINGS['teensy_port'] = self.serial_teensy. #  TODO: разобраться со стандартными настройками здесь
-        #DEFAULT_SETTINGS['arduino_port'] = self.serial_arduino.port
+        # DEFAULT_SETTINGS['teensy_port'] = self.serial_teensy. #  TODO: разобраться со стандартными настройками здесь
+        # DEFAULT_SETTINGS['arduino_port'] = self.serial_arduino.port
 
         for index, joint in enumerate(self.joints):
             DEFAULT_SETTINGS[f'J{index + 1}_current_step'] = joint.current_joint_step
@@ -337,7 +300,6 @@ class Manipulator:
 
     def calibrate(self, calibration_axes: str, speed: str):
         axes = [axis for axis in calibration_axes]
-        # print(axes)
 
         steps = []
         for i, axis in enumerate(axes):
@@ -352,7 +314,7 @@ class Manipulator:
                                             for joint, cd, step in zip(self.joints, calibration_drive, steps)]
         command = f"LL{''.join(joint_calibration_drive_and_step)}S{speed}\n"
         self.teensy_push(command)
-        logger.debug(f"Write to teensy: {command}")
+        logger.debug(f"Write to teensy: {command.strip()}")
 
         self.serial_teensy.flushInput()
         calibration_value = self.serial_teensy.read()
@@ -379,8 +341,9 @@ class Manipulator:
         joints_current_steps = [f"{joint.get_name_joint()}{joint.current_joint_step}" for joint in self.joints]
         command = f'LM{"".join(joints_current_steps)}\n'
         self.teensy_push(command)
-        logger.debug(f"Write to teensy: {command}")
+        logger.debug(f"Write to teensy: {command.strip()}")
         self.serial_teensy.flushInput()
+
     def auto_calibrate2(self):
         calibration_axes = "111110"
         speed = '40'
@@ -389,6 +352,7 @@ class Manipulator:
         calibration_axes = '000001'
         speed = '50'
         self.calibrate(calibration_axes, speed)
+
     def auto_calibrate(self):
         # TODO: узнать, что такое blockEncPosCal
         # blockEncPosCal = 1
@@ -400,7 +364,7 @@ class Manipulator:
                   f"S15G10H10I10K10\n"
         logger.debug(command)
         self.teensy_push(command)
-        logger.debug(f"Write to teensy: {command}")
+        logger.debug(f"Write to teensy: {command.strip()}")
         self.serial_teensy.flushInput()
 
         speed = '8'
@@ -414,7 +378,7 @@ class Manipulator:
         command = f"MJA{cd[0]}0B{cd[1]}0C{cd[2]}0D{cd[3]}0E{cd[4]}0F{cd[5]}500" \
                   f"S15G10H10I10K10\n"
         self.teensy_push(command)
-        logger.debug(f"Write to teensy: {command}")
+        logger.debug(f"Write to teensy: {command.strip()}")
         self.serial_teensy.flushInput()
 
         speed = '8'
@@ -424,19 +388,70 @@ class Manipulator:
         logger.success('CALIBRATION SUCCESSFUL')
         # blockEncPosCal = 1
 
-    def calculate_direct_kinematics_problem(self):
+    def go_to_rest_position(self):
+        command = "MoveJ[*] X)0.068944 Y)0.0 Z)0.733607 W)-90.0 P)1.05 R)-90.0 T)201.5 Speed-50 Ad15As10Dd20Ds5$F"
+        pattern = "MoveJ[*] X){CX} Y){CY} Z){CZ} W){CRx} P){CRy} R){CRz} T){Track} Speed-{newSpeed}" \
+                  " Ad{ACCdur}As{ACCspd}Dd{DECdur}Ds{DECspd}${WC}"
+        data = parse(pattern, command).named
+        TCX = 0
+        TCY = 0
+        TCZ = 0
+        TCRx = 0
+        TCRy = 0
+        TCRz = 0
+        Code = 0
+        # vector = np.array([[float(data['CX'])], [float(data['CY'])], [float(data['CZ'])]])
+        vector = np.array([[0.8], [0.9], [0.8]])
+        angles = self.calculate_inverse_kinematic_problem(vector)
+
+        joint_commands = []
+        joint_angels = []
+        letter = 85
+        if not self._check_axis_limit(angles):
+            for i, (joint, angle) in enumerate(zip(self.joints, angles)):
+                if float(angle) >= float(joint.current_joint_angle):
+                    direction = 1 if joint.motor_direction == 0 else 0
+                    calc_angle = float(angle) - float(joint.current_joint_angle)
+                    steps = int(calc_angle / joint.degrees_per_step)
+                    if Code != 3:
+                        joint.current_joint_step += steps
+                        joint.current_joint_angle = round(
+                            joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step), 2)
+                else:
+                    direction = joint.motor_direction
+                    calc_angle = float(joint.current_joint_angle) - float(angle)
+                    steps = int(calc_angle / joint.degrees_per_step)
+                    if Code != 3:
+                        joint.current_joint_step -= steps
+                        joint.current_joint_angle = round(
+                            joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step), 2)
+                joint_commands.append(f"{joint.get_name_joint()}{direction}{steps}")
+                joint_angels.append(f"{chr(letter + i)}{joint.current_joint_step}")
+
+        commandCalc = f"MJ{''.join(joint_commands)}T{1}{2}S{data['newSpeed']}" \
+                      f"G{data['ACCdur']}H{data['ACCspd']}I{data['DECdur']}K{data['DECspd']}{''.join(joint_angels)}\n"
+        print(commandCalc)
+        self.calculate_direct_kinematics_problem()
+        self.save_data()
+
+
+    def _check_axis_limit(self, angles) -> bool:
+        axis_limit = False
+        for joint, angle in zip(self.joints, angles):
+            if angle < radians(joint.negative_angle_limit) or angle > radians(joint.positive_angle_limit):
+                logger.error(f'{joint} AXIS LIMIT')
+                axis_limit = True
+        return axis_limit
+
+    def calculate_direct_kinematics_problem(self) -> None:
         for joint in self.joints:
             if joint.get_current_joint_angle() == 0:
-                joint.current_joint_angle = 0.000000000001 # TODO: разобраться с необходимостью данных операций upd. Влияет на знак в углах эйлера, пока не понятно как
+                joint.current_joint_angle = 0.000000000001  # TODO: разобраться с необходимостью данных операций upd. Влияет на знак в углах эйлера, пока не понятно как
         transform_matrix = self.matrix_create()
         p = self.take_coordinate(transform_matrix, 0, 6)
         angles = self.angular_Euler_calculation(self.matrix_dot(transform_matrix, 0, 6))  # theta, fi, psi
-        # print("Углы внутри функции cdkp")
-        # print(self.matrix_dot_all(transform_matrix))
-        # for angle in angles:
-        #     if angle
-        x_y_z_theta_phi_psi = np.hstack([p, angles])
-        return x_y_z_theta_phi_psi
+
+        self.position.change(*list(p), *angles)
 
     def matrix_create(self):
         cja = [float(self.joints[0].current_joint_angle), float(self.joints[1].current_joint_angle),
@@ -445,12 +460,12 @@ class Manipulator:
                float(self.joints[5].current_joint_angle)]
         cja = list(map(radians, cja))
         T = []
-        #displacement_theta_3 = self.DH['displacement_theta_3']
+        # displacement_theta_3 = self.DH['displacement_theta_3']
         for i in range(6):
-            #d = 0
+            # d = 0
             # if i == 2:
             #     d = displacement_theta_3
-            d = self.DH[f'displacement_theta_{i+1}']
+            d = self.DH[f'displacement_theta_{i + 1}']
             T.append(np.array(
                 [[cos(cja[i] + d), -sin(cja[i] + d) * cos(self.DH[f'alpha_{i + 1}']),
                   sin(cja[i] + d) * sin(self.DH[f'alpha_{i + 1}']),
@@ -464,7 +479,7 @@ class Manipulator:
 
     def matrix_dot_all(self, array_matrix):
         T0_6 = ((((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(
-                    array_matrix[4])).dot(array_matrix[5])
+            array_matrix[4])).dot(array_matrix[5])
         return T0_6
 
     def matrix_dot(self, array_matrix, num1, num2):
@@ -552,37 +567,37 @@ class Manipulator:
         array_matrix = self.matrix_create()
         # Расчет обратной задачи кинематики по положению: расчет theta1, theta2, theta3
         R0_6 = self.take_rotation_matrix(array_matrix, 0, 6)
-       # print('aboba')
-      #  print((np.dot(self.DH['d_6'], R0_6)).dot(np.array([[0],
-                                                     #      [0],
-                                                       #    [1]])))
+        # print('aboba')
+        #  print((np.dot(self.DH['d_6'], R0_6)).dot(np.array([[0],
+        #      [0],
+        #    [1]])))
         p0_4 = np.array(p0_6) - (np.dot(self.DH['d_6'], R0_6)).dot(np.array([[0],
                                                                              [0],
                                                                              [1]]))
-       # print(p0_4)
+        # print(p0_4)
         # вектор p0_4, который содержит координаты пересечения осей поворота двух последних # звеньев
         # print(p0_4)
         x0_4 = p0_4[0]
         y0_4 = p0_4[1]
         z0_4 = p0_4[2]
-        c = sqrt((x0_4) ** 2 + (y0_4) ** 2) #?????
-        #print(f'c = {c}')
+        c = sqrt((x0_4) ** 2 + (y0_4) ** 2)  # ?????
+        # print(f'c = {c}')
         # T1_4 = (np.linalg.inv(array_matrix[0])).dot(self.matrix_dot(array_matrix, 0, 4))
         p1_4 = self.take_coordinate(array_matrix, 1, 4)
-        #print(f'p1_4 = {p1_4}')
+        # print(f'p1_4 = {p1_4}')
         b = z0_4 - self.DH['d_1']
-        #print(f'b = {b}')
+        # print(f'b = {b}')
         a = sqrt(p1_4[0] ** 2 + p1_4[1] ** 2 + p1_4[2] ** 2)
-        #print(f'a = {a}')
+        # print(f'a = {a}')
         d4 = -self.DH['d_4']
-        #print(f'd4 = {d4}')
+        # print(f'd4 = {d4}')
         a2 = self.DH[
             'a_2']  # self.length_vector(self.take_coordinate(array_matrix, 0, 1), self.take_coordinate(array_matrix, 0, 2))
-        #print(f'a2 = {a2}')
-        #cos_theta3 = (b ** 2 + c ** 2 - a2 ** 2 - d4 ** 2) / (2 * a2 * d4)
-        #cos_theta3 = (d4**2+a2**2-a**2)/(2*d4*a2)
+        # print(f'a2 = {a2}')
+        # cos_theta3 = (b ** 2 + c ** 2 - a2 ** 2 - d4 ** 2) / (2 * a2 * d4)
+        # cos_theta3 = (d4**2+a2**2-a**2)/(2*d4*a2)
         cos_theta3 = (a ** 2 - d4 ** 2 - a2 ** 2) / (2 * d4 * a2)
-        #print(f'cos_theta3 = {cos_theta3}')
+        # print(f'cos_theta3 = {cos_theta3}')
         theta3 = atan2(sqrt(1 - cos_theta3 ** 2), cos_theta3)
         theta2 = atan2(b, c) - atan2(d4 * sin(theta3), a2 + d4 * cos(theta3))
         theta1 = atan2(y0_4, x0_4)
@@ -624,9 +639,8 @@ class Manipulator:
             if joint.current_joint_angle == 0:
                 joint.current_joint_angle = 0.00001
 
-
     def move_xyz(self, vector):
         coordinate_array = np.array([[vector[0]], [vector[1]], [vector[2]]])
         angles = self.calculate_inverse_kinematic_problem(coordinate_array)
-        for i, joint in enumerate(self.joints):
-            self.jog_joint(joint, 10, angles[i])
+        # for i, joint in enumerate(self.joints):
+        #     self.jog_joint(joint, 10, angles[i])

@@ -11,6 +11,8 @@ arduino_port = 13
 ################# Конец настроек #################
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
+robot.go_to_rest_position()
+
 # print(robot.calculate_inverse_kinematic_problem([[0.1],
 #                                                  [0.1],
 #                                                  [0.1]]))
@@ -109,8 +111,8 @@ robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 #print(robot.calculate_direct_kinematics_problem())
 
 
-robot.serial_teensy.close()
-robot.serial_arduino.close()
+# robot.serial_teensy.close()
+# robot.serial_arduino.close()
 
 
 
