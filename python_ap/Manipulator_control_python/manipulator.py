@@ -9,7 +9,7 @@ from loguru import logger
 from config import DEFAULT_SETTINGS
 from joint import Joint
 from dataclasses import dataclass
-from parse import parse
+# from parse import parse
 
 
 @dataclass(init=True)
@@ -389,10 +389,10 @@ class Manipulator:
         # blockEncPosCal = 1
 
     def go_to_rest_position(self):
-        command = "MoveJ[*] X)0.068944 Y)0.0 Z)0.733607 W)-90.0 P)1.05 R)-90.0 T)201.5 Speed-50 Ad15As10Dd20Ds5$F"
-        pattern = "MoveJ[*] X){CX} Y){CY} Z){CZ} W){CRx} P){CRy} R){CRz} T){Track} Speed-{newSpeed}" \
-                  " Ad{ACCdur}As{ACCspd}Dd{DECdur}Ds{DECspd}${WC}"
-        data = parse(pattern, command).named
+        # command = "MoveJ[*] X)0.068944 Y)0.0 Z)0.733607 W)-90.0 P)1.05 R)-90.0 T)201.5 Speed-50 Ad15As10Dd20Ds5$F"
+        # pattern = "MoveJ[*] X){CX} Y){CY} Z){CZ} W){CRx} P){CRy} R){CRz} T){Track} Speed-{newSpeed}" \
+        #           " Ad{ACCdur}As{ACCspd}Dd{DECdur}Ds{DECspd}${WC}"
+        # data = parse(pattern, command).named
         TCX = 0
         TCY = 0
         TCZ = 0
@@ -428,12 +428,11 @@ class Manipulator:
                 joint_commands.append(f"{joint.get_name_joint()}{direction}{steps}")
                 joint_angels.append(f"{chr(letter + i)}{joint.current_joint_step}")
 
-        commandCalc = f"MJ{''.join(joint_commands)}T{1}{2}S{data['newSpeed']}" \
-                      f"G{data['ACCdur']}H{data['ACCspd']}I{data['DECdur']}K{data['DECspd']}{''.join(joint_angels)}\n"
+        commandCalc = f"MJ{''.join(joint_commands)}T{1}{2}S{50}" \
+                      f"G{15}H{10}I{20}K{5}{''.join(joint_angels)}\n"
         print(commandCalc)
         self.calculate_direct_kinematics_problem()
         self.save_data()
-
 
     def _check_axis_limit(self, angles) -> bool:
         axis_limit = False
