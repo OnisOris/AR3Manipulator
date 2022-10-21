@@ -381,8 +381,7 @@ class Manipulator:
         speed = '8'
         time.sleep(2.5)
         self.calibrate(calibration_axes, speed)
-        # gotoRestPos()
-        self.go_to_rest_position()
+        # self.go_to_rest_position()
 
         calibration_axes = '000001'
         speed = '50'
@@ -396,8 +395,7 @@ class Manipulator:
         speed = '8'
         time.sleep(1)
         self.calibrate(calibration_axes, speed)
-        # gotoRestPos()
-        self.go_to_rest_position()
+        # self.go_to_rest_position()
         logger.success('CALIBRATION SUCCESSFUL')
         # blockEncPosCal = 1
 
@@ -417,6 +415,7 @@ class Manipulator:
         vector = np.array([[0.07323478170634413], [0.0], [0.7334922972987035]])
         angles = self.calculate_inverse_kinematic_problem(vector)
         angles = list(map(math.degrees, angles))
+
         logger.debug(f"{angles=}")
 
         joint_commands = []
