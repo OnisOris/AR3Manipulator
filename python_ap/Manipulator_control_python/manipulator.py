@@ -108,6 +108,9 @@ class Manipulator:
         self.serial_teensy.close()
         self.serial_arduino.close()
 
+    def get_joints_angles(self) -> list:
+        return [joint.current_joint_angle for joint in self.joints]
+
     def move_to(self, command):
         self.serial_teensy.write(command.encode())
 
@@ -356,73 +359,62 @@ class Manipulator:
         logger.debug(f"Write to teensy: {command.strip()}")
         self.serial_teensy.flushInput()
 
-    def auto_calibrate2(self):
-        calibration_axes = "111110"
-        speed = '40'
-        self.calibrate(calibration_axes, speed)
-
-        calibration_axes = '000001'
-        speed = '50'
-        self.calibrate(calibration_axes, speed)
-
     def auto_calibrate(self):
-        # TODO: узнать, что такое blockEncPosCal
-        # blockEncPosCal = 1
-        calibration_axes = "111110"
-        speed = '40'
-        self.calibrate(calibration_axes, speed)
+        self.calibrate('111111', '40')
         cd = self.get_calibration_drive_auto()
-        command = f"MJA{cd[0]}500B{cd[1]}500C{cd[2]}500D{cd[3]}500E{cd[4]}500F{cd[5]}0" \
+        command = f"MJA{cd[0]}500B{cd[1]}500C{cd[2]}500D{cd[3]}1300E{cd[4]}500F{cd[5]}0" \
                   f"S15G10H10I10K10\n"
         self.teensy_push(command)
         logger.debug(f"Write to teensy: {command.strip()}")
         self.serial_teensy.flushInput()
-
-        speed = '8'
         time.sleep(2.5)
-        self.calibrate(calibration_axes, speed)
-        # self.go_to_rest_position()
-
-        calibration_axes = '000001'
-        speed = '50'
-        self.calibrate(calibration_axes, speed)
-        command = f"MJA{cd[0]}0B{cd[1]}0C{cd[2]}0D{cd[3]}0E{cd[4]}0F{cd[5]}500" \
-                  f"S15G10H10I10K10\n"
-        self.teensy_push(command)
-        logger.debug(f"Write to teensy: {command.strip()}")
-        self.serial_teensy.flushInput()
-
-        speed = '8'
-        time.sleep(1)
-        self.calibrate(calibration_axes, speed)
-        # self.go_to_rest_position()
-        logger.success('CALIBRATION SUCCESSFUL')
+        self.calibrate('111111', '8')
+        # TODO: узнать, что такое blockEncPosCal
+        # # blockEncPosCal = 1
+        # calibration_axes = "111110"
+        # speed = '40'
+        # self.calibrate(calibration_axes, speed)
+        # cd = self.get_calibration_drive_auto()
+        # command = f"MJA{cd[0]}500B{cd[1]}500C{cd[2]}500D{cd[3]}500E{cd[4]}500F{cd[5]}0" \
+        #           f"S15G10H10I10K10\n"
+        # self.teensy_push(command)
+        # logger.debug(f"Write to teensy: {command.strip()}")
+        # self.serial_teensy.flushInput()
+        #
+        # speed = '8'
+        # time.sleep(2.5)
+        # self.calibrate(calibration_axes, speed)
+        # # self.go_to_rest_position()
+        #
+        # calibration_axes = '000001'
+        # speed = '50'
+        # self.calibrate(calibration_axes, speed)
+        # command = f"MJA{cd[0]}0B{cd[1]}0C{cd[2]}0D{cd[3]}0E{cd[4]}0F{cd[5]}500" \
+        #           f"S15G10H10I10K10\n"
+        # self.teensy_push(command)
+        # logger.debug(f"Write to teensy: {command.strip()}")
+        # self.serial_teensy.flushInput()
+        #
+        # speed = '8'
+        # time.sleep(1)
+        # self.calibrate(calibration_axes, speed)
+        # # self.go_to_rest_position()
         # blockEncPosCal = 1
 
-    def go_to_rest_position(self):
-        # command = "MoveJ[*] X)0.068944 Y)0.0 Z)0.733607 W)-90.0 P)1.05 R)-90.0 T)201.5 Speed-50 Ad15As10Dd20Ds5$F"
-        # pattern = "MoveJ[*] X){CX} Y){CY} Z){CZ} W){CRx} P){CRy} R){CRz} T){Track} Speed-{newSpeed}" \
-        #           " Ad{ACCdur}As{ACCspd}Dd{DECdur}Ds{DECspd}${WC}"
-        # data = parse(pattern, command).named
-        TCX = 0
-        TCY = 0
-        TCZ = 0
-        TCRx = 0
-        TCRy = 0
-        TCRz = 0
+    def move_xyz(self, pos: Position):
         Code = 0
-        # vector = np.array([[float(data['CX'])], [float(data['CY'])], [float(data['CZ'])]])
-        vector = np.array([[0.07323478170634413], [0.0], [0.7334922972987035]])
-        angles = self.calculate_inverse_kinematic_problem(vector)
-        angles = list(map(math.degrees, angles))
 
-        logger.debug(f"{angles=}")
+        need_angles = self.calculate_inverse_kinematic_problem(np.array([[pos.x], [pos.y], [pos.z]]))
+        need_angles = list(map(math.degrees, need_angles))
+        logger.debug(f"{need_angles=}")
+        # need_angles = [0.005, -81.87, 1.04, 13.37, 0.05, 7.17]
+        # logger.debug(f"{need_angles=}")
 
         joint_commands = []
         joint_angels = []
         letter = 85
-        if not self._check_axis_limit(angles):
-            for i, (joint, angle) in enumerate(zip(self.joints, angles)):
+        if not self._check_axis_limit(need_angles):
+            for i, (joint, angle) in enumerate(zip(self.joints, need_angles)):
                 if float(angle) >= float(joint.current_joint_angle):
                     direction = 1 if joint.motor_direction == 0 else 0
                     calc_angle = float(angle) - float(joint.current_joint_angle)
@@ -442,10 +434,9 @@ class Manipulator:
                 joint_commands.append(f"{joint.get_name_joint()}{direction}{steps}")
                 joint_angels.append(f"{chr(letter + i)}{joint.current_joint_step}")
 
-            commandCalc = f"MJ{''.join(joint_commands)}T{1}{3}S{10}" \
-                          f"G{15}H{10}I{20}K{5}{''.join(joint_angels)}\n"
+            commandCalc = f"MJ{''.join(joint_commands)}S{30}G{15}H{10}I{20}K{5}\n"
             logger.debug(commandCalc.strip())
-            # self.teensy_push(commandCalc)
+            self.teensy_push(commandCalc)
         self.calculate_direct_kinematics_problem()
         self.save_data()
 
@@ -652,9 +643,3 @@ class Manipulator:
         for joint in self.joints:
             if joint.current_joint_angle == 0:
                 joint.current_joint_angle = 0.00001
-
-    def move_xyz(self, vector):
-        coordinate_array = np.array([[vector[0]], [vector[1]], [vector[2]]])
-        angles = self.calculate_inverse_kinematic_problem(coordinate_array)
-        # for i, joint in enumerate(self.joints):
-        #     self.jog_joint(joint, 10, angles[i])

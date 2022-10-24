@@ -1,6 +1,6 @@
 import time
 
-from manipulator import Manipulator
+from manipulator import Manipulator, Position
 import numpy as np
 from math import (pi)
 from loguru import logger
@@ -12,35 +12,32 @@ arduino_port = 7
 ################# Конец настроек #################
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
-robot.calibrate('111111', '40')
-cd = robot.get_calibration_drive_auto()
-command = f"MJA{cd[0]}500B{cd[1]}500C{cd[2]}500D{cd[3]}1300E{cd[4]}500F{cd[5]}0" \
-          f"S15G10H10I10K10\n"
-robot.teensy_push(command)
-logger.debug(f"Write to teensy: {command.strip()}")
-robot.serial_teensy.flushInput()
-time.sleep(2.5)
-robot.calibrate('111111', '8')
+robot.auto_calibrate()
+logger.info(f'{robot.get_joints_angles()}')
+robot.move_xyz(Position(x=0.07323478170634413, y=0.0, z=0.7334922972987035, theta=2.980871355633929, phi=3.140331681299819, psi=0.3572458216613488))
+logger.debug(f"{robot.position}")
 
-direction = ['1', '1', '0', '1', '1', '0']
-steps = [7555, 2221, 7944, 7006, 2276, 3157]
-parameters = {
-    'speed': [50, 'S'],
-    'ACC_duration': [15, 'G'],
-    'ACC_speed': [10, 'H'],
-    'DEC_duration': [20, 'I'],
-    'DEC_speed': [5, 'K'],
-}
-param_command = []
-for param in parameters.values():
-    param_command.append(f"{param[1]}{param[0]}")
-parts = []
-for i, joint in enumerate(robot.joints):
-    parts.append(f"{joint.get_name_joint()}{direction[i]}{steps[i]}")
-my_command = f"MJ{''.join(parts)}{''.join(param_command)}\n"
-robot.teensy_push(my_command)
-logger.debug(f"Write to teensy: {my_command.strip()}")
-robot.serial_teensy.flushInput()
+# direction = ['1', '1', '0', '1', '1', '0']
+# steps = [7555, 2221, 7944, 7006, 2276, 3157]
+# parameters = {
+#     'speed': [50, 'S'],
+#     'ACC_duration': [15, 'G'],
+#     'ACC_speed': [10, 'H'],
+#     'DEC_duration': [20, 'I'],
+#     'DEC_speed': [5, 'K'],
+# }
+# param_command = []
+# for param in parameters.values():
+#     param_command.append(f"{param[1]}{param[0]}")
+# parts = []
+# for i, joint in enumerate(robot.joints):
+#     parts.append(f"{joint.get_name_joint()}{direction[i]}{steps[i]}")
+# my_command = f"MJ{''.join(parts)}{''.join(param_command)}\n"
+# robot.teensy_push(my_command)
+# logger.debug(f"Write to teensy: {my_command.strip()}")
+# robot.serial_teensy.flushInput()
+# robot.calculate_direct_kinematics_problem()
+# logger.debug(f"{robot.position}")
 
 # robot.jog_joint(robot.joints[0], 30, 170)
 # robot.calculate_direct_kinematics_problem()
@@ -54,17 +51,18 @@ robot.serial_teensy.flushInput()
 # robot.calculate_direct_kinematics_problem()
 # logger.info(robot.position)
 #
-# robot.jog_joint(robot.joints[3], 30, 164)
+# robot.jog_joint(robot.joints[3], 30, 165)
 # robot.calculate_direct_kinematics_problem()
 # logger.info(robot.position)
-#
+# #
 # robot.jog_joint(robot.joints[4], 30, 104)
 # robot.calculate_direct_kinematics_problem()
 # logger.info(robot.position)
-#
+# #
 # robot.jog_joint(robot.joints[5], 30, -148)
 # robot.calculate_direct_kinematics_problem()
 # logger.info(robot.position)
+# logger.info(f'{robot.get_joints_angles()}')
 
 # print(robot.calculate_inverse_kinematic_problem([[0.1],
 #                                                  [0.1],
