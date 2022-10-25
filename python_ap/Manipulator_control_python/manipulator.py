@@ -403,12 +403,13 @@ class Manipulator:
 
     def move_xyz(self, pos: Position):
         Code = 0
-
-        need_angles = self.calculate_inverse_kinematic_problem(np.array([[pos.x], [pos.y], [pos.z]]))
-        need_angles = list(map(math.degrees, need_angles))
+        print(f'pos: {pos}')
+        need_angles = self.calculate_inverse_kinematic_problem([[pos.x], [pos.y], [pos.z]])
         logger.debug(f"{need_angles=}")
-        # need_angles = [0.005, -81.87, 1.04, 13.37, 0.05, 7.17]
-        # logger.debug(f"{need_angles=}")
+        need_angles = list(map(math.degrees, need_angles))
+        logger.debug(f"degrees: {need_angles=}")
+        #need_angles = [0.005, -81.87, 1.04, 13.37, 0.05, 7.17]
+       # logger.debug(f"{need_angles=}")
 
         joint_commands = []
         joint_angels = []

@@ -1,3 +1,4 @@
+import math
 import time
 
 from manipulator import Manipulator, Position
@@ -14,8 +15,9 @@ arduino_port = 7
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 robot.auto_calibrate()
 logger.info(f'{robot.get_joints_angles()}')
-robot.move_xyz(Position(x=0.07323478170634413, y=0.0, z=0.7334922972987035, theta=2.980871355633929, phi=3.140331681299819, psi=0.3572458216613488))
-logger.debug(f"{robot.position}")
+# robot.move_xyz(Position(x=6.88455501e-02, y=-5.03769084e-17, z=7.33607349e-01, theta=2.980871355633929, phi=3.140331681299819, psi=0.3572458216613488))
+# logger.debug(f"{robot.calculate_inverse_kinematic_problem()}")
+# logger.debug(f"{robot.position}")
 
 # direction = ['1', '1', '0', '1', '1', '0']
 # steps = [7555, 2221, 7944, 7006, 2276, 3157]
@@ -39,30 +41,35 @@ logger.debug(f"{robot.position}")
 # robot.calculate_direct_kinematics_problem()
 # logger.debug(f"{robot.position}")
 
-# robot.jog_joint(robot.joints[0], 30, 170)
-# robot.calculate_direct_kinematics_problem()
-# logger.info(robot.position)
+robot.jog_joint(robot.joints[0], 30, 170)
+robot.calculate_direct_kinematics_problem()
+logger.info(robot.position)
+
+robot.jog_joint(robot.joints[1], 30, 40)
+robot.calculate_direct_kinematics_problem()
+logger.info(robot.position)
+
+robot.jog_joint(robot.joints[2], 30, -142)
+robot.calculate_direct_kinematics_problem()
+logger.info(robot.position)
+
+robot.jog_joint(robot.joints[3], 30, 165)
+robot.calculate_direct_kinematics_problem()
+logger.info(robot.position)
 #
-# robot.jog_joint(robot.joints[1], 30, 40)
-# robot.calculate_direct_kinematics_problem()
-# logger.info(robot.position)
+robot.jog_joint(robot.joints[4], 30, 104)
+robot.calculate_direct_kinematics_problem()
+logger.info(robot.position)
 #
-# robot.jog_joint(robot.joints[2], 30, -142)
+robot.jog_joint(robot.joints[5], 30, -148)
+robot.calculate_direct_kinematics_problem()
+logger.info(robot.position)
+
+# robot.jog_joint(robot.joints[1], 30, 20)
 # robot.calculate_direct_kinematics_problem()
 # logger.info(robot.position)
-#
-# robot.jog_joint(robot.joints[3], 30, 165)
-# robot.calculate_direct_kinematics_problem()
-# logger.info(robot.position)
-# #
-# robot.jog_joint(robot.joints[4], 30, 104)
-# robot.calculate_direct_kinematics_problem()
-# logger.info(robot.position)
-# #
-# robot.jog_joint(robot.joints[5], 30, -148)
-# robot.calculate_direct_kinematics_problem()
-# logger.info(robot.position)
-# logger.info(f'{robot.get_joints_angles()}')
+# logger.debug(f"{list(map(math.degrees, robot.calculate_inverse_kinematic_problem([[6.88455501e-02], [-5.03769084e-17], [7.33607349e-01]])))}")
+logger.info(f'{robot.get_joints_angles()}')
 
 # print(robot.calculate_inverse_kinematic_problem([[0.1],
 #                                                  [0.1],
