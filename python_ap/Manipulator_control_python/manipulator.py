@@ -567,63 +567,30 @@ class Manipulator:
 
         return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат TODO: точно такой порядок углов???
 
-    def calculate_inverse_kinematic_problem(self, p0_6):
+    def calculate_inverse_kinematic_problem(self, xyz, left):
         self.anti_zero()
-        # p0_4 = p0_6 - d6 * R0_6 * [0, 0, 1]', где p_04 = [x0_4, y0_4, z0_4]
-        array_matrix = self.matrix_create()
-        # Расчет обратной задачи кинематики по положению: расчет theta1, theta2, theta3
-        R0_6 = self.take_rotation_matrix(array_matrix, 0, 6)
-        # print('aboba')
-        #  print((np.dot(self.DH['d_6'], R0_6)).dot(np.array([[0],
-        #      [0],
-        #    [1]])))
-        p0_4 = np.array(p0_6) - (np.dot(self.DH['d_6'], R0_6)).dot(np.array([[0],
-                                                                             [0],
-                                                                             [1]]))
-        # print(p0_4)
-        # вектор p0_4, который содержит координаты пересечения осей поворота двух последних # звеньев
-        # print(p0_4)
-        x0_4 = p0_4[0]
-        y0_4 = p0_4[1]
-        z0_4 = p0_4[2]
-        c = sqrt((x0_4) ** 2 + (y0_4) ** 2)  # ?????
-        # print(f'c = {c}')
-        # T1_4 = (np.linalg.inv(array_matrix[0])).dot(self.matrix_dot(array_matrix, 0, 4))
-        p1_4 = self.take_coordinate(array_matrix, 1, 4)
-        # print(f'p1_4 = {p1_4}')
-        b = z0_4 - self.DH['d_1']
-        # print(f'b = {b}')
-        a = sqrt(p1_4[0] ** 2 + p1_4[1] ** 2 + p1_4[2] ** 2)
-        # print(f'a = {a}')
-        d4 = -self.DH['d_4']
-        # print(f'd4 = {d4}')
-        a2 = self.DH[
-            'a_2']  # self.length_vector(self.take_coordinate(array_matrix, 0, 1), self.take_coordinate(array_matrix, 0, 2))
-        # print(f'a2 = {a2}')
-        # cos_theta3 = (b ** 2 + c ** 2 - a2 ** 2 - d4 ** 2) / (2 * a2 * d4)
-        # cos_theta3 = (d4**2+a2**2-a**2)/(2*d4*a2)
-        cos_theta3 = (a ** 2 - d4 ** 2 - a2 ** 2) / (2 * d4 * a2)
-        # print(f'cos_theta3 = {cos_theta3}')
-        theta3 = atan2(sqrt(1 - cos_theta3 ** 2), cos_theta3)
-        theta2 = atan2(b, c) - atan2(d4 * sin(theta3), a2 + d4 * cos(theta3))
-        theta1 = atan2(y0_4, x0_4)
-        # Расчет обратной задачи кинематики:
+        # Теперь делаем все по методе Спонга
+        xc = xyz[0]
+        yc = xyz[1]
+        zc = xyz[2]
+        d = 0.0642
+        d1 = 0.16977
+        a2 = self.DH['a_2']
+        a3 = 0.22263
+        r = xc**2+yc**2-d**2
+        s = zc-d1
+        D = (r+s**2-a2**2-a3**2)/(2*a2*a3) #(r^2+s^2-a2^2-a3^2)/(2*a2*a3)
+        Theta3 = atan2(D, sqrt(1-D**2))
 
-        # Расчет обратной задачи кинематики по ориентации:
-        R0_3 = self.take_rotation_matrix(array_matrix, 0, 3)
-        R0_3_inv = np.linalg.inv(R0_3)
-        R3_6 = np.dot(R0_3_inv, R0_6)
-        theta = atan2(sqrt(1 - R3_6[2, 2] ** 2), R3_6[2, 2])
+        Theta2 = atan2(r, s) - atan2(a2+a3*cos(Theta3), a3*sin(Theta3))
 
-        if R3_6[2, 2] == abs(1):
-            if theta == 0:
-                theta == 0.001
-            if theta == pi:
-                theta = pi + 0.001
+        if (left):
+            Theta1 = atan2(xc, yc)
+        else:
+            Theta1 = atan2(xc, yc) + atan2(-sqrt(r**2-d**2), -d)
 
-        phi = atan2(R3_6[1, 2], R3_6[0, 2])
-        psi = atan2(R3_6[2, 1], R3_6[2, 0])
-        return [theta1, -theta2, theta3, phi, theta, -psi]
+
+        return [Theta1, Theta2, Theta3]
 
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
