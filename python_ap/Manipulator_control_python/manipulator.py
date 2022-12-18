@@ -567,12 +567,12 @@ class Manipulator:
 
         return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат TODO: точно такой порядок углов???
 
-    def calculate_inverse_kinematic_problem(self, xyz, left):
+    def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi, left):
         self.anti_zero()
         # Теперь делаем все по методе Спонга
-        xc = xyz[0]
-        yc = xyz[1]
-        zc = xyz[2]
+        xc = x_y_z_phi_theta_psi[0]
+        yc = x_y_z_phi_theta_psi[1]
+        zc = x_y_z_phi_theta_psi[2]
         d = 0.0642
         d1 = 0.16977
         a2 = self.DH['a_2']
@@ -588,9 +588,55 @@ class Manipulator:
             Theta1 = atan2(xc, yc)
         else:
             Theta1 = atan2(xc, yc) + atan2(-sqrt(r**2-d**2), -d)
+        cja = [Theta1, Theta2, Theta3]
+        cja = list(map(radians, cja))
+        T = []
+        for i in range(3):
+            d = self.DH[f'displacement_theta_{i + 1}']
+            T.append(np.array(
+                [[cos(cja[i] + d), -sin(cja[i] + d) * cos(self.DH[f'alpha_{i + 1}']),
+                  sin(cja[i] + d) * sin(self.DH[f'alpha_{i + 1}']),
+                  self.DH[f'a_{i + 1}'] * cos(cja[i] + d)],
+                 [sin(cja[i] + d), cos(cja[i] + d) * cos(self.DH[f'alpha_{i + 1}']),
+                  -cos(cja[i] + d) * sin(self.DH[f'alpha_{i + 1}']),
+                  self.DH[f'a_{i + 1}'] * sin(cja[i] + d)],
+                 [0, sin(self.DH[f'alpha_{i + 1}']), cos(self.DH[f'alpha_{i + 1}']), self.DH[f'd_{i + 1}']],
+                 [0, 0, 0, 1]]))
+        R03 = self.take_rotation_matrix(T, 0, 3)
+        # Углы эйлера вокруг осей x, y, z TODO: проверить, что углы соответствуют осям
+        phi = x_y_z_phi_theta_psi[3]
+        theta = x_y_z_phi_theta_psi[4]
+        psi = x_y_z_phi_theta_psi[5]
+        # Преобразуем в матрицу поворота
+
+        # Матрицы поворота вокруг осей
+        Rz1 = np.array([[cos(phi), -sin(phi), 0],
+                       [sin(phi), cos(phi), 0],
+                       [0, 0, 1]])
+        Ry = np.array([[cos(theta), 0, sin(theta)],
+                       [0, 1, 0],
+                       [-sin(theta), 0, cos(theta)]])
+        Rz2 = np.array([[cos(psi), -sin(psi), 0],
+                       [sin(psi), cos(psi), 0],
+                       [0, 0, 1]])
+        # Матрица преобразования, параметризованная углами Эйлера
+        Rxyz = np.dot(np.dot(Rz1, Ry), Rz2)
 
 
-        return [Theta1, Theta2, Theta3]
+        # R36 = (R03)^T*Rxyz
+
+        R36 = np.dot(np.transpose(R03), Rxyz)
+
+        Theta4 = atan2(sqrt(1-R36[3, 3]**2), R36[3, 3])
+        if R36[2, 2] == abs(1):
+            if Theta4 == 0:
+                Theta4 == 0.001
+            if Theta4 == pi:
+                Theta4 = pi - 0.001
+        Theta5 = atan2(R36[2, 3], R36[1, 3])
+        Theta6 = atan2(R36[3, 2], R36[3, 1])
+
+        return [Theta1, Theta2, Theta3, Theta4, Theta5, Theta6]
 
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
