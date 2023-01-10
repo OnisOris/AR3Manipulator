@@ -575,19 +575,22 @@ class Manipulator:
         zc = x_y_z_phi_theta_psi[2]
         d = 0.0642
         d1 = 0.16977
-        a2 = self.DH['a_2']
+        a2 = 0.305
         a3 = 0.22263
-        r = xc**2+yc**2-d**2
-        s = zc-d1
-        D = (r+s**2-a2**2-a3**2)/(2*a2*a3) #(r^2+s^2-a2^2-a3^2)/(2*a2*a3)
-        Theta3 = atan2(D, sqrt(1-D**2))
+        r = xc ** 2 + yc ** 2 - d ** 2
+        logger.debug(r)
+        s = zc - d1
+        D = (r ** 2 + s ** 2 - a2 ** 2 - a3 ** 2) / (2 * a2 * a3)  # (r^2+s^2-a2^2-a3^2)/(2*a2*a3)
+        print(f"D = {D}")
+        # print(D)
+        Theta3 = atan2(D, sqrt(1 - D ** 2))
 
-        Theta2 = atan2(r, s) - atan2(a2+a3*cos(Theta3), a3*sin(Theta3))
+        Theta2 = atan2(r, s) - atan2(a2 + a3 * cos(Theta3), a3 * sin(Theta3))
 
         if (left):
             Theta1 = atan2(xc, yc)
         else:
-            Theta1 = atan2(xc, yc) + atan2(-sqrt(r**2-d**2), -d)
+            Theta1 = atan2(xc, yc) + atan2(-sqrt(r ** 2 - d ** 2), -d)
         cja = [Theta1, Theta2, Theta3]
         cja = list(map(radians, cja))
         T = []
@@ -611,30 +614,29 @@ class Manipulator:
 
         # Матрицы поворота вокруг осей
         Rz1 = np.array([[cos(phi), -sin(phi), 0],
-                       [sin(phi), cos(phi), 0],
-                       [0, 0, 1]])
+                        [sin(phi), cos(phi), 0],
+                        [0, 0, 1]])
         Ry = np.array([[cos(theta), 0, sin(theta)],
                        [0, 1, 0],
                        [-sin(theta), 0, cos(theta)]])
         Rz2 = np.array([[cos(psi), -sin(psi), 0],
-                       [sin(psi), cos(psi), 0],
-                       [0, 0, 1]])
+                        [sin(psi), cos(psi), 0],
+                        [0, 0, 1]])
         # Матрица преобразования, параметризованная углами Эйлера
         Rxyz = np.dot(np.dot(Rz1, Ry), Rz2)
-
 
         # R36 = (R03)^T*Rxyz
 
         R36 = np.dot(np.transpose(R03), Rxyz)
-
-        Theta4 = atan2(sqrt(1-R36[3, 3]**2), R36[3, 3])
+        logger.debug(R36)
+        Theta4 = atan2(sqrt(1 - R36[2, 2] ** 2), R36[2, 2])
         if R36[2, 2] == abs(1):
             if Theta4 == 0:
                 Theta4 == 0.001
             if Theta4 == pi:
                 Theta4 = pi - 0.001
-        Theta5 = atan2(R36[2, 3], R36[1, 3])
-        Theta6 = atan2(R36[3, 2], R36[3, 1])
+        Theta5 = atan2(R36[1, 2], R36[0, 2])
+        Theta6 = atan2(R36[2, 1], R36[2, 0])
 
         return [Theta1, Theta2, Theta3, Theta4, Theta5, Theta6]
 
@@ -657,3 +659,7 @@ class Manipulator:
         for joint in self.joints:
             if joint.current_joint_angle == 0:
                 joint.current_joint_angle = 0.00001
+
+    def inverse(self, xyz_angles, left_or_right):
+        xyz_new = [xyz_angles[0]/1000, xyz_angles[1]/1000, xyz_angles[2]/1000, xyz_angles[0]*pi/180, xyz_angles[1]*pi/180, xyz_angles[2]*pi/180]
+        return self.calculate_inverse_kinematic_problem(xyz_new, left_or_right)
