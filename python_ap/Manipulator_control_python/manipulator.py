@@ -462,7 +462,9 @@ class Manipulator:
                 joint.current_joint_angle = 0.000000000001  # TODO: разобраться с необходимостью данных операций upd. Влияет на знак в углах эйлера, пока не понятно как
         transform_matrix = self.matrix_create()
         p = self.take_coordinate(transform_matrix, 0, 6)
+        p = [p[0]*1000, p[1]*1000, p[2]*1000] # перевод
         angles = self.angular_Euler_calculation(self.matrix_dot(transform_matrix, 0, 6))  # theta, fi, psi
+        angles = [angles[0]/pi*180, angles[1]/pi*180, angles[2]/pi*180]
 
         self.position.change(*list(p), *angles)
 
