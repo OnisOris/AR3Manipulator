@@ -14,9 +14,12 @@ arduino_port = 7
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 # robot.auto_calibrate()
-for i in robot.joints:
-    print(f"{i} -> {i.current_joint_angle}")
-print(robot.inverse([60, 0.0001, 650, -90, 1.04, -89.99], "left") )
+robot.check_all()
+pos = Position( 60, 0.001, 650, -90, 1.04, -89.99)
+print("---------------------------------\n")
+robot.move_xyz(pos)
+robot.check_all()
+#print(robot.inverse([60, 0.0001, 650, -90, 1.04, -89.99], "left") )
 
 
 

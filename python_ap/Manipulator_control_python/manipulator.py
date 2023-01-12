@@ -17,12 +17,19 @@ class Position:
     """
     Class for keeping global position and orientation of manipulitor's wrist
     """
-    x: float = 0
-    y: float = 0
-    z: float = 0
-    theta: float = 0
-    phi: float = 0
-    psi: float = 0
+    x: float = 0  # mm
+    x_m = x/1000  # m
+    y: float = 0  # mm
+    y_m = y/1000  # m
+    z: float = 0  # mm
+    z_m = z/1000  # m
+    theta: float = 0  # grad
+    theta_rad = theta*pi/180  # rad
+    phi: float = 0  # grad
+    phi_rad = phi*pi/180  # rad
+    psi: float = 0  # grad
+    psi_rad = psi*pi/180  # rad
+
 
     def change(self, x, y, z, theta, phi, psi):
         self.x = x
@@ -404,7 +411,7 @@ class Manipulator:
     def move_xyz(self, pos: Position):
         Code = 0
         print(f'pos: {pos}')
-        need_angles = self.calculate_inverse_kinematic_problem([[pos.x], [pos.y], [pos.z]])
+        need_angles = self.calculate_inverse_kinematic_problem([pos.x_m, pos.y_m, pos.z_m, pos.theta_rad, pos.phi_rad, pos.psi_rad], "left")
         logger.debug(f"{need_angles=}")
         need_angles = list(map(math.degrees, need_angles))
         logger.debug(f"degrees: {need_angles=}")
@@ -663,3 +670,13 @@ class Manipulator:
     def inverse(self, xyz_angles, left_or_right):
         xyz_new = [xyz_angles[0]/1000, xyz_angles[1]/1000, xyz_angles[2]/1000, xyz_angles[0]*pi/180, xyz_angles[1]*pi/180, xyz_angles[2]*pi/180]
         return self.calculate_inverse_kinematic_problem(xyz_new, left_or_right)
+
+    def check_all(self):
+        for i in self.joints:
+            print(f"{i} -> {i.current_joint_angle}")
+        print(f"x -> {self.position.x}")
+        print(f"y -> {self.position.y}")
+        print(f"z -> {self.position.z}")
+        print(f"theta -> {self.position.theta}")
+        print(f"phi -> {self.position.phi}")
+        print(f"psi -> {self.position.psi}")
