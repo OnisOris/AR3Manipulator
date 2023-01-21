@@ -682,3 +682,442 @@ class Manipulator:
         print(f"theta -> {self.position.theta}")
         print(f"phi -> {self.position.phi}")
         print(f"psi -> {self.position.psi}")
+
+    def calculate_inverse_kinematics_problem(self, CX, CY, CZ, CRx, CRy, CRz, WC, TCX, TCY, TCZ, TCRx, TCRy, TCRz):
+        # global J1out
+        # global J2out
+        # global J3out
+        # global J4out
+        # global J5out
+
+        # global J6out
+        J1AngCur = self.joints[0]
+        J2AngCur = self.joints[1]
+        J3AngCur = self.joints[2]
+        J4AngCur = self.joints[3]
+        J5AngCur = self.joints[4]
+        J6AngCur = self.joints[5]
+        if J1AngCur == 0:
+            J1AngCur = .0001
+        if J2AngCur == 0:
+            J2AngCur = .0001
+        if J3AngCur == 0:
+            J3AngCur = .0001
+        if J4AngCur == 0:
+            J4AngCur = .0001
+        if J5AngCur == 0:
+            J5AngCur = .0001
+        if J6AngCur == 0:
+            J6AngCur = .0001
+            # input
+        O4 = CX
+        O5 = CY
+        O6 = CZ
+        O9 = CRx
+        O8 = CRy
+        O7 = CRz
+        V8 = WC
+        if O4 == 0:
+            O4 = .0001
+        if O5 == 0:
+            O5 = .0001
+        if O6 == 0:
+            O6 = .0001
+        if O7 == 0:
+            O7 = .0001
+        if O8 == 0:
+            O8 = .0001
+        if O9 == 0:
+            O9 = .0001
+        # quadrant
+        if O4 > 0 and O5 > 0:
+            V9 = 1
+        elif O4 > 0 and O5 < 0:
+            V9 = 2
+        elif O4 < 0 and O5 < 0:
+            V9 = 3
+        elif O4 < 0 and O5 > 0:
+            V9 = 4
+        # DH TABLE
+        D13 = math.radians(-90)
+        D14 = math.radians(0.0)
+        D15 = math.radians(90)
+        D16 = math.radians(-90)
+        D17 = math.radians(90)
+        D18 = math.radians(0)
+
+        E13 = 169.77
+        E14 = 0.0
+        E15 = 0.0
+        E16 = -222.63
+        E17 = 0.0
+        E18 = -36.25
+
+        F13 = 64.2
+        F14 = 305.0
+        F15 = 0.0
+        F16 = 0.0
+        F17 = 0.0
+        F18 = 0.0
+        # WORK FRAME INPUT
+        H13 = -float(0)
+        H14 = -float(0)
+        H15 = -float(0)
+        H16 = -float(0)
+        H17 = -float(0)
+        H18 = -float(0)
+        # TOOL FRAME INPUT
+        J13 = -float(0) + TCX
+        J14 = -float(0) + TCY
+        J15 = -float(0) + TCZ
+        J16 = -float(0) + TCRx
+        J17 = -float(0) + TCRy
+        J18 = -float(0) + TCRz
+        # WORK FRAME TABLE
+        N30 = math.cos(math.radians(H18)) * math.cos(math.radians(H17))
+        O30 = -math.sin(math.radians(H18)) * math.cos(math.radians(H16)) + math.cos(math.radians(H18)) * math.sin(
+            math.radians(H17)) * math.sin(math.radians(H16))
+        P30 = math.sin(math.radians(H18)) * math.sin(math.radians(H16)) + math.cos(math.radians(H18)) * math.sin(
+            math.radians(H17)) * math.cos(math.radians(H16))
+        Q30 = H13
+        N31 = math.sin(math.radians(H18)) * math.cos(math.radians(H17))
+        O31 = math.cos(math.radians(H18)) * math.cos(math.radians(H16)) + math.sin(math.radians(H18)) * math.sin(
+            math.radians(H17)) * math.sin(math.radians(H16))
+        P31 = -math.cos(math.radians(H18)) * math.sin(math.radians(H16)) + math.sin(math.radians(H18)) * math.sin(
+            math.radians(H17)) * math.cos(math.radians(H16))
+        Q31 = H14
+        N32 = -math.sin(math.radians(H18))
+        O32 = math.cos(math.radians(H17)) * math.sin(math.radians(H16))
+        P32 = math.cos(math.radians(H17)) * math.cos(math.radians(H16))
+        Q32 = H15
+        N33 = 0
+        O33 = 0
+        P33 = 0
+        Q33 = 1
+        # R 0-T
+        X30 = math.cos(math.radians(O7)) * math.cos(math.radians(O9)) - math.cos(math.radians(O8)) * math.sin(
+            math.radians(O7)) * math.sin(math.radians(O9))
+        Y30 = math.cos(math.radians(O9)) * math.sin(math.radians(O7)) + math.cos(math.radians(O7)) * math.cos(
+            math.radians(O8)) * math.sin(math.radians(O9))
+        Z30 = math.sin(math.radians(O8)) * math.sin(math.radians(O9))
+        AA30 = O4
+        X31 = math.cos(math.radians(O8)) * math.cos(math.radians(O9)) * math.sin(math.radians(O7)) + math.cos(
+            math.radians(O7)) * math.sin(math.radians(O9))
+        Y31 = math.cos(math.radians(O7)) * math.cos(math.radians(O8)) * math.cos(math.radians(O9)) - math.sin(
+            math.radians(O7)) * math.sin(math.radians(O9))
+        Z31 = math.cos(math.radians(O9)) * math.sin(math.radians(O8))
+        AA31 = O5
+        X32 = math.sin(math.radians(O7)) * math.sin(math.radians(O8))
+        Y32 = math.cos(math.radians(O7)) * math.sin(math.radians(O8))
+        Z32 = -math.cos(math.radians(O8))
+        AA32 = O6
+        X33 = 0
+        Y33 = 0
+        Z33 = 0
+        AA33 = 1
+        # R 0-T   offset by work frame
+        X36 = ((N30 * X30) + (O30 * X31) + (P30 * X32) + (Q30 * X33)) * -1
+        Y36 = (N30 * Y30) + (O30 * Y31) + (P30 * Y32) + (Q30 * Y33)
+        Z36 = (N30 * Z30) + (O30 * Z31) + (P30 * Z32) + (Q30 * Z33)
+        AA36 = (N30 * AA30) + (O30 * AA31) + (P30 * AA32) + (Q30 * AA33)
+        X37 = (N31 * X30) + (O31 * X31) + (P31 * X32) + (Q31 * X33)
+        Y37 = (N31 * Y30) + (O31 * Y31) + (P31 * Y32) + (Q31 * Y33)
+        Z37 = (N31 * Z30) + (O31 * Z31) + (P31 * Z32) + (Q31 * Z33)
+        AA37 = (N31 * AA30) + (O31 * AA31) + (P31 * AA32) + (Q31 * AA33)
+        X38 = (N32 * X30) + (O32 * X31) + (P32 * X32) + (Q32 * X33)
+        Y38 = (N32 * Y30) + (O32 * Y31) + (P32 * Y32) + (Q32 * Y33)
+        Z38 = (N32 * Z30) + (O32 * Z31) + (P32 * Z32) + (Q32 * Z33)
+        AA38 = (N32 * AA30) + (O32 * AA31) + (P32 * AA32) + (Q32 * AA33)
+        X39 = (N33 * X30) + (O33 * X31) + (P33 * X32) + (Q33 * X33)
+        Y39 = (N33 * Y30) + (O33 * Y31) + (P33 * Y32) + (Q33 * Y33)
+        Z39 = (N33 * Z30) + (O33 * Z31) + (P33 * Z32) + (Q33 * Z33)
+        AA39 = (N33 * AA30) + (O33 * AA31) + (P33 * AA32) + (Q33 * AA33)
+        # TOOL FRAME
+        X42 = math.cos(math.radians(J18)) * math.cos(math.radians(J17))
+        Y42 = -math.sin(math.radians(J18)) * math.cos(math.radians(J16)) + math.cos(math.radians(J18)) * math.sin(
+            math.radians(J17)) * math.sin(math.radians(J16))
+        Z42 = math.sin(math.radians(J18)) * math.sin(math.radians(J16)) + math.cos(math.radians(J18)) * math.sin(
+            math.radians(J17)) * math.cos(math.radians(J16))
+        AA42 = J13
+        X43 = math.sin(math.radians(J18)) * math.cos(math.radians(J17))
+        Y43 = math.cos(math.radians(J18)) * math.cos(math.radians(J16)) + math.sin(math.radians(J18)) * math.sin(
+            math.radians(J17)) * math.sin(math.radians(J16))
+        Z43 = -math.cos(math.radians(J18)) * math.sin(math.radians(J16)) + math.sin(math.radians(J18)) * math.sin(
+            math.radians(J17)) * math.cos(math.radians(J16))
+        AA43 = J14
+        X44 = -math.sin(math.radians(J18))
+        Y44 = math.cos(math.radians(J17)) * math.sin(math.radians(J16))
+        Z44 = math.cos(math.radians(J17)) * math.cos(math.radians(J16))
+        AA44 = J15
+        X45 = 0
+        Y45 = 0
+        Z45 = 0
+        AA45 = 1
+        # INVERT TOOL FRAME
+        X48 = X42
+        Y48 = X43
+        Z48 = X44
+        AA48 = (X48 * AA42) + (Y48 * AA43) + (Z48 * AA44)
+        X49 = Y42
+        Y49 = Y43
+        Z49 = Y44
+        AA49 = (X49 * AA42) + (Y49 * AA43) + (Z49 * AA44)
+        X50 = Z42
+        Y50 = Z43
+        Z50 = Z44
+        AA50 = (X50 * AA42) + (Y50 * AA43) + (Z50 * AA44)
+        X51 = 0
+        Y51 = 0
+        Z51 = 0
+        AA51 = 1
+        # R 0-6
+        X54 = (X36 * X48) + (Y36 * X49) + (Z36 * X50) + (AA36 * X51)
+        Y54 = (X36 * Y48) + (Y36 * Y49) + (Z36 * Y50) + (AA36 * Y51)
+        Z54 = (X36 * Z48) + (Y36 * Z49) + (Z36 * Z50) + (AA36 * Z51)
+        AA54 = (X36 * AA48) + (Y36 * AA49) + (Z36 * AA50) + (AA36 * AA51)
+        X55 = (X37 * X48) + (Y37 * X49) + (Z37 * X50) + (AA37 * X51)
+        Y55 = (X37 * Y48) + (Y37 * Y49) + (Z37 * Y50) + (AA37 * Y51)
+        Z55 = (X37 * Z48) + (Y37 * Z49) + (Z37 * Z50) + (AA37 * Z51)
+        AA55 = (X37 * AA48) + (Y37 * AA49) + (Z37 * AA50) + (AA37 * AA51)
+        X56 = (X38 * X48) + (Y38 * X49) + (Z38 * X50) + (AA38 * X51)
+        Y56 = (X38 * Y48) + (Y38 * Y49) + (Z38 * Y50) + (AA38 * Y51)
+        Z56 = (X38 * Z48) + (Y38 * Z49) + (Z38 * Z50) + (AA38 * Z51)
+        AA56 = (X38 * AA48) + (Y38 * AA49) + (Z38 * AA50) + (AA38 * AA51)
+        X57 = (X39 * X48) + (Y39 * X49) + (Z39 * X50) + (AA39 * X51)
+        Y57 = (X39 * Y48) + (Y39 * Y49) + (Z39 * Y50) + (AA39 * Y51)
+        Z57 = (X39 * Z48) + (Y39 * Z49) + (Z39 * Z50) + (AA39 * Z51)
+        AA57 = (X39 * AA48) + (Y39 * AA49) + (Z39 * AA50) + (AA39 * AA51)
+        # REMOVE R 0-6
+        X60 = math.cos(math.radians(180))
+        Y60 = math.sin(math.radians(180))
+        Z60 = 0
+        AA60 = 0
+        X61 = -math.sin(math.radians(180)) * math.cos(D18)
+        Y61 = math.cos(math.radians(180)) * math.cos(D18)
+        Z61 = math.sin(D18)
+        AA61 = 0
+        X62 = math.sin(math.radians(180)) * math.sin(D18)
+        Y62 = -math.cos(math.radians(180)) * math.sin(D18)
+        Z62 = math.cos(D18)
+        AA62 = -E18
+        X63 = 0
+        Y63 = 0
+        Z63 = 0
+        AA63 = 1
+        # R 0-5 (center spherica wrist)
+        X66 = (X54 * X60) + (Y54 * X61) + (Z54 * X62) + (AA54 * X63)
+        Y66 = (X54 * Y60) + (Y54 * Y61) + (Z54 * Y62) + (AA54 * Y63)
+        Z66 = (X54 * Z60) + (Y54 * Z61) + (Z54 * Z62) + (AA54 * Z63)
+        AA66 = (X54 * AA60) + (Y54 * AA61) + (Z54 * AA62) + (AA54 * AA63)
+        X67 = (X55 * X60) + (Y55 * X61) + (Z55 * X62) + (AA55 * X63)
+        Y67 = (X55 * Y60) + (Y55 * Y61) + (Z55 * Y62) + (AA55 * Y63)
+        Z67 = (X55 * Z60) + (Y55 * Z61) + (Z55 * Z62) + (AA55 * Z63)
+        AA67 = (X55 * AA60) + (Y55 * AA61) + (Z55 * AA62) + (AA55 * AA63)
+        X68 = (X56 * X60) + (Y56 * X61) + (Z56 * X62) + (AA56 * X63)
+        Y68 = (X56 * Y60) + (Y56 * Y61) + (Z56 * Y62) + (AA56 * Y63)
+        Z68 = (X56 * Z60) + (Y56 * Z61) + (Z56 * Z62) + (AA56 * Z63)
+        AA68 = (X56 * AA60) + (Y56 * AA61) + (Z56 * AA62) + (AA56 * AA63)
+        X69 = (X57 * X60) + (Y57 * X61) + (Z57 * X62) + (AA57 * X63)
+        Y69 = (X57 * Y60) + (Y57 * Y61) + (Z57 * Y62) + (AA57 * Y63)
+        Z69 = (X57 * Z60) + (Y57 * Z61) + (Z57 * Z62) + (AA57 * Z63)
+        AA69 = (X57 * AA60) + (Y57 * AA61) + (Z57 * AA62) + (AA57 * AA63)
+        # CALCULATE J1 ANGLE
+        O13 = math.atan(AA67 / AA66)
+        if V9 == 1:
+            P13 = math.degrees(O13)
+        if V9 == 2:
+            P13 = math.degrees(O13)
+        if V9 == 3:
+            P13 = -180 + math.degrees(O13)
+        if V9 == 4:
+            P13 = 180 + math.degrees(O13)
+        # CALCULATE J2 ANGLE	FWD
+
+        O16 = math.sqrt(((abs(AA67)) ** 2) + ((abs(AA66)) ** 2))
+        O17 = AA68 - E13
+        O18 = O16 - F13
+        O19 = math.sqrt((O17 ** 2) + (O18 ** 2))
+        O20 = math.sqrt((E16 ** 2) + (F15 ** 2))
+        O21 = math.degrees(math.atan(O17 / O18))
+        O22 = math.degrees(math.acos(((F14 ** 2) + (O19 ** 2) - (abs(O20) ** 2)) / (2 * F14 * O19)))
+        try:
+            O25 = math.degrees(math.atan(abs(E16) / F15))
+        except:
+            O25 = 90
+        O23 = 180 - math.degrees(math.acos(((abs(O20) ** 2) + (F14 ** 2) - (O19 ** 2)) / (2 * abs(O20) * F14))) + (
+                90 - O25)
+        O26 = -(O21 + O22)
+        O27 = O23
+        # CALCULATE J2 ANGLE	MID
+        P18 = -O18
+        P19 = math.sqrt((O17 ** 2) + (P18 ** 2))
+        P21 = math.degrees(math.acos(((F14 ** 2) + (P19 ** 2) - (abs(O20) ** 2)) / (2 * F14 * P19)))
+        P22 = math.degrees(math.atan(P18 / O17))
+        P23 = 180 - math.degrees(math.acos(((abs(O20) ** 2) + (F14 ** 2) - (P19 ** 2)) / (2 * abs(O20) * F14))) + (
+                90 - O25)
+        P24 = 90 - (P21 + P22)
+        P26 = -180 + P24
+        P27 = P23
+        # J1,J2,J3
+        Q4 = P13
+        if O18 < 0:
+            Q5 = P26
+            Q6 = P27
+        else:
+            Q5 = O26
+            Q6 = O27
+        # J1
+        N36 = math.cos(math.radians(Q4))
+        O36 = -math.sin(math.radians(Q4)) * math.cos(D13)
+        P36 = math.sin(math.radians(Q4)) * math.sin(D13)
+        Q36 = F13 * math.cos(math.radians(Q4))
+        N37 = math.sin(math.radians(Q4))
+        O37 = math.cos(math.radians(Q4)) * math.cos(D13)
+        P37 = -math.cos(math.radians(Q4)) * math.sin(D13)
+        Q37 = F13 * math.sin(math.radians(Q4))
+        N38 = 0
+        O38 = math.sin(D13)
+        P38 = math.cos(D13)
+        Q38 = E13
+        N39 = 0
+        O39 = 0
+        P39 = 0
+        Q39 = 1
+        # J2
+        N42 = math.cos(math.radians(Q5))
+        O42 = -math.sin(math.radians(Q5)) * math.cos(D14)
+        P42 = math.sin(math.radians(Q5)) * math.sin(D14)
+        Q42 = F14 * math.cos(math.radians(Q5))
+        N43 = math.sin(math.radians(Q5))
+        O43 = math.cos(math.radians(Q5)) * math.cos(D14)
+        P43 = -math.cos(math.radians(Q5)) * math.sin(D14)
+        Q43 = F14 * math.sin(math.radians(Q5))
+        N44 = 0
+        O44 = math.sin(D14)
+        P44 = math.cos(D14)
+        Q44 = E14
+        N45 = 0
+        O45 = 0
+        P45 = 0
+        Q45 = 1
+        # J3
+        N48 = math.cos(math.radians(Q6 - 90))
+        O48 = -math.sin(math.radians(Q6 - 90)) * math.cos(D15)
+        P48 = math.sin(math.radians(Q6 - 90)) * math.sin(D15)
+        Q48 = F15 * math.cos(math.radians(Q6 - 90))
+        N49 = math.sin(math.radians(Q6 - 90))
+        O49 = math.cos(math.radians(Q6 - 90)) * math.cos(D15)
+        P49 = -math.cos(math.radians(Q6 - 90)) * math.sin(D15)
+        Q49 = F15 * math.sin(math.radians(Q6 - 90))
+        N50 = 0
+        O50 = math.sin(D15)
+        P50 = math.cos(D15)
+        Q50 = E15
+        N51 = 0
+        O51 = 0
+        P51 = 0
+        Q51 = 0
+        # R 0-1
+        S33 = (N30 * N36) + (O30 * N37) + (P30 * N38) + (Q30 * N39)
+        T33 = (N30 * O36) + (O30 * O37) + (P30 * O38) + (Q30 * O39)
+        U33 = (N30 * P36) + (O30 * P37) + (P30 * P38) + (Q30 * P39)
+        V33 = (N30 * Q36) + (O30 * Q37) + (P30 * Q38) + (Q30 * Q39)
+        S34 = (N31 * N36) + (O31 * N37) + (P31 * N38) + (Q31 * N39)
+        T34 = (N31 * O36) + (O31 * O37) + (P31 * O38) + (Q31 * O39)
+        U34 = (N31 * P36) + (O31 * P37) + (P31 * P38) + (Q31 * P39)
+        V34 = (N31 * Q36) + (O31 * Q37) + (P31 * Q38) + (Q31 * Q39)
+        S35 = (N32 * N36) + (O32 * N37) + (P32 * N38) + (Q32 * N39)
+        T35 = (N32 * O36) + (O32 * O37) + (P32 * O38) + (Q32 * O39)
+        U35 = (N32 * P36) + (O32 * P37) + (P32 * P38) + (Q32 * P39)
+        V35 = (N32 * Q36) + (O32 * Q37) + (P32 * Q38) + (Q32 * Q39)
+        S36 = (N33 * N36) + (O33 * N37) + (P33 * N38) + (Q33 * N39)
+        T36 = (N33 * O36) + (O33 * O37) + (P33 * O38) + (Q33 * O39)
+        U36 = (N33 * P36) + (O33 * P37) + (P33 * P38) + (Q33 * P39)
+        V36 = (N33 * Q36) + (O33 * Q37) + (P33 * Q38) + (Q33 * Q39)
+        # R 0-2
+        S39 = (S33 * N42) + (T33 * N43) + (U33 * N44) + (V33 * N45)
+        T39 = (S33 * O42) + (T33 * O43) + (U33 * O44) + (V33 * O45)
+        U39 = (S33 * P42) + (T33 * P43) + (U33 * P44) + (V33 * P45)
+        V39 = (S33 * Q42) + (T33 * Q43) + (U33 * Q44) + (V33 * Q45)
+        S40 = (S34 * N42) + (T34 * N43) + (U34 * N44) + (V34 * N45)
+        T40 = (S34 * O42) + (T34 * O43) + (U34 * O44) + (V34 * O45)
+        U40 = (S34 * P42) + (T34 * P43) + (U34 * P44) + (V34 * P45)
+        V40 = (S34 * Q42) + (T34 * Q43) + (U34 * Q44) + (V34 * Q45)
+        S41 = (S35 * N42) + (T35 * N43) + (U35 * N44) + (V35 * N45)
+        T41 = (S35 * O42) + (T35 * O43) + (U35 * O44) + (V35 * O45)
+        U41 = (S35 * P42) + (T35 * P43) + (U35 * P44) + (V35 * P45)
+        V41 = (S35 * Q42) + (T35 * Q43) + (U35 * Q44) + (V35 * Q45)
+        S42 = (S36 * N42) + (T36 * N43) + (U36 * N44) + (V36 * N45)
+        T42 = (S36 * O42) + (T36 * O43) + (U36 * O44) + (V36 * O45)
+        U42 = (S36 * P42) + (T36 * P43) + (U36 * P44) + (V36 * P45)
+        V42 = (S36 * Q42) + (T36 * Q43) + (U36 * Q44) + (V36 * Q45)
+        # R 0-3
+        S45 = (S39 * N48) + (T39 * N49) + (U39 * N50) + (V39 * N51)
+        T45 = (S39 * O48) + (T39 * O49) + (U39 * O50) + (V39 * O51)
+        U45 = (S39 * P48) + (T39 * P49) + (U39 * P50) + (V39 * P51)
+        V45 = (S39 * Q48) + (T39 * Q49) + (U39 * Q50) + (V39 * Q51)
+        S46 = (S40 * N48) + (T40 * N49) + (U40 * N50) + (V40 * N51)
+        T46 = (S40 * O48) + (T40 * O49) + (U40 * O50) + (V40 * O51)
+        U46 = (S40 * P48) + (T40 * P49) + (U40 * P50) + (V40 * P51)
+        V46 = (S40 * Q48) + (T40 * Q49) + (U40 * Q50) + (V40 * Q51)
+        S47 = (S41 * N48) + (T41 * N49) + (U41 * N50) + (V41 * N51)
+        T47 = (S41 * O48) + (T41 * O49) + (U41 * O50) + (V41 * O51)
+        U47 = (S41 * P48) + (T41 * P49) + (U41 * P50) + (V41 * P51)
+        V47 = (S41 * Q48) + (T41 * Q49) + (U41 * Q50) + (V41 * Q51)
+        S48 = (S42 * N48) + (T42 * N49) + (U42 * N50) + (V42 * N51)
+        T48 = (S42 * O48) + (T42 * O49) + (U42 * O50) + (V42 * O51)
+        U48 = (S42 * P48) + (T42 * P49) + (U42 * P50) + (V42 * P51)
+        V48 = (S42 * Q48) + (T42 * Q49) + (U42 * Q50) + (V42 * Q51)
+        # R 0-3 transposed
+        S51 = S45
+        T51 = S46
+        U51 = S47
+        S52 = T45
+        T52 = T46
+        U52 = T47
+        S53 = U45
+        T53 = U46
+        U53 = U47
+        # R 3-6 (spherical wrist  orientation)
+        X72 = (S51 * X66) + (T51 * X67) + (U51 * X68)
+        Y72 = (S51 * Y66) + (T51 * Y67) + (U51 * Y68)
+        Z72 = (S51 * Z66) + (T51 * Z67) + (U51 * Z68)
+        X73 = (S52 * X66) + (T52 * X67) + (U52 * X68)
+        Y73 = (S52 * Y66) + (T52 * Y67) + (U52 * Y68)
+        Z73 = (S52 * Z66) + (T52 * Z67) + (U52 * Z68)
+        X74 = (S53 * X66) + (T53 * X67) + (U53 * X68)
+        Y74 = (S53 * Y66) + (T53 * Y67) + (U53 * Y68)
+        Z74 = (S53 * Z66) + (T53 * Z67) + (U53 * Z68)
+        # WRIST ORIENTATION
+        R7 = math.degrees(math.atan2(Z73, Z72))
+        R8 = math.degrees(math.atan2(+math.sqrt(1 - Z74 ** 2), Z74))
+        if Y74 < 0:
+            R9 = math.degrees(math.atan2(-Y74, X74)) - 180
+        else:
+            R9 = math.degrees(math.atan2(-Y74, X74)) + 180
+        S7 = math.degrees(math.atan2(-Z73, -Z72))
+        S8 = math.degrees(math.atan2(-math.sqrt(1 - Z74 ** 2), Z74))
+        if Y74 < 0:
+            S9 = math.degrees(math.atan2(Y74, -X74)) + 180
+        else:
+            S9 = math.degrees(math.atan2(Y74, -X74)) - 180
+        if V8 == "F":
+            Q8 = R8
+        else:
+            Q8 = S8
+        if Q8 > 0:
+            Q7 = R7
+        else:
+            Q7 = S7
+        if Q8 < 0:
+            Q9 = S9
+        else:
+            Q9 = R9
+        # FINAL OUTPUT
+        J1out = Q4
+        J2out = Q5
+        J3out = Q6
+        J4out = Q7
+        J5out = Q8
+        J6out = Q9
+        return J1out, J2out, J3out, J4out, J5out, J6out
