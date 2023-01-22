@@ -408,13 +408,13 @@ class Manipulator:
         # # self.go_to_rest_position()
         # blockEncPosCal = 1
 
-    def move_xyz(self, pos: Position):
+    def move_xyz(self, pos):
         Code = 0
         print(f'pos: {pos}')
-        need_angles = self.calculate_inverse_kinematic_problem([pos.x_m, pos.y_m, pos.z_m, pos.theta_rad, pos.phi_rad, pos.psi_rad], "left")
-        logger.debug(f"{need_angles=}")
-        need_angles = list(map(math.degrees, need_angles))
-        logger.debug(f"degrees: {need_angles=}")
+        #need_angles = self.calculate_inverse_kinematic_problem([pos.x_m, pos.y_m, pos.z_m, pos.theta_rad, pos.phi_rad, pos.psi_rad], "left")
+        need_angles = self.calculate_inverse_kinematics_problem2(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5],'F', 0, 0, 0, 0, 0, 0)
+        #need_angles = list(map(math.degrees, need_angles))
+
         #need_angles = [0.005, -81.87, 1.04, 13.37, 0.05, 7.17]
        # logger.debug(f"{need_angles=}")
 
@@ -683,7 +683,7 @@ class Manipulator:
         print(f"phi -> {self.position.phi}")
         print(f"psi -> {self.position.psi}")
 
-    def calculate_inverse_kinematics_problem(self, CX, CY, CZ, CRx, CRy, CRz, WC, TCX, TCY, TCZ, TCRx, TCRy, TCRz):
+    def calculate_inverse_kinematics_problem2(self, CX, CY, CZ, CRx, CRy, CRz, WC, TCX, TCY, TCZ, TCRx, TCRy, TCRz):
         # global J1out
         # global J2out
         # global J3out
