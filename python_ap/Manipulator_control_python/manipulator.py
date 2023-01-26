@@ -9,6 +9,8 @@ from loguru import logger
 from config import DEFAULT_SETTINGS
 from joint import Joint
 from dataclasses import dataclass
+
+
 # from parse import parse
 
 
@@ -18,18 +20,17 @@ class Position:
     Class for keeping global position and orientation of manipulitor's wrist
     """
     x: float = 0  # mm
-    x_m = x/1000  # m
+    x_m = x / 1000  # m
     y: float = 0  # mm
-    y_m = y/1000  # m
+    y_m = y / 1000  # m
     z: float = 0  # mm
-    z_m = z/1000  # m
+    z_m = z / 1000  # m
     theta: float = 0  # grad
-    theta_rad = theta*pi/180  # rad
+    theta_rad = theta * pi / 180  # rad
     phi: float = 0  # grad
-    phi_rad = phi*pi/180  # rad
+    phi_rad = phi * pi / 180  # rad
     psi: float = 0  # grad
-    psi_rad = psi*pi/180  # rad
-
+    psi_rad = psi * pi / 180  # rad
 
     def change(self, x, y, z, theta, phi, psi):
         self.x = x
@@ -38,7 +39,6 @@ class Position:
         self.theta = theta
         self.phi = phi
         self.psi = psi
-
 
 
 class Manipulator:
@@ -380,6 +380,7 @@ class Manipulator:
         self.calibrate('111111', '8')
         # TODO: узнать, что такое blockEncPosCal
         position = [68.944, 0.0, 733.607, -90.0, 1.05, -90.0]
+        logger.debug(DEFAULT_SETTINGS['DH_r_1'])
         self.move_xyz(position)
         # # blockEncPosCal = 1
         # calibration_axes = "111110"
@@ -412,14 +413,15 @@ class Manipulator:
         # self.go_to_rest_position()
         # blockEncPosCal = 1
 
-    def move_xyz(self, pos): # mm, grad
+    def move_xyz(self, pos):  # mm, grad
         Code = 0
         print(f'pos: {pos}')
-        #need_angles = self.calculate_inverse_kinematic_problem([pos.x_m, pos.y_m, pos.z_m, pos.theta_rad, pos.phi_rad, pos.psi_rad], "left")
-        need_angles = self.calculate_inverse_kinematics_problem2(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5],'F', 0, 0, 0, 0, 0, 0)
-        #need_angles = list(map(math.degrees, need_angles))
+        # need_angles = self.calculate_inverse_kinematic_problem([pos.x_m, pos.y_m, pos.z_m, pos.theta_rad, pos.phi_rad, pos.psi_rad], "left")
+        need_angles = self.calculate_inverse_kinematics_problem2(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], 'F', 0,
+                                                                 0, 0, 0, 0, 0)
+        # need_angles = list(map(math.degrees, need_angles))
 
-        #need_angles = [0.005, -81.87, 1.04, 13.37, 0.05, 7.17]
+        # need_angles = [0.005, -81.87, 1.04, 13.37, 0.05, 7.17]
         logger.debug(f"{need_angles=}")
 
         joint_commands = []
@@ -466,9 +468,9 @@ class Manipulator:
                 joint.current_joint_angle = 0.000000000001  # TODO: разобраться с необходимостью данных операций upd. Влияет на знак в углах эйлера, пока не понятно как
         transform_matrix = self.matrix_create()
         p = self.take_coordinate(transform_matrix, 0, 6)
-        p = [p[0]*1000, p[1]*1000, p[2]*1000] # перевод
+        p = [p[0] * 1000, p[1] * 1000, p[2] * 1000]  # перевод
         angles = self.angular_Euler_calculation(self.matrix_dot(transform_matrix, 0, 6))  # theta, fi, psi
-        angles = [angles[0]/pi*180, angles[1]/pi*180, angles[2]/pi*180]
+        angles = [angles[0] / pi * 180, angles[1] / pi * 180, angles[2] / pi * 180]
 
         self.position.change(*list(p), *angles)
 
@@ -674,7 +676,8 @@ class Manipulator:
                 joint.current_joint_angle = 0.00001
 
     def inverse(self, xyz_angles, left_or_right):
-        xyz_new = [xyz_angles[0]/1000, xyz_angles[1]/1000, xyz_angles[2]/1000, xyz_angles[0]*pi/180, xyz_angles[1]*pi/180, xyz_angles[2]*pi/180]
+        xyz_new = [xyz_angles[0] / 1000, xyz_angles[1] / 1000, xyz_angles[2] / 1000, xyz_angles[0] * pi / 180,
+                   xyz_angles[1] * pi / 180, xyz_angles[2] * pi / 180]
         return self.calculate_inverse_kinematic_problem(xyz_new, left_or_right)
 
     def check_all(self):
@@ -695,12 +698,12 @@ class Manipulator:
         # global J5out
 
         # global J6out
-        J1AngCur = self.joints[0]
-        J2AngCur = self.joints[1]
-        J3AngCur = self.joints[2]
-        J4AngCur = self.joints[3]
-        J5AngCur = self.joints[4]
-        J6AngCur = self.joints[5]
+        J1AngCur = self.joints[0].current_joint_angle
+        J2AngCur = self.joints[1].current_joint_angle
+        J3AngCur = self.joints[2].current_joint_angle
+        J4AngCur = self.joints[3].current_joint_angle
+        J5AngCur = self.joints[4].current_joint_angle
+        J6AngCur = self.joints[5].current_joint_angle
         if J1AngCur == 0:
             J1AngCur = .0001
         if J2AngCur == 0:
@@ -1125,11 +1128,14 @@ class Manipulator:
         J5out = Q8
         J6out = Q9
         return J1out, J2out, J3out, J4out, J5out, J6out
+
     def print(self):
-        logger.debug(f"x = {self.position.x} y = {self.position.y} z = {self.position.z} theta = {self.position.theta} phi = {self.position.phi} psi = {self.position.psi}")
-        logger.debug(f"x_m = {self.position.x_m} y_m = {self.position.y_m} z_m = {self.position.z_m} theta_m = {self.position.theta_rad} phi_m = {self.position.phi_rad} psi_m = {self.position.psi_rad}")
+        logger.debug(
+            f"x = {self.position.x} y = {self.position.y} z = {self.position.z} theta = {self.position.theta} phi = {self.position.phi} psi = {self.position.psi}")
+        logger.debug(
+            f"x_m = {self.position.x_m} y_m = {self.position.y_m} z_m = {self.position.z_m} theta_m = {self.position.theta_rad} phi_m = {self.position.phi_rad} psi_m = {self.position.psi_rad}")
         for i in range(6):
-            logger.debug(f"joint number {i+1} have angle = {self.joints[i].current_joint_angle}")
+            logger.debug(f"joint number {i + 1} have angle = {self.joints[i].current_joint_angle}")
 
     def calculate_direct_kinematics_problem2(self):
         # XcurPos = self.position.x
@@ -1150,25 +1156,60 @@ class Manipulator:
         # global J5AngCur
         # global J6AngCur
         # global WC
-        J1AngCur = self.joints[0]
-        J2AngCur = self.joints[1]
-        J3AngCur = self.joints[2]
-        J4AngCur = self.joints[3]
-        J5AngCur = self.joints[4]
-        J6AngCur = self.joints[5]
-
+        DH2 = {
+            'DH_r_1': -90.0,
+            'DH_r_2': 0,
+            'DH_r_3': 90,
+            'DH_r_4': -90,
+            'DH_r_5': 90,
+            'DH_r_6': 0,
+            'DH_a_1': 64.2,
+            'DH_a_2': 305.0,
+            'DH_a_3': 0,
+            'DH_a_4': 0,
+            'DH_a_5': 0,
+            'DH_a_6': 0,
+            'DH_d_1': 169.77,
+            'DH_d_2': 0,
+            'DH_d_3': 0,
+            'DH_d_4': -222.63,
+            'DH_d_5': 0,
+            'DH_d_6': -36.25,
+            'DH_t_1': 0.0,
+            'DH_t_2': 0.0,
+            'DH_t_3': -90.0,
+            'DH_t_4': 0.0,
+            'DH_t_5': 0.0,
+            'DH_t_6': 180.0}
+        J1AngCur = self.joints[0].current_joint_angle
+        J2AngCur = self.joints[1].current_joint_angle
+        J3AngCur = self.joints[2].current_joint_angle
+        J4AngCur = self.joints[3].current_joint_angle
+        J5AngCur = self.joints[4].current_joint_angle
+        J6AngCur = self.joints[5].current_joint_angle
+        # need_angles = (
+        # 37.31264459234135, -112.01600336272531, 106.48952963361333, 143.03703145029735, 56.77692331934787,
+        # -119.2673452127536)
         # Set Wrist Config
         if J5AngCur > 0:
-            WC = "F"
+            self.WC = "F"
         else:
-            WC = "N"
+            self.WC = "N"
         # CONVERT TO RADIANS
-        C4 = math.radians(float(J1AngCur) + DEFAULT_SETTINGS['DH_t_1'])
-        C5 = math.radians(float(J2AngCur) + DEFAULT_SETTINGS['DH_t_2'])
-        C6 = math.radians(float(J3AngCur) + DEFAULT_SETTINGS['DH_t_3'])
-        C7 = math.radians(float(J4AngCur) + DEFAULT_SETTINGS['DH_t_4'])
-        C8 = math.radians(float(J5AngCur) + DEFAULT_SETTINGS['DH_t_5'])
-        C9 = math.radians(float(J6AngCur) + DEFAULT_SETTINGS['DH_t_6'])
+
+        #logger.debug(DH2['DH_t_1'])
+        DH_t_1 = 0.0
+        DH_t_2 = 0.0
+        DH_t_3 = -90.0
+        DH_t_4 = 0.0
+        DH_t_5 = 0.0
+        DH_t_6 = 180.0
+        C4 = math.radians(float(J1AngCur) + DH_t_1)
+        C5 = math.radians(float(J2AngCur) + DH_t_2)
+        C6 = math.radians(float(J3AngCur) + DH_t_3)
+        C7 = math.radians(float(J4AngCur) + DH_t_4)
+        C8 = math.radians(float(J5AngCur) + DH_t_5)
+        C9 = math.radians(float(J6AngCur) + DH_t_6)
         # DH TABLE
         C13 = C4
         C14 = C5
@@ -1176,24 +1217,24 @@ class Manipulator:
         C16 = C7
         C17 = C8
         C18 = C9
-        D13 = math.radians(DEFAULT_SETTINGS['DH_r_1'])
-        D14 = math.radians(DEFAULT_SETTINGS['DH_r_2'])
-        D15 = math.radians(DEFAULT_SETTINGS['DH_r_3'])
-        D16 = math.radians(DEFAULT_SETTINGS['DH_r_4'])
-        D17 = math.radians(DEFAULT_SETTINGS['DH_r_5'])
-        D18 = math.radians(DEFAULT_SETTINGS['DH_r_6'])
-        E13 = DEFAULT_SETTINGS['DH_d_1']
-        E14 = DEFAULT_SETTINGS['DH_d_2']
-        E15 = DEFAULT_SETTINGS['DH_d_3']
-        E16 = DEFAULT_SETTINGS['DH_d_4']
-        E17 = DEFAULT_SETTINGS['DH_d_5']
-        E18 = DEFAULT_SETTINGS['DH_d_6']
-        F13 = DEFAULT_SETTINGS['DH_a_1']
-        F14 = DEFAULT_SETTINGS['DH_a_2']
-        F15 = DEFAULT_SETTINGS['DH_a_3']
-        F16 = DEFAULT_SETTINGS['DH_a_4']
-        F17 = DEFAULT_SETTINGS['DH_a_5']
-        F18 = DEFAULT_SETTINGS['DH_a_6']
+        D13 = math.radians(DH2['DH_r_1'])
+        D14 = math.radians(DH2['DH_r_2'])
+        D15 = math.radians(DH2['DH_r_3'])
+        D16 = math.radians(DH2['DH_r_4'])
+        D17 = math.radians(DH2['DH_r_5'])
+        D18 = math.radians(DH2['DH_r_6'])
+        E13 = DH2['DH_d_1']
+        E14 = DH2['DH_d_2']
+        E15 = DH2['DH_d_3']
+        E16 = DH2['DH_d_4']
+        E17 = DH2['DH_d_5']
+        E18 = DH2['DH_d_6']
+        F13 = DH2['DH_a_1']
+        F14 = DH2['DH_a_2']
+        F15 = DH2['DH_a_3']
+        F16 = DH2['DH_a_4']
+        F17 = DH2['DH_a_5']
+        F18 = DH2['DH_a_6']
         # WORK FRAME INPUT
         H13 = float(0)
         H14 = float(0)
@@ -1488,7 +1529,7 @@ class Manipulator:
         RycurPos = H8
         RzcurPos = H7
         self.position.change(XcurPos, YcurPos, ZcurPos, RxcurPos, RycurPos, RzcurPos)
-        #return [XcurPos, YcurPos, ZcurPos, RxcurPos, RycurPos, RzcurPos]
+        # return [XcurPos, YcurPos, ZcurPos, RxcurPos, RycurPos, RzcurPos]
         # XcurEntryField.delete(0, 'end')
         # XcurEntryField.insert(0, str(XcurPos))
         # YcurEntryField.delete(0, 'end')
@@ -1501,4 +1542,3 @@ class Manipulator:
         # RycurEntryField.insert(0, str(RycurPos))
         # RzcurEntryField.delete(0, 'end')
         # RzcurEntryField.insert(0, str(RzcurPos))
-

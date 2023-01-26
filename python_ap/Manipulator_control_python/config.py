@@ -62,10 +62,8 @@ DEFAULT_SETTINGS = {
     'TF_rx': 0,
     'TF_ry': 0,
     'TF_rz': 0,
-
     'fine_cal_position': 'Move J [*] X) 293.565 Y) 357.208 Z) 87.278 W) -114.73 P) 179.577 R) -113.577 T) 201.5 '
                          'Speed-5 Ad 15 As 10 Dd 20 Ds 5 $F',
-
     'DH_r_1': -90.0,
     'DH_r_2': 0,
     'DH_r_3': 90,
@@ -84,13 +82,12 @@ DEFAULT_SETTINGS = {
     'DH_d_4': -222.63,
     'DH_d_5': 0,
     'DH_d_6': -36.25,
-    'DH_t_1': 0,
-    'DH_t_2': 0,
-    'DH_t_3': -90,
-    'DH_t_4': 0,
-    'DH_t_5': 0,
-    'DH_t_6': 180,
-
+    'DH_t_1': 0.0,
+    'DH_t_2': 0.0,
+    'DH_t_3': -90.0,
+    'DH_t_4': 0.0,
+    'DH_t_5': 0.0,
+    'DH_t_6': 180.0,
     'calibration_direction': '001001',
     'motor_direction': '000000',
     'TrackcurPos': 201.5,

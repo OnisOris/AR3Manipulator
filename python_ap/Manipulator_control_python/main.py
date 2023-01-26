@@ -1,6 +1,6 @@
 import math
 import time
-
+from config import DEFAULT_SETTINGS
 from manipulator import Manipulator, Position
 import numpy as np
 from math import (pi)
@@ -22,17 +22,24 @@ position = [68.944, 0.0, 733.607, -90.0, 1.05, -90.0]
 # robot.joints[4].current_joint_angle = -104.15
 # robot.joints[5].current_joint_angle = 148.1
 # robot.print()
-# robot.auto_calibrate()
-# robot.print()
+#print(DEFAULT_SETTINGS['DH_t_1'])
+robot.auto_calibrate()
+robot.print()
+#robot.print()
 # logger.debug(robot.joints[0].current_joint_angle)
 # robot.jog_joint(robot.joints[0], 30, 40)
 # logger.debug(robot.joints[0].current_joint_angle)
-# robot.jog_joint(robot.joints[1], 30, 30)
-# robot.jog_joint(robot.joints[2], 30, 30)
-#robot.jog_joint(robot.joints[3], 30, 30)
+#robot.jog_joint(robot.joints[1], 30, 30)
+#robot.jog_joint(robot.joints[2], 30, 30)
+#robot.jog_joint(robot.joints[0], 30, 90)
+pos = robot.print()
+position = [161.29, 15.261, 713.24, -81.03, 44.104, -88.58]
 
-#position = [0.157, 458.89, 545, -179, 63, -90.0]
-#robot.move_xyz(position)
+robot.move_xyz(position)
+
+position = [50, 15.261, 713.24, -81.03, 44.104, -88.58]
+
+robot.move_xyz(position)
 #print(position+['F', 0, 0, 0, 0, 0, 0])
 
 # logger.debug(
