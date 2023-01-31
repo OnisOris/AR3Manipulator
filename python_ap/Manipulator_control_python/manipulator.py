@@ -31,7 +31,7 @@ class Position:
     phi_rad = phi * pi / 180  # rad
     psi: float = 0  # grad
     psi_rad = psi * pi / 180  # rad
-
+    speed: int = 30
     def change(self, x, y, z, theta, phi, psi):
         self.x = x
         self.y = y
@@ -39,6 +39,8 @@ class Position:
         self.theta = theta
         self.phi = phi
         self.psi = psi
+    def change_speed(self, speed):
+        self.speed = speed
 
 
 class Manipulator:
@@ -160,7 +162,8 @@ class Manipulator:
 
         if not axis_limit:
             joint.current_joint_angle = round(
-                joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step))
+                joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step)) # Jjogneg J1AngCur = round(J1NegAngLim + (J1StepCur * J1DegPerStep), 2)
+                                                                                                          # J1AngCur = round(J1NegAngLim + (J1StepCur * J1DegPerStep), 2)
             self.save_data()
             # print(f"Новые координаты: {np.round(np.dot(self.calculate_direct_kinematics_problem(), 180 / pi), 3)}")
             j_jog_steps = int(round(j_jog_steps))
@@ -173,10 +176,11 @@ class Manipulator:
             logger.debug(f"Write to teensy: {command.strip()}")
             self.serial_teensy.flushInput()
             time.sleep(.2)
+            self.calculate_direct_kinematics_problem2()
             robot_code = str(self.serial_teensy.readline())
             # TODO: разобраться с pcode
-            if robot_code[2:4] == "01":
-                self.apply_robot_calibration(robot_code)
+            #if robot_code[2:4] == "01":
+               # self.apply_robot_calibration(robot_code)
 
     def apply_robot_calibration(self, robot_code: str):
         faults = [
@@ -448,7 +452,7 @@ class Manipulator:
                 joint_commands.append(f"{joint.get_name_joint()}{direction}{steps}")
                 joint_angels.append(f"{chr(letter + i)}{joint.current_joint_step}")
 
-            commandCalc = f"MJ{''.join(joint_commands)}S{30}G{15}H{10}I{20}K{5}\n"
+            commandCalc = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
             logger.debug(commandCalc.strip())
             self.teensy_push(commandCalc)
         self.calculate_direct_kinematics_problem2()
@@ -1530,15 +1534,21 @@ class Manipulator:
         RzcurPos = H7
         self.position.change(XcurPos, YcurPos, ZcurPos, RxcurPos, RycurPos, RzcurPos)
         # return [XcurPos, YcurPos, ZcurPos, RxcurPos, RycurPos, RzcurPos]
-        # XcurEntryField.delete(0, 'end')
-        # XcurEntryField.insert(0, str(XcurPos))
-        # YcurEntryField.delete(0, 'end')
-        # YcurEntryField.insert(0, str(YcurPos))
-        # ZcurEntryField.delete(0, 'end')
-        # ZcurEntryField.insert(0, str(ZcurPos))
-        # RxcurEntryField.delete(0, 'end')
-        # RxcurEntryField.insert(0, str(RxcurPos))
-        # RycurEntryField.delete(0, 'end')
-        # RycurEntryField.insert(0, str(RycurPos))
-        # RzcurEntryField.delete(0, 'end')
-        # RzcurEntryField.insert(0, str(RzcurPos))
+    def move_x (self, lenth_x):
+        position = [self.position.x+lenth_x, self.position.y, self.position.z, self.position.theta, self.position.phi, self.position.psi]
+        self.move_xyz(position)
+    def move_y (self, lenth_y):
+        position = [self.position.x, self.position.y+lenth_y, self.position.z, self.position.theta, self.position.phi, self.position.psi]
+        self.move_xyz(position)
+    def move_z (self, lenth_z):
+        position = [self.position.x, self.position.y, self.position.z + lenth_z, self.position.theta, self.position.phi, self.position.psi]
+        self.move_xyz(position)
+    def move_theta (self, lenth_theta):
+        position = [self.position.x, self.position.y, self.position.z, self.position.theta+lenth_theta, self.position.phi, self.position.psi]
+        self.move_xyz(position)
+    def move_phi (self, lenth_phi):
+        position = [self.position.x, self.position.y, self.position.z, self.position.theta, self.position.phi+lenth_phi, self.position.psi]
+        self.move_xyz(position)
+    def move_psi (self, lenth_psi):
+        position = [self.position.x, self.position.y, self.position.z, self.position.theta, self.position.phi, self.position.psi+lenth_psi]
+        self.move_xyz(position)

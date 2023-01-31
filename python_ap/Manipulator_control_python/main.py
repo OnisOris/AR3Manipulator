@@ -24,7 +24,7 @@ position = [68.944, 0.0, 733.607, -90.0, 1.05, -90.0]
 # robot.print()
 #print(DEFAULT_SETTINGS['DH_t_1'])
 robot.auto_calibrate()
-robot.print()
+#robot.print()
 #robot.print()
 # logger.debug(robot.joints[0].current_joint_angle)
 # robot.jog_joint(robot.joints[0], 30, 40)
@@ -32,14 +32,39 @@ robot.print()
 #robot.jog_joint(robot.joints[1], 30, 30)
 #robot.jog_joint(robot.joints[2], 30, 30)
 #robot.jog_joint(robot.joints[0], 30, 90)
-pos = robot.print()
-position = [161.29, 15.261, 713.24, -81.03, 44.104, -88.58]
+#pos = robot.print()
+#position = [161.29, 15.261, 713.24, -81.03, 44.104, -88.58]
 
-robot.move_xyz(position)
+# robot.move_xyz(position)
+robot.print()
+# time.sleep(2)
+# position = [299.45, 5.4327, 329.97, -98.96, 74, -82.43]
+#
+# robot.print()
+# print("----------------------------")
+# robot.jog_joint(robot.joints[0], "30", 90)
+# robot.jog_joint(robot.joints[1], "30", 30)
+# robot.jog_joint(robot.joints[2], "30", 30)
+# robot.print()
+print("----------------------------")
+# robot.move_z(20)
+# robot.print()
+# print("----------------------------")
+#  need_angles=(90.0, -54.4326657322994, 14.139687841074192, -1.0585094009335781e-14, 11.29297789122522, 0.0)
+# 2023-01-31 16:01:58.363 | DEBUG    | manipulator:move_xyz:456 - MJA10B1309C0943D00E1247F10S30G15H10I20K5
+# 2023-01-31 16:01:58.364 | DEBUG    | manipulator:print:1137 - x = 0.15468345111515427 y = 443.13542747242195 z = 579.3600934009104 theta = -179.98 phi = 61.019999999999996 psi = -90.00000000000001
+robot.move_xyz([-1.337, 399.893, 329.457, -179.98, 74.28, -100.059])
+robot.move_z(-30)
+robot.print()
 
-position = [50, 15.261, 713.24, -81.03, 44.104, -88.58]
+#robot.jog_joint(robot.joints[0], "30", 45)
+#robot.move_xyz(position)
+# robot.move_x(40)
+# robot.print
 
-robot.move_xyz(position)
+# position = [50, 15.261, 713.24, -81.03, 44.104, -88.58]
+#
+# robot.move_xyz(position)
 #print(position+['F', 0, 0, 0, 0, 0, 0])
 
 # logger.debug(
