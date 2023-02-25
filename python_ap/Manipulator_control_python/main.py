@@ -5,6 +5,7 @@ from manipulator import Manipulator, Position
 import numpy as np
 from math import (pi)
 from loguru import logger
+from pynput import keyboard
 
 ############## Настройки программы ##############
 baud = 115200
@@ -22,7 +23,7 @@ while (True):
         elif(inp ==  "calib"):
             robot.auto_calibrate()
         elif (inp_c[0] == "jog"):
-            if (int(inp_c[1]) >= 0 and int(inp_c[1]) <= 5):
+            if (int(inp_c[1]) >= 1 and int(inp_c[1]) <= 6):
                 robot.jog_joint(robot.joints[int(inp_c[1])-1], 20,  int(inp_c[2]))
             else:
                 print("Звеньев все 6, введите число от 1 до 6")
@@ -43,13 +44,9 @@ while (True):
                 print(command)
                 robot.arduino_push(command)
         elif (inp_c[0] == "grab"):
-                command = f"SV{0}P{180}\n"
-                print(command)
-                robot.arduino_push(command)
+                robot.grab()
         elif (inp_c[0] == "absolve"):
-                command = f"SV{0}P{1}\n"
-                print(command)
-                robot.arduino_push(command)
+                robot.absolve()
         else:
             print("Неправильная команда")
     except ValueError:

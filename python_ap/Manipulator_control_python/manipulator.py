@@ -93,6 +93,7 @@ class Manipulator:
     }
 
     def __init__(self, teensy_port, arduino_port, baud):
+        self.delta = 10
         self.WC = 'F'
         self.is_connected = False
         self.ACC_dur = 15
@@ -127,6 +128,7 @@ class Manipulator:
 
     def jog_joint(self, joint: Joint, speed, degrees):  # degrees - то, на сколько градусов мы двигаем Джойнт
         # Задача направления движения джойнта и отлов ошибок
+        logger.debug("jog_joint")
         if not type(degrees) is int:
             raise TypeError("Only integer are allowed")
 
@@ -173,7 +175,7 @@ class Manipulator:
                       f"X{self.joints[3].current_joint_step}Y{self.joints[4].current_joint_step}" \
                       f"Z{self.joints[5].current_joint_step}\n"
             self.teensy_push(command)
-            logger.debug(f"Write to teensy: {command.strip()}")
+            #logger.debug(f"Write to teensy: {command.strip()}")
             self.serial_teensy.flushInput()
             time.sleep(.2)
             self.calculate_direct_kinematics_problem2()
@@ -217,9 +219,11 @@ class Manipulator:
         self.save_data()
 
     def teensy_push(self, command):
+        logger.debug("")
         self.serial_teensy.write(command.encode())
 
     def arduino_push(self, command):
+        logger.debug("")
         self.serial_arduino.write(command.encode())
 
     def save_data(self):
@@ -1552,3 +1556,11 @@ class Manipulator:
     def move_psi (self, lenth_psi):
         position = [self.position.x, self.position.y, self.position.z, self.position.theta, self.position.phi, self.position.psi+lenth_psi]
         self.move_xyz(position)
+    def grab (self):
+        command = f"SV{0}P{135}\n"
+        logger.debug(command)
+        self.arduino_push(command)
+    def absolve(self):
+        command = f"SV{0}P{1}\n"
+        logger.debug(command)
+        self.arduino_push(command)

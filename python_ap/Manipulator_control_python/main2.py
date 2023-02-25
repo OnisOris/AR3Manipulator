@@ -1,87 +1,82 @@
+import math
 import time
-
-from manipulator import Manipulator
+from config import DEFAULT_SETTINGS
+from manipulator import Manipulator, Position
 import numpy as np
 from math import (pi)
 from loguru import logger
+from pynput import keyboard
+#import keyboard
 
 ############## Настройки программы ##############
-baud = 115200
-teensy_port = 8
-arduino_port = 7
+baud = 1152001
+teensy_port = 3
+arduino_port = 4
 ################# Конец настроек #################
-
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
-# robot.calibrate('111111', '40')
-[-170.0, -129.6, 143.7, -164.5, -104.15, 148.1]
-robot.joints[0].current_joint_angle = 170
-robot.joints[1].current_joint_angle = -129.6
-robot.joints[2].current_joint_angle = 143.7
-robot.joints[3].current_joint_angle = -164.5
-robot.joints[4].current_joint_angle = -104.15
-robot.joints[5].current_joint_angle = 148.1
+print ("Начало")
+def on_press(key):
+    try:
+        print(f'Нажата буквенно-цифровая клавиша: {key.char}')
+    except AttributeError:
+        print(f'Нажата специальная клавиша: {key}')
 
-coordinate_array = np.array(robot.take_coordinate(robot.matrix_create(), 0, 6))
-coordinate_array = np.array([[coordinate_array[0]], [coordinate_array[1]], [coordinate_array[2]]])
-#
-print(f'coordinate_array = {coordinate_array}')
-#
-print(f'Координаты нужных углов {np.round(np.dot(robot.calculate_inverse_kinematic_problem(coordinate_array), 180/pi), 3)}')
-inverse = robot.calculate_inverse_kinematic_problem(coordinate_array)
-robot.joints[0].current_joint_angle = inverse[0]*180/pi
-robot.joints[1].current_joint_angle = inverse[1]*180/pi
-robot.joints[2].current_joint_angle = inverse[2]*180/pi
-robot.joints[3].current_joint_angle = inverse[3]*180/pi
-robot.joints[4].current_joint_angle = inverse[4]*180/pi
-robot.joints[5].current_joint_angle = inverse[5]*180/pi
-print(f'Координаты 2: {robot.calculate_direct_kinematics_problem()}')
-#print(robot.angular_Euler_calculation(robot.matrix_dot_all(robot.matrix_create())))
-# print("-------------------------------------------------------------------")
-#print(np.around(robot.matrix_create()[5], 5))
-#print(robot.matrix_dot_all(robot.matrix_create()))
-# robot.jog_joint(robot.joints[0], 10, 10)
-# for i in range(5):
-#     robot.jog_joint(robot.joints[i], 10, 10)
-#robot.calibrate("111111", "40")
+def on_release(key):
+    #grad = 10
+    print(f'{key} released')
+    key2 = f'{key}'
+    if key == keyboard.Key.ctrl_l:
+        robot.delta -=3
+        print(f'Значение перемещения {robot.delta}')
+    if key == keyboard.Key.shift:
+        robot.delta +=3
+        print(f'Значение перемещения {robot.delta}')
+    if key == keyboard.Key.left:
+        robot.jog_joint(robot.joints[0], 20, -robot.delta)
+    if key == keyboard.Key.right:
+        robot.jog_joint(robot.joints[0], 20, robot.delta)
+    if key == keyboard.Key.page_up:
+        robot.jog_joint(robot.joints[1], 20, -robot.delta)
+    if key == keyboard.Key.page_down:
+        robot.jog_joint(robot.joints[1], 20, robot.delta)
+    if key == keyboard.Key.up:
+        robot.jog_joint(robot.joints[2], 20, -robot.delta)
+    if key == keyboard.Key.down:
+        robot.jog_joint(robot.joints[2], 20, robot.delta)
+    if key2 == '<100>':
+        robot.jog_joint(robot.joints[3], 20, robot.delta)
+    if key2 == '<102>':
+        robot.jog_joint(robot.joints[3], 20, -robot.delta)
+    if key2 == '<98>':
+        robot.jog_joint(robot.joints[4], 20, robot.delta)
+    if key2 == '<104>':
+        robot.jog_joint(robot.joints[4], 20, -robot.delta)
+    if key2 == '<103>':
+        robot.jog_joint(robot.joints[5], 20, robot.delta)
+    if key2 == '<97>':
+        robot.jog_joint(robot.joints[5], 20, -robot.delta)
+    if key == keyboard.Key.f1:
+        robot.auto_calibrate()
+    if key == keyboard.Key.space:
+        robot.grab()
+    if key == keyboard.Key.alt_l:
+        robot.absolve()
+    if key == keyboard.Key.f2:
+        robot.print()
+    if key == keyboard.Key.esc:
+        robot.finish()
+        # Возврат False - остановит слушатель
+        return False
 
-#robot.calibrate("000001", "40")
-#
-# robot.jog_joint(robot.joints[1], 10, 10)
-# robot.calibrate("010000", "20")
-#
-# robot.jog_joint(robot.joints[2], 10, 10)
-# robot.calibrate("001000", "20")
-#
-# robot.jog_joint(robot.joints[3], 10, 10)
-# robot.calibrate("000100", "20")
-#
-# robot.jog_joint(robot.joints[4], 10, 10)
-# robot.calibrate("000010", "20")
-#
-# robot.jog_joint(robot.joints[5], 10, 20)
-# robot.calibrate("000001", "20")
+# блок `with` слушает события до выхода
+# до остановки слушателя
+with keyboard.Listener(
+        on_press=on_press,
+        on_release=on_release) as listener:
+    listener.join()
 
-#robot.auto_calibrate()
-#robot.jog_joint(robot.joints[2], 20, 20)
-
-# robot.jog_joint(robot.joints[0], 20, 180)
-# robot.jog_joint(robot.joints[1], 20, 45)
-# robot.jog_joint(robot.joints[2], 20, -150)
-# robot.jog_joint(robot.joints[3], 20, 180)
-# robot.jog_joint(robot.joints[4], 20, 90)
-# robot.jog_joint(robot.joints[5], 20, 180)
-
-
-
-# print(robot.matrix_dot_all(robot.matrix_create()))
-# print("-----------------")
-# print(robot.matrix_dot(robot.matrix_create(), 0, 6))
-
-# print(robot.matrix_dot_all(robot.matrix_create()))
-# print("-----------------")
-#print(robot.calculate_direct_kinematics_problem())
-
-robot.finish()
-
-
-
+#...или неблокирующим способом:
+listener = keyboard.Listener(
+    on_press=on_press,
+    on_release=on_release)
+listener.start()
