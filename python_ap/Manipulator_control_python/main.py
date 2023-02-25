@@ -38,11 +38,13 @@ while (True):
                 robot.move_y(int(inp_c[1]))
         elif (inp_c[0] == "move_z"):
                 robot.move_z(int(inp_c[1]))
+        elif (inp_c[0] == "servo"):
+                command = f"SV{1}P{inp_c[1]}\n"
+                robot.arduino_push(command)
         else:
             print("Неправильная команда")
     except ValueError:
         print("Из этого положения нельзя передвинуться в новое")
-
 
 
 #position = [68.944, 0.0, 733.607, -90.0, 1.05, -90.0]
