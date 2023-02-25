@@ -8,8 +8,8 @@ from loguru import logger
 
 ############## Настройки программы ##############
 baud = 115200
-teensy_port = 6
-arduino_port = 7
+teensy_port = 3
+arduino_port = 4
 ################# Конец настроек #################
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
@@ -39,7 +39,16 @@ while (True):
         elif (inp_c[0] == "move_z"):
                 robot.move_z(int(inp_c[1]))
         elif (inp_c[0] == "servo"):
-                command = f"SV{1}P{inp_c[1]}\n"
+                command = f"SV{0}P{inp_c[1]}\n"
+                print(command)
+                robot.arduino_push(command)
+        elif (inp_c[0] == "grab"):
+                command = f"SV{0}P{180}\n"
+                print(command)
+                robot.arduino_push(command)
+        elif (inp_c[0] == "absolve"):
+                command = f"SV{0}P{1}\n"
+                print(command)
                 robot.arduino_push(command)
         else:
             print("Неправильная команда")
