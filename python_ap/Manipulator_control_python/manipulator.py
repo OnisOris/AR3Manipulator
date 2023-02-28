@@ -126,6 +126,31 @@ class Manipulator:
     def move_to(self, command):
         self.serial_teensy.write(command.encode())
 
+    def calc_angle(self, angle, joint: Joint):
+        if(angle > joint.positive_angle_limit or angle < joint.negative_angle_limit):
+            logger.error("Угол превышает лимит")
+            return None
+        # Расчет направления двигателей
+        x = joint.current_joint_angle
+        if (angle > x):
+            drive_direction = 1
+        if (angle < x):
+            drive_direction = 0
+        if (angle == x):
+            logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
+
+        arc = abs(angle-x)
+        logger.debug(arc)
+        logger.debug(drive_direction)
+        return arc
+    def jog_joints(self,joint: Joint, degrees):
+        self.jog_joint(joint, self.position.speed, self.calc_angle(degrees, joint))
+        # command = f"MJ{joint.get_name_joint()}{drive_direction}{j_jog_steps}S{self.speed}G{self.ACC_dur}H{self.ACC_spd}" \
+        #           f"I{self.DEC_dur}K{self.DEC_spd}U{self.joints[0].current_joint_step}" \
+        #           f"V{self.joints[1].current_joint_step}W{self.joints[2].current_joint_step}" \
+        #           f"X{self.joints[3].current_joint_step}Y{self.joints[4].current_joint_step}" \
+        #           f"Z{self.joints[5].current_joint_step}\n"
+
     def jog_joint(self, joint: Joint, speed, degrees):  # degrees - то, на сколько градусов мы двигаем Джойнт
         # Задача направления движения джойнта и отлов ошибок
         logger.debug("jog_joint")
@@ -378,7 +403,7 @@ class Manipulator:
 
     def auto_calibrate(self):
         self.calibrate('111111', '40')
-        cd = self.get_calibration_drive_auto()
+        cd = self.get_calibration_drive_auto() # направление калибровки
         command = f"MJA{cd[0]}500B{cd[1]}500C{cd[2]}500D{cd[3]}1300E{cd[4]}500F{cd[5]}0" \
                   f"S15G10H10I10K10\n"
         self.teensy_push(command)
@@ -435,7 +460,7 @@ class Manipulator:
         joint_commands = []
         joint_angels = []
         letter = 85
-        if not self._check_axis_limit(need_angles):
+        if not self._check_axis_limit(need_angles): #
             for i, (joint, angle) in enumerate(zip(self.joints, need_angles)):
                 if float(angle) >= float(joint.current_joint_angle):
                     direction = 1 if joint.motor_direction == 0 else 0
@@ -462,7 +487,7 @@ class Manipulator:
         self.calculate_direct_kinematics_problem2()
         self.save_data()
 
-    def _check_axis_limit(self, angles) -> bool:
+    def _check_axis_limit(self, angles) -> bool: # TODO: проверить, высчитывается ли модуль растояния
         axis_limit = False
         for joint, angle in zip(self.joints, angles):
             if angle < joint.negative_angle_limit or angle > joint.positive_angle_limit:
