@@ -33,6 +33,7 @@ while (True):
             print("move_z [расстояние в мм] - передвижение по оси z в [мм]\n ")
             print("calib - автокалибровка\n ")
             print("jog [номер джойнта 1-6]\n ")
+            robot.info()
         elif (inp_c[0] == "move_x"):
                 robot.move_x(int(inp_c[1]))
         elif (inp_c[0] == "move_y"):
@@ -47,6 +48,10 @@ while (True):
                 robot.grab()
         elif (inp_c[0] == "absolve"):
                 robot.absolve()
+        elif (inp_c[0] == "move"):
+                robot.jog_joint_c(robot.joints[int(inp_c[1])-1], int(inp_c[2]))
+        elif (inp_c[0] == "print"):
+                robot.print()
         else:
             print("Неправильная команда")
     except ValueError:

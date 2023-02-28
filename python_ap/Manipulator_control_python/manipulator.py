@@ -126,10 +126,16 @@ class Manipulator:
     def move_to(self, command):
         self.serial_teensy.write(command.encode())
 
+    def info(self):
+        for i in range(6):
+            print(f"Отрицательный лимит {i+1}го звена: {DEFAULT_SETTINGS[f'J{i+1}_negative_angle_limit']} \n"
+                  f"Положительный лимит {i+1}го звена: {DEFAULT_SETTINGS[f'J{i+1}_positive_angle_limit']} \n"
+                  f"\n")
+
+
     def calc_angle(self, angle, joint: Joint):
         if(angle > joint.positive_angle_limit or angle < joint.negative_angle_limit):
             logger.error("Угол превышает лимит")
-            return None
         # Расчет направления двигателей
         x = joint.current_joint_angle
         if (angle > x):
@@ -138,13 +144,30 @@ class Manipulator:
             drive_direction = 0
         if (angle == x):
             logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
+            drive_direction = None
 
         arc = abs(angle-x)
         logger.debug(arc)
         logger.debug(drive_direction)
-        return arc
-    def jog_joints(self,joint: Joint, degrees):
-        self.jog_joint(joint, self.position.speed, self.calc_angle(degrees, joint))
+        return [arc, drive_direction]
+    def jog_joint_c(self,joint: Joint, degrees):
+        d = self.calc_angle(degrees, joint)
+        logger.debug(f"angle, d = {d}")
+        if(d[1] == 1):
+            self.jog_joint(joint, self.position.speed, d[0])
+        if(d[1] == 0):
+            self.jog_joint(joint, self.position.speed, -d[0])
+
+    def jog_joints   (self, joint: Joint, degrees):
+        d = self.calc_angle(degrees, joint)
+        logger.debug(f"angle, d = {d}")
+        if (d[1] == 1):
+            self.jog_joint(joint, self.position.speed, d[0])
+        if (d[1] == 0):
+            self.jog_joint(joint, self.position.speed, -d[0])
+            # j_jog_steps = int(
+            #     degrees / joint.degrees_per_step)
+        #self.jog_joint(joint, self.position.speed, d)
         # command = f"MJ{joint.get_name_joint()}{drive_direction}{j_jog_steps}S{self.speed}G{self.ACC_dur}H{self.ACC_spd}" \
         #           f"I{self.DEC_dur}K{self.DEC_spd}U{self.joints[0].current_joint_step}" \
         #           f"V{self.joints[1].current_joint_step}W{self.joints[2].current_joint_step}" \
@@ -154,6 +177,7 @@ class Manipulator:
     def jog_joint(self, joint: Joint, speed, degrees):  # degrees - то, на сколько градусов мы двигаем Джойнт
         # Задача направления движения джойнта и отлов ошибок
         logger.debug("jog_joint")
+        degrees = int(degrees)
         if not type(degrees) is int:
             raise TypeError("Only integer are allowed")
 

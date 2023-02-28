@@ -14,8 +14,10 @@ teensy_port = 3
 arduino_port = 4
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
-robot.joints[0].current_joint_angle = 10
-robot.jog_joints(robot.joints[0], 30)
+# robot.auto_calibrate()
+# #robot.joints[0].current_joint_angle = 10
+# robot.jog_joints(robot.joints[0], 90)
+robot.info()
 
 # robot.calc_angle(100.5, robot.joints[0])
 # robot.auto_calibrate()
