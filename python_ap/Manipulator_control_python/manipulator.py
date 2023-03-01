@@ -158,13 +158,34 @@ class Manipulator:
         if(d[1] == 0):
             self.jog_joint(joint, self.position.speed, -d[0])
 
-    def jog_joints   (self, joint: Joint, degrees):
-        d = self.calc_angle(degrees, joint)
-        logger.debug(f"angle, d = {d}")
-        if (d[1] == 1):
-            self.jog_joint(joint, self.position.speed, d[0])
-        if (d[1] == 0):
-            self.jog_joint(joint, self.position.speed, -d[0])
+    def jog_joints(self, degrees):
+        joint_commands = []
+        for i in range(6):
+            d = self.calc_angle(degrees[i], self.joints[i])
+            arc = d[0]
+            direction = d[1]
+            j_jog_steps = int(degrees[i] / self.joints[i].degrees_per_step)
+            joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
+
+        command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
+        logger.debug(f'joint_commands = {joint_commands}')
+        logger.debug(f' command  = {command}')
+        self.teensy_push(command)
+        #
+        # joints_current_steps = [f"{joint.get_name_joint()}{joint.current_joint_step}" for joint in self.joints]
+        # command = f'LM{"".join(joints_current_steps)}\n'
+        #
+        # command = f"MJ{joint[0].get_name_joint()}{drive_direction}{j_jog_steps}S{speed}G{self.ACC_dur}H{self.ACC_spd}" \
+        #           f"I{self.DEC_dur}K{self.DEC_spd}U{self.joints[0].current_joint_step}" \
+        #           f"V{self.joints[1].current_joint_step}W{self.joints[2].current_joint_step}" \
+        #           f"X{self.joints[3].current_joint_step}Y{self.joints[4].current_joint_step}" \
+        #           f"Z{self.joints[5].current_joint_step}\n"
+        # d = self.calc_angle(degrees, joint)
+        # logger.debug(f"angle, d = {d}")
+        # if (d[1] == 1):
+        #     self.jog_joint(joint, self.position.speed, d[0])
+        # if (d[1] == 0):
+        #     self.jog_joint(joint, self.position.speed, -d[0])
             # j_jog_steps = int(
             #     degrees / joint.degrees_per_step)
         #self.jog_joint(joint, self.position.speed, d)
@@ -173,6 +194,7 @@ class Manipulator:
         #           f"V{self.joints[1].current_joint_step}W{self.joints[2].current_joint_step}" \
         #           f"X{self.joints[3].current_joint_step}Y{self.joints[4].current_joint_step}" \
         #           f"Z{self.joints[5].current_joint_step}\n"
+        #MJA17555B12199C07981D17028E12280F03160S30G15H10I20K5
 
     def jog_joint(self, joint: Joint, speed, degrees):  # degrees - то, на сколько градусов мы двигаем Джойнт
         # Задача направления движения джойнта и отлов ошибок
@@ -229,7 +251,6 @@ class Manipulator:
             time.sleep(.2)
             self.calculate_direct_kinematics_problem2()
             robot_code = str(self.serial_teensy.readline())
-            # TODO: разобраться с pcode
             #if robot_code[2:4] == "01":
                # self.apply_robot_calibration(robot_code)
 

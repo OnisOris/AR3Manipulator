@@ -52,6 +52,8 @@ while (True):
                 robot.jog_joint_c(robot.joints[int(inp_c[1])-1], int(inp_c[2]))
         elif (inp_c[0] == "print"):
                 robot.print()
+        elif (inp_c[0] == "move_all"):
+                robot.jog_joints([inp_c[1], inp_c[2], inp_c[3], inp_c[4], inp_c[5], inp_c[6]])
         else:
             print("Неправильная команда")
     except ValueError:
