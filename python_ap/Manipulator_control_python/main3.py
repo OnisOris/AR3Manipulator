@@ -15,7 +15,14 @@ arduino_port = 4
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 robot.auto_calibrate()
-robot.jog_joints([170, 0, 143, 164, 104, 148])
+robot.print()
+robot.jog_joints([180, 0, 0, 0, 0, 70])
+robot.print()
+robot.visual()
+# logger.debug(robot.joints[1].current_joint_angle)
+# robot.jog_joints([-50, robot.joints[1].current_joint_angle, robot.joints[2].current_joint_angle, robot.joints[3].current_joint_angle, robot.joints[4].current_joint_angle, robot.joints[5].current_joint_angle])
+# robot.jog_joints([170, 0, 143, 164, 104, 148])
+
 # Отрицательный лимит 1го звена: -170
 # Положительный лимит 1го звена: 170
 #

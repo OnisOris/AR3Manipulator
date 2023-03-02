@@ -9,6 +9,9 @@ from loguru import logger
 from config import DEFAULT_SETTINGS
 from joint import Joint
 from dataclasses import dataclass
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
 
 
 # from parse import parse
@@ -144,7 +147,7 @@ class Manipulator:
             drive_direction = 0
         if (angle == x):
             logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
-            drive_direction = None
+            drive_direction = 1
 
         arc = abs(angle-x)
         logger.debug(arc)
@@ -164,13 +167,15 @@ class Manipulator:
             d = self.calc_angle(degrees[i], self.joints[i])
             arc = d[0]
             direction = d[1]
-            j_jog_steps = int(degrees[i] / self.joints[i].degrees_per_step)
+            j_jog_steps = abs(int(degrees[i] / self.joints[i].degrees_per_step))
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
+            self.joints[i].current_joint_angle = degrees[i]
 
         command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
         logger.debug(f'joint_commands = {joint_commands}')
         logger.debug(f' command  = {command}')
         self.teensy_push(command)
+
         #
         # joints_current_steps = [f"{joint.get_name_joint()}{joint.current_joint_step}" for joint in self.joints]
         # command = f'LM{"".join(joints_current_steps)}\n'
@@ -195,7 +200,42 @@ class Manipulator:
         #           f"X{self.joints[3].current_joint_step}Y{self.joints[4].current_joint_step}" \
         #           f"Z{self.joints[5].current_joint_step}\n"
         #MJA17555B12199C07981D17028E12280F03160S30G15H10I20K5
+    def visual(self):
+        T = np.array(self.matrix_create())
+        #T = T.round(3)
+        logger.debug(T)
+        joint_1 = self.take_coordinate(T, 0, 1)
+        joint_2 = self.take_coordinate(T, 0, 2)
+        joint_3 = self.take_coordinate(T, 0, 3)
+        joint_4 = self.take_coordinate(T, 0, 4)
+        joint_5 = self.take_coordinate(T, 0, 5)
+        joint_6 = self.take_coordinate(T, 0, 6)
+        logger.debug(joint_1)
+        logger.debug(joint_2)
+        logger.debug(joint_3)
+        logger.debug(joint_4)
+        logger.debug(joint_5)
+        logger.debug(joint_6)
+      #  logger.debug(self.matrix_dot(T, 0, 2))
 
+        vectors = np.array([np.hstack([joint_2, joint_3])])
+        soa = np.array([np.hstack([[0,0,0], joint_1]), np.hstack([joint_1, joint_2]), np.hstack([joint_2, joint_4]), np.hstack([joint_4, joint_6])])# np.hstack([joint_2, joint_4]), np.hstack([joint_4, joint_6])])
+        logger.debug(np.array([np.hstack([joint_1, joint_2])]))
+        logger.debug(soa)
+        X, Y, Z, U, V, W = zip(*soa)
+        #logger.debug(f'{X[1]} ----- {X[2]}')
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.quiver(X, Y, Z, U, V, W,  color = '#dd113360')
+        ax.set_xlim([-0.9, 0.9])
+        ax.set_ylim([-0.9, 0.9])
+        ax.set_zlim([0, 1])
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+
+        soa = np.array([np.hstack([[0, 0, 0], joint_1]), np.hstack([joint_1, joint_2])])
+        plt.show()
     def jog_joint(self, joint: Joint, speed, degrees):  # degrees - то, на сколько градусов мы двигаем Джойнт
         # Задача направления движения джойнта и отлов ошибок
         logger.debug("jog_joint")
