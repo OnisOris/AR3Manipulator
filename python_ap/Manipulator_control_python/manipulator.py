@@ -12,7 +12,7 @@ from dataclasses import dataclass
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
-
+import plotly.graph_objects as go
 
 # from parse import parse
 
@@ -137,6 +137,7 @@ class Manipulator:
 
 
     def calc_angle(self, angle, joint: Joint):
+        angle = float(angle)
         if(angle > joint.positive_angle_limit or angle < joint.negative_angle_limit):
             logger.error("Угол превышает лимит")
         # Расчет направления двигателей
@@ -162,6 +163,7 @@ class Manipulator:
             self.jog_joint(joint, self.position.speed, -d[0])
 
     def jog_joints(self, degrees):
+        degrees = [float(x) for x in degrees]
         joint_commands = []
         for i in range(6):
             d = self.calc_angle(degrees[i], self.joints[i])
@@ -220,8 +222,8 @@ class Manipulator:
 
         vectors = np.array([np.hstack([joint_2, joint_3])])
         soa = np.array([np.hstack([[0,0,0], joint_1]), np.hstack([joint_1, joint_2]), np.hstack([joint_2, joint_4]), np.hstack([joint_4, joint_6])])# np.hstack([joint_2, joint_4]), np.hstack([joint_4, joint_6])])
-        logger.debug(np.array([np.hstack([joint_1, joint_2])]))
-        logger.debug(soa)
+        # logger.debug(np.array([np.hstack([joint_1, joint_2])]))
+        # logger.debug(soa)
         X, Y, Z, U, V, W = zip(*soa)
         #logger.debug(f'{X[1]} ----- {X[2]}')
         fig = plt.figure()
@@ -236,6 +238,55 @@ class Manipulator:
 
         soa = np.array([np.hstack([[0, 0, 0], joint_1]), np.hstack([joint_1, joint_2])])
         plt.show()
+
+    def visual2(self):
+        T = np.array(self.matrix_create())
+        # T = T.round(3)
+        logger.debug(T)
+        joint_1 = self.take_coordinate(T, 0, 1)
+        joint_2 = self.take_coordinate(T, 0, 2)
+        joint_3 = self.take_coordinate(T, 0, 3)
+        joint_4 = self.take_coordinate(T, 0, 4)
+        joint_5 = self.take_coordinate(T, 0, 5)
+        joint_6 = self.take_coordinate(T, 0, 6)
+        logger.debug(joint_1)
+        logger.debug(joint_2)
+        logger.debug(joint_3)
+        logger.debug(joint_4)
+        logger.debug(joint_5)
+        logger.debug(joint_6)
+
+        # soa = np.array([np.hstack([[0, 0, 0], joint_1]), np.hstack([joint_1, joint_2]), np.hstack([joint_2, joint_4]),
+        #                 np.hstack([joint_4, joint_6])])
+        soa = np.array([np.hstack([[0, 0, 0], joint_1]), np.hstack([joint_1, joint_2])])
+        soa = np.array([np.hstack([[0, 0, 0], joint_1])])
+        soa = soa.round(4)
+        X, Y, Z, U, V, W = zip(*soa)
+
+        X = [0]
+        Y = [0]
+        Z = [0]
+        U = [-pi/2]
+        V = [0]
+        W = [0]
+        logger.debug(f'x = {X}  y =  {Y} z = {Z} u = {U}  v =  {V} W = {W}')
+        fig = go.Figure(data=go.Cone(
+            x=X,
+            y=Y,
+            z=Z,
+            u=U,
+            v=V,
+            w=W,
+            sizemode="absolute",
+            sizeref=2,
+            anchor="tip"))
+
+        fig.update_layout(
+            scene=dict(domain_x=[0, 1],
+                       camera_eye=dict(x=-1.57, y=1.36, z=0.58)))
+
+        fig.show()
+
     def jog_joint(self, joint: Joint, speed, degrees):  # degrees - то, на сколько градусов мы двигаем Джойнт
         # Задача направления движения джойнта и отлов ошибок
         logger.debug("jog_joint")

@@ -9,7 +9,7 @@ from pynput import keyboard
 
 ############## Настройки программы ##############
 baud = 115200
-teensy_port = 3
+teensy_port = 5
 arduino_port = 4
 ################# Конец настроек #################
 
