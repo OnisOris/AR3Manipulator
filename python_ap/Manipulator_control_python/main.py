@@ -9,8 +9,8 @@ from pynput import keyboard
 
 ############## Настройки программы ##############
 baud = 115200
-teensy_port = 5
-arduino_port = 4
+teensy_port = 3
+arduino_port = 6
 ################# Конец настроек #################
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
@@ -59,7 +59,7 @@ while (True):
     except ValueError:
         print("Из этого положения нельзя передвинуться в новое")
 
-
+# move_all 68 -34 87 0 -60 0
 #position = [68.944, 0.0, 733.607, -90.0, 1.05, -90.0]
 #logger.debug(robot.calculate_direct_kinematics_problem2(8.391331785652922e-05, -89.99514827193128, 1.0385111119522037, 0.013274359904453395, 0.006637160177256035, -0.01319046058787876))
 # robot.joints[0].current_joint_angle = 170

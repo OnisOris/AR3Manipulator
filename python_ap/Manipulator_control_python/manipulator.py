@@ -142,6 +142,7 @@ class Manipulator:
             logger.error("Угол превышает лимит")
         # Расчет направления двигателей
         x = joint.current_joint_angle
+        arc = abs(angle-x)
         if (angle > x):
             drive_direction = 1
         if (angle < x):
@@ -149,8 +150,8 @@ class Manipulator:
         if (angle == x):
             logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
             drive_direction = 1
+            arc = 0
 
-        arc = abs(angle-x)
         logger.debug(arc)
         logger.debug(drive_direction)
         return [arc, drive_direction]
@@ -169,7 +170,7 @@ class Manipulator:
             d = self.calc_angle(degrees[i], self.joints[i])
             arc = d[0]
             direction = d[1]
-            j_jog_steps = abs(int(degrees[i] / self.joints[i].degrees_per_step))
+            j_jog_steps = abs(int(arc / self.joints[i].degrees_per_step))
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
             self.joints[i].current_joint_angle = degrees[i]
 
