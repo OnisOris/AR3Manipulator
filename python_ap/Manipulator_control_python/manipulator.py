@@ -96,6 +96,7 @@ class Manipulator:
     }
 
     def __init__(self, teensy_port, arduino_port, baud):
+        self.points = ""
         self.delta = 10
         self.WC = 'F'
         self.is_connected = False
@@ -122,7 +123,41 @@ class Manipulator:
     def finish(self):
         self.serial_teensy.close()
         self.serial_arduino.close()
+    def write_point(self, string):
+        file = open("points.txt", "w")
+        file.write(string)
+        # file.write(f"{self.joints[0].current_joint_angle}, {self.joints[1].current_joint_angle}, {self.joints[2].current_joint_angle}, {self.joints[3].current_joint_angle}, {self.joints[4].current_joint_angle}, {self.joints[5].current_joint_angle}\n")
+        file.close()
+    def read_points(self):
+        file = open("points.txt", "r")
+        commands = file.read()
+        command = commands.split("\n")
+        # logger.debug(command)
+        # mas = [[],[]]
+        for i in range(len(command)):
+            angles = command[i].split(",")
+            mas = []
+           # print(angles)
+            for g in range(len(angles)):
+                 mas.append(float(angles[g]))
+            logger.debug(mas)
+            logger.debug("---------------------------------------------------")
+            self.jog_joints(mas)
+            time.sleep(3)
+        # mas2 = [[], []]
+        # for l in range(len(mas)):
+        #     for o in range(int(len(mas)/6)):
+        #         self.jog_joints()
+        # lenth = int(len(mas)/6)
+        # for o in range(lenth):
+        #     for l in range(6):
+        #         mas2.append(mas[l + o * 6])
+        # print(mas)
+        # logger.debug(mas2)
+        #self.jog_joints()
 
+
+        #print(command)
     def get_joints_angles(self) -> list:
         return [joint.current_joint_angle for joint in self.joints]
 
@@ -291,8 +326,9 @@ class Manipulator:
         fig.show()
 
     def display(vector_matrix):
-        ijk1 = np.array([[0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, -1]])
-        R1 = Rotation.from_rotvec(ijk[0][3:6]).as_matrix()
+        d = 3
+        # ijk1 = np.array([[0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, -1]])
+        # R1 = Rotation.from_rotvec(ijk[0][3:6]).as_matrix()
         # MRot = Rotation.from_euler('x', [np.pi / 2]).as_matrix()
         # a = np.array([0, 0, 1])
         # rot_a = np.squeeze(np.matmul(a, MRot))

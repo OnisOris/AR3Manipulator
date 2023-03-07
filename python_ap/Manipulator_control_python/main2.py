@@ -63,6 +63,10 @@ def on_release(key):
         robot.absolve()
     if key == keyboard.Key.f2:
         robot.print()
+    if key == keyboard.Key.f3:
+        robot.points += f"{robot.joints[0].current_joint_angle},{robot.joints[1].current_joint_angle},{robot.joints[2].current_joint_angle},{robot.joints[3].current_joint_angle},{robot.joints[4].current_joint_angle},{robot.joints[5].current_joint_angle}\n"
+    if key == keyboard.Key.f4:
+        robot.write_point(robot.points)
     if key == keyboard.Key.esc:
         robot.finish()
         # Возврат False - остановит слушатель

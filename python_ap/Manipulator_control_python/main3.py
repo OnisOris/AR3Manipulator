@@ -10,17 +10,19 @@ from pynput import keyboard
 
 ############## Настройки программы ##############
 baud = 1152001
-teensy_port = 5
-arduino_port = 4
+teensy_port = 3
+arduino_port = 6
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 robot.auto_calibrate()
-robot.print()
-robot.jog_joints([90, -34, 87, 0, -60, 0])
-massive = robot.calculate_direct_kinematics_problem()
-logger.debug(massive)
+time.sleep(5)
 # robot.print()
-robot.visual2()
+# robot.jog_joints([90, -34, 87, 0, -60, 0])
+robot.read_points()
+# massive = robot.calculate_direct_kinematics_problem()
+# logger.debug(massive)
+# robot.print()
+# robot.visual2()
 #robot.visual2()
 # logger.debug(robot.joints[1].current_joint_angle)
 # robot.jog_joints([-50, robot.joints[1].current_joint_angle, robot.joints[2].current_joint_angle, robot.joints[3].current_joint_angle, robot.joints[4].current_joint_angle, robot.joints[5].current_joint_angle])

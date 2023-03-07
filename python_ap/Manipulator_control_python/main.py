@@ -54,6 +54,10 @@ while (True):
                 robot.print()
         elif (inp_c[0] == "move_all"):
                 robot.jog_joints([inp_c[1], inp_c[2], inp_c[3], inp_c[4], inp_c[5], inp_c[6]])
+        elif (inp_c[0] == "add"):
+                robot.points += f"{robot.joints[0].current_joint_angle},{robot.joints[1].current_joint_angle},{robot.joints[2].current_joint_angle},{robot.joints[3].current_joint_angle},{robot.joints[4].current_joint_angle},{robot.joints[5].current_joint_angle}\n"
+        elif (inp_c[0] == "save"):
+                robot.write_point(robot.points)
         else:
             print("Неправильная команда")
     except ValueError:
