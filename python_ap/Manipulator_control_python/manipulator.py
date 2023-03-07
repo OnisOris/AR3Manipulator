@@ -1,7 +1,7 @@
 import time
 import math
 from math import (sin, cos, pi, atan2, sqrt, radians)
-
+from scipy.spatial.transform import Rotation
 import numpy as np
 import serial
 from loguru import logger
@@ -224,9 +224,11 @@ class Manipulator:
         vectors = np.array([np.hstack([joint_2, joint_3])])
         soa = np.array([np.hstack([[0,0,0], joint_1]), np.hstack([joint_1, joint_2]), np.hstack([joint_2, joint_4]), np.hstack([joint_4, joint_6])])# np.hstack([joint_2, joint_4]), np.hstack([joint_4, joint_6])])
         # logger.debug(np.array([np.hstack([joint_1, joint_2])]))
+        soa = np.array([np.hstack([[0, 0, 0], joint_1]), np.hstack([joint_1, [0.11877144, 0.29396963, 0.34032384]]), np.hstack([[0.11877144, 0.29396963, 0.34032384], joint_4]),
+                        np.hstack([joint_4, joint_6])])
         # logger.debug(soa)
         X, Y, Z, U, V, W = zip(*soa)
-        #logger.debug(f'{X[1]} ----- {X[2]}')
+        logger.debug(f'{X[1]} ----- {X[2]}')
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         ax.quiver(X, Y, Z, U, V, W,  color = '#dd113360')
@@ -288,6 +290,26 @@ class Manipulator:
 
         fig.show()
 
+    def display(vector_matrix):
+        ijk1 = np.array([[0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, -1]])
+        R1 = Rotation.from_rotvec(ijk[0][3:6]).as_matrix()
+        # MRot = Rotation.from_euler('x', [np.pi / 2]).as_matrix()
+        # a = np.array([0, 0, 1])
+        # rot_a = np.squeeze(np.matmul(a, MRot))
+        # vector = np.array([np.hstack([[0, 0, 0], rot_a])])
+        # vector
+        #
+        # X, Y, Z, U, V, W = zip(*vector_matrix)
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # ax.quiver(X, Y, Z, U, V, W, color='#dd113360')
+        # ax.set_xlim([-0.9, 0.9])
+        # ax.set_ylim([-0.9, 0.9])
+        # ax.set_zlim([0, 1])
+        # ax.set_xlabel('x')
+        # ax.set_ylabel('y')
+        # ax.set_zlabel('z')
+        # plt.show()
     def jog_joint(self, joint: Joint, speed, degrees):  # degrees - то, на сколько градусов мы двигаем Джойнт
         # Задача направления движения джойнта и отлов ошибок
         logger.debug("jog_joint")
@@ -632,7 +654,7 @@ class Manipulator:
                 axis_limit = True
         return axis_limit
 
-    def calculate_direct_kinematics_problem(self) -> None:
+    def calculate_direct_kinematics_problem(self):
         for joint in self.joints:
             if joint.get_current_joint_angle() == 0:
                 joint.current_joint_angle = 0.000000000001  # TODO: разобраться с необходимостью данных операций upd. Влияет на знак в углах эйлера, пока не понятно как
@@ -643,6 +665,7 @@ class Manipulator:
         angles = [angles[0] / pi * 180, angles[1] / pi * 180, angles[2] / pi * 180]
 
         self.position.change(*list(p), *angles)
+        return [*list(p), *angles]
 
     def matrix_create(self):
         cja = [float(self.joints[0].current_joint_angle), float(self.joints[1].current_joint_angle),
