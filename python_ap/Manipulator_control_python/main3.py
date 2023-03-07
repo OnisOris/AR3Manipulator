@@ -9,13 +9,14 @@ from pynput import keyboard
 #import keyboard
 
 ############## Настройки программы ##############
-baud = 1152001
+baud = 115200
 teensy_port = 3
 arduino_port = 6
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 robot.auto_calibrate()
-time.sleep(5)
+time.sleep(3)
+robot.time_sleep = 1
 # robot.print()
 # robot.jog_joints([90, -34, 87, 0, -60, 0])
 robot.read_points()

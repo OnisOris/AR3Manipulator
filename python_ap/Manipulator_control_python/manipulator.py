@@ -96,6 +96,7 @@ class Manipulator:
     }
 
     def __init__(self, teensy_port, arduino_port, baud):
+        self.time_sleep = 3
         self.points = ""
         self.delta = 10
         self.WC = 'F'
@@ -134,16 +135,26 @@ class Manipulator:
         command = commands.split("\n")
         # logger.debug(command)
         # mas = [[],[]]
+
         for i in range(len(command)):
+            #if (command[i] == "grab"):
             angles = command[i].split(",")
             mas = []
-           # print(angles)
             for g in range(len(angles)):
-                 mas.append(float(angles[g]))
-            logger.debug(mas)
-            logger.debug("---------------------------------------------------")
-            self.jog_joints(mas)
-            time.sleep(3)
+                 if(angles[g] == "grab"):
+                     logger.debug("grab------------------------------------->")
+                     self.grab()
+                 elif(angles[g] == "abs"):
+                     logger.debug("absolve------------------------------------->")
+                     self.absolve()
+                 elif(angles[g] == "sleep"):
+                     logger.debug("sleep------------------------------------->")
+                     time.sleep(float(angles[g+1]))
+                     self.absolve()
+                 else:
+                     mas.append(float(angles[g]))
+            if (len(mas) > 2):
+                self.jog_joints(mas)
         # mas2 = [[], []]
         # for l in range(len(mas)):
         #     for o in range(int(len(mas)/6)):
@@ -186,9 +197,9 @@ class Manipulator:
             logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
             drive_direction = 1
             arc = 0
-
-        logger.debug(arc)
-        logger.debug(drive_direction)
+        #
+        # logger.debug(arc)
+        # logger.debug(drive_direction)
         return [arc, drive_direction]
     def jog_joint_c(self,joint: Joint, degrees):
         d = self.calc_angle(degrees, joint)
@@ -199,6 +210,7 @@ class Manipulator:
             self.jog_joint(joint, self.position.speed, -d[0])
 
     def jog_joints(self, degrees):
+        #time.sleep(self.time_sleep)
         degrees = [float(x) for x in degrees]
         joint_commands = []
         for i in range(6):
@@ -208,10 +220,9 @@ class Manipulator:
             j_jog_steps = abs(int(arc / self.joints[i].degrees_per_step))
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
             self.joints[i].current_joint_angle = degrees[i]
-
         command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
-        logger.debug(f'joint_commands = {joint_commands}')
-        logger.debug(f' command  = {command}')
+        # logger.debug(f'joint_commands = {joint_commands}')
+        # logger.debug(f' command  = {command}')
         self.teensy_push(command)
 
         #
