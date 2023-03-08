@@ -96,6 +96,7 @@ class Manipulator:
     }
 
     def __init__(self, teensy_port, arduino_port, baud):
+        self.ijk = np.array([])
         self.time_sleep = 3
         self.points = ""
         self.delta = 10
@@ -737,7 +738,6 @@ class Manipulator:
                  [0, sin(self.DH[f'alpha_{i + 1}']), cos(self.DH[f'alpha_{i + 1}']), self.DH[f'd_{i + 1}']],
                  [0, 0, 0, 1]]))
         return T
-
     def matrix_dot_all(self, array_matrix):
         T0_6 = ((((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(
             array_matrix[4])).dot(array_matrix[5])
@@ -1796,3 +1796,83 @@ class Manipulator:
         command = f"SV{0}P{1}\n"
         logger.debug(command)
         self.arduino_push(command)
+
+    def rotate_3(self, vectors, axis, angle):  # [[1, 0, 0], [0, 1, 0], [0, 0, -1]]
+        k = []
+        v_norm = axis / np.linalg.norm(axis)
+        R = Rotation.from_rotvec(angle * v_norm).as_matrix()
+        for i in range(3):
+            v = vectors[i]
+            k.append(np.dot(v, R))
+        return k
+
+    def display_axis(self, vector_matrix):
+        a = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+        b = vector_matrix
+        vec = np.hstack([a, b])
+        # vec = np.array([vec])
+        print(vec)
+        X, Y, Z, U, V, W = zip(*vec)
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.quiver(X[0], Y[0], Z[0], U[0], V[0], W[0], color='#fa0707')
+        ax.quiver(X[1], Y[1], Z[1], U[1], V[1], W[1], color='#25c710')
+        ax.quiver(X[2], Y[2], Z[2], U[2], V[2], W[2], color='#132ceb')
+        ax.set_xlim([-1, 1])
+        ax.set_ylim([-1, 1])
+        ax.set_zlim([-1, 1])
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+        plt.gca().invert_yaxis()
+        plt.show()
+    def display_axis2(self, vector_matrix):
+        a = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+        b = vector_matrix
+        vec = np.hstack([a, b])
+        # vec = np.array([vec])
+        print(vec)
+        X, Y, Z, U, V, W = zip(*vec)
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.quiver(X[0], Y[0], Z[0], U[0], V[0], W[0], color='#fa0707')
+        ax.quiver(X[1], Y[1], Z[1], U[1], V[1], W[1], color='#25c710')
+        ax.quiver(X[2], Y[2], Z[2], U[2], V[2], W[2], color='#132ceb')
+        ax.set_xlim([-1, 1])
+        ax.set_ylim([-1, 1])
+        ax.set_zlim([-1, 1])
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+        plt.gca()
+        plt.show()
+    def ijk_create(self):
+        # Архитектура: sysC = [point_zero, [v1], [v2], [v3]]
+        # matrix = [sysC1,..., sysC6]
+        point_zero = np.array([0,0,0])
+        ijk1 = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, -1]])  # ijk1 без поворота по оси z0
+
+        # logger.debug(vec)
+
+        # тут будут преобразования......
+
+        #итоговый массив
+        matrix = np.array([ijk1, ijk1, ijk1, ijk1, ijk1, ijk1])
+        logger.debug(matrix[0])
+    def Tcreate(self, ijk):
+        T = 1
+    def RXY_transform(self):
+        angles = [pi/2, pi/3, 0]
+        rotateX = np.array([[1, 0, 0],
+                            [0, np.cos(angles[0]), -np.sin(angles[0])],
+                            [0, np.sin(angles[0]), np.cos(angles[0])]])
+        rotateY = np.array([[np.cos(angles[1]), 0, np.sin(angles[1])],
+                            [0, 1, 0],
+                            [-np.sin(angles[1]), 0, np.cos(angles[1])]])
+        rotateZ = np.array([[np.cos(angles[2]), -np.sin(angles[2]), 0],
+                            [np.sin(angles[2]), np.cos(angles[2]), 0],
+                            [0, 0, 1]])
+        T = np.dot(rotateX, rotateY).dot(rotateZ)
+        return T
+
+
