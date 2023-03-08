@@ -1859,10 +1859,10 @@ class Manipulator:
         #итоговый массив
         matrix = np.array([ijk1, ijk1, ijk1, ijk1, ijk1, ijk1])
         logger.debug(matrix[0])
-    def Tcreate(self, ijk):
-        T = 1
-    def RXY_transform(self):
-        angles = [pi/2, pi/3, 0]
+    def Tcreate(self):
+        T1 = np.hstack([])
+    def RXY_transform(self, angles):
+        # angles = [pi/2, 0, 0]
         rotateX = np.array([[1, 0, 0],
                             [0, np.cos(angles[0]), -np.sin(angles[0])],
                             [0, np.sin(angles[0]), np.cos(angles[0])]])

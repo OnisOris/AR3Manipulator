@@ -15,5 +15,11 @@ ijk = np.array([[1, 0, 0], [0, 1, 0], [0, 0, -1]])
 #ijk = r.rotate_3(ijk, ijk[0], pi/3)
 r.display_axis(ijk)
 # print(r.RXY_transform())
-ijk2 = ijk.dot(r.RXY_transform())
+ijk2 = ijk.dot(r.RXY_transform([pi/2, pi, 0]))
+r.display_axis(ijk2)
+
+ijk2 = ijk2.dot(r.RXY_transform([0, -pi/2, 0]))
+r.display_axis(ijk2)
+
+ijk2 = ijk2.dot(r.RXY_transform([pi/2, pi, 0]))
 r.display_axis(ijk2)
