@@ -14,14 +14,15 @@ teensy_port = 3
 arduino_port = 6
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
-robot.auto_calibrate()
-time.sleep(3)
-robot.time_sleep = 1
-# robot.print()
-# robot.jog_joints([90, -34, 87, 0, -60, 0])
-robot.read_points()
+ang = np.degrees(robot.calculate_inverse_kinematic_problem([0.5, 0.1, 0.5], True))
+# robot.auto_calibrate()
+# time.sleep(3)
+# robot.time_sleep = 1
+# # robot.print()
+# # robot.jog_joints([90, -34, 87, 0, -60, 0])
+# robot.read_points()
 # massive = robot.calculate_direct_kinematics_problem()
-# logger.debug(massive)
+logger.debug(ang)
 # robot.print()
 # robot.visual2()
 #robot.visual2()
