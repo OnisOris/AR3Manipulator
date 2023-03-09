@@ -918,7 +918,7 @@ class Manipulator:
             Theta1 = atan2(yc, xc)
         else:
             Theta1 = atan2(xc, yc) + atan2(-sqrt(r ** 2 - d ** 2), -d)
-        cja = [Theta1, Theta2, Theta3]
+        cja = [Theta1, -Theta2, -Theta3]
         return cja
 
     def length_vector(self, point_A, point_B):
@@ -1853,12 +1853,12 @@ class Manipulator:
         plt.gca().invert_yaxis()
         plt.show()
     def display_axis2(self, vector_matrix):
-        a = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
-        b = vector_matrix
-        vec = np.hstack([a, b])
+        # a = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+        # b = vector_matrix
+        # vec = np.hstack([a, b])
         # vec = np.array([vec])
-        print(vec)
-        X, Y, Z, U, V, W = zip(*vec)
+        # print(vec)
+        X, Y, Z, U, V, W = zip(*vector_matrix)
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         ax.quiver(X[0], Y[0], Z[0], U[0], V[0], W[0], color='#fa0707')
