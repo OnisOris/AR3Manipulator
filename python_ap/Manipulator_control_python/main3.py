@@ -14,6 +14,8 @@ teensy_port = 3
 arduino_port = 6
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
+R = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 2]])
+logger.debug(R[2, 2])
 ang = np.degrees(robot.calculate_inverse_kinematic_problem([0.5, 0.1, 0.5], True))
 # robot.auto_calibrate()
 # time.sleep(3)

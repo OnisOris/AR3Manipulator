@@ -58,6 +58,13 @@ while (True):
                 robot.points += f"{robot.joints[0].current_joint_angle},{robot.joints[1].current_joint_angle},{robot.joints[2].current_joint_angle},{robot.joints[3].current_joint_angle},{robot.joints[4].current_joint_angle},{robot.joints[5].current_joint_angle}\n"
         elif (inp_c[0] == "save"):
                 robot.write_point(robot.points)
+        elif (inp_c[0] == "txmove"):
+            ang = np.degrees(robot.calculate_inverse_kinematic_problem(
+                [float(inp_c[1]), float(inp_c[2]), float(inp_c[3]), robot.joints[3].current_joint_angle,
+                 robot.joints[4].current_joint_angle, robot.joints[5].current_joint_angle], True))
+            robot.jog_joints(
+                [ang[0], ang[1], ang[2], robot.joints[3].current_joint_angle, robot.joints[4].current_joint_angle,
+                 robot.joints[5].current_joint_angle])
         else:
             print("Неправильная команда")
     except ValueError:

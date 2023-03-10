@@ -86,7 +86,7 @@ class Manipulator:
         'd_3': 0,
         'd_4': -0.22263,
         'd_5': 0,
-        'd_6': -0.03625,
+        'd_6': 0.03625,
         'displacement_theta_1': 0,
         'displacement_theta_2': 0,
         'displacement_theta_3': - pi / 2,
@@ -897,9 +897,12 @@ class Manipulator:
     def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi, left):
         #self.anti_zero()
         # Теперь делаем все по методе Спонга
-        xc = x_y_z_phi_theta_psi[0]
-        yc = x_y_z_phi_theta_psi[1]
-        zc = x_y_z_phi_theta_psi[2]
+        # Первые три джойнта
+        d6 = self.DH['d_6']
+        R = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])  # матрица поворота относительно глобальной системы координат
+        xc = x_y_z_phi_theta_psi[0]-d6*R[0, 2]
+        yc = x_y_z_phi_theta_psi[1]-d6*R[1, 2]
+        zc = x_y_z_phi_theta_psi[2]-d6*R[2, 2]
         d = 0.0642
         d1 = 0.16977
         a2 = 0.305
@@ -918,7 +921,20 @@ class Manipulator:
             Theta1 = atan2(yc, xc)
         else:
             Theta1 = atan2(xc, yc) + atan2(-sqrt(r ** 2 - d ** 2), -d)
-        cja = [Theta1, -Theta2, -Theta3]
+
+        # Сферическое запястье
+        T0_3 = self.matrix_create()[0:3]
+        logger.debug(T0_3)
+        R0_3 = np.dot(T0_3[0], T0_3[1]).dot(T0_3[2])  # TODO: проверить матрицу
+        logger.debug("------------------------------------------")
+        logger.debug(R0_3)
+        R0_3_T = np.transpose(R0_3[0:3, 0:3])
+        R3_6 = np.dot(R0_3_T, R)
+        logger.debug(R3_6)
+
+
+
+        cja = [Theta1, Theta2, -Theta3]
         return cja
 
     def length_vector(self, point_A, point_B):
@@ -1837,7 +1853,7 @@ class Manipulator:
         b = vector_matrix
         vec = np.hstack([a, b])
         # vec = np.array([vec])
-        print(vec)
+        #print(vec)
         X, Y, Z, U, V, W = zip(*vec)
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
@@ -1900,5 +1916,38 @@ class Manipulator:
                             [0, 0, 1]])
         T = np.dot(rotateX, rotateY).dot(rotateZ)
         return T
+    def RZYZ_transform(self, angles):
+        rotateZ = np.array([[np.cos(angles[0]), -np.sin(angles[0]), 0],
+                            [np.sin(angles[0]), np.cos(angles[0]), 0],
+                            [0, 0, 1]])
+        rotateY = np.array([[np.cos(angles[1]), 0, np.sin(angles[1])],
+                            [0, 1, 0],
+                            [-np.sin(angles[1]), 0, np.cos(angles[1])]])
+        rotateZ2 = np.array([[np.cos(angles[2]), -np.sin(angles[2]), 0],
+                            [np.sin(angles[2]), np.cos(angles[2]), 0],
+                            [0, 0, 1]])
+        T = np.dot(rotateZ, rotateY).dot(rotateZ2)
+        return T
+
+    def matrixRZYZ(self, angles_xyz):
+        angles_xyz = np.array(angles_xyz)
+        rotateZ = np.array([[np.cos(angles_xyz[0]), -np.sin(angles_xyz[0]), 0],
+                            [np.sin(angles_xyz[0]), np.cos(angles_xyz[0]), 0],
+                            [0, 0, 1]])
+        rotateY = np.array([[np.cos(angles_xyz[1]), 0, np.sin(angles_xyz[1])],
+                            [0, 1, 0],
+                            [-np.sin(angles_xyz[1]), 0, np.cos(angles_xyz[1])]])
+        rotateZ2 = np.array([[np.cos(angles_xyz[2]), -np.sin(angles_xyz[2]), 0],
+                            [np.sin(angles_xyz[2]), np.cos(angles_xyz[2]), 0],
+                            [0, 0, 1]])
+        T = np.dot(rotateZ, rotateY).dot(rotateZ2)
+        logger.debug(angles_xyz[3:6])
+        angles = np.array([angles_xyz[3:6]])
+        angles = angles.transpose()
+        print(angles)
+        logger.debug(angles)
+        matrix = np.hstack([T, angles])
+        T1 = np.vstack([matrix, [0, 0, 0, 1]])
+        logger.debug(T1)
 
 
