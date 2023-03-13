@@ -17,6 +17,6 @@ r = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 # matrix_r = Rotation.from_rotvec(pi/3 * v/np.linalg.norm(v)).as_matrix()
 ijk = np.array([[1, 0, 0], [0, 1, 0], [0, 0, -1]]) # 0
 r.display_axis(ijk)
-r.matrixRZYZ([0, 0, pi/3, 1, 1, 1])
+#r.matrixRZYZ([0, 0, pi/3, 1, 1, 1])
 # ijk = ijk.dot(r.RZYZ_transform([0, 0, pi/3]))
 # r.display_axis(ijk)

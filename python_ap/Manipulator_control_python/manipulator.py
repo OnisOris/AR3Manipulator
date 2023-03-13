@@ -47,7 +47,7 @@ class Position:
 
 
 class Manipulator:
-    # DH = {
+    # DH2 = {
     #     'a_1': 0.0642,
     #     'a_2': 0.305,
     #     'a_3': 0,
@@ -60,14 +60,40 @@ class Manipulator:
     #     'alpha_4': -pi / 2,
     #     'alpha_5': pi / 2,
     #     'alpha_6': 0,
-    #     'd_1': 0.16977,
+    #     'd_1': -0.16977,
     #     'd_2': 0,
     #     'd_3': 0,
     #     'd_4': 0.22263,
     #     'd_5': 0,
     #     'd_6': 0.03625,
     #     'displacement_theta_3': pi / 2
-    # }
+    # }    # DH = {
+    #     #     'a_1': 0.0642,
+    #     #     'a_2': 0.305,
+    #     #     'a_3': 0,
+    #     #     'a_4': 0,
+    #     #     'a_5': 0,
+    #     #     'a_6': 0,
+    #     #     'alpha_1': - pi / 2,
+    #     #     'alpha_2': 0,
+    #     #     'alpha_3': pi / 2,
+    #     #     'alpha_4': -pi / 2,
+    #     #     'alpha_5': pi / 2,
+    #     #     'alpha_6': 0,
+    #     #     'd_1': 0.16977,
+    #     #     'd_2': 0,
+    #     #     'd_3': 0,
+    #     #     'd_4': 0.22263,
+    #     #     'd_5': 0,
+    #     #     'd_6': 0.03625,
+    #     #     'displacement_theta_1': 0,
+    #     #     'displacement_theta_2': 0,
+    #     #     'displacement_theta_3': - pi / 2,
+    #     #     'displacement_theta_4': 0,
+    #     #     'displacement_theta_5': 0,
+    #     #     'displacement_theta_6': pi
+    #     # }
+
     DH = {
         'a_1': 0.0642,
         'a_2': 0.305,
@@ -75,27 +101,28 @@ class Manipulator:
         'a_4': 0,
         'a_5': 0,
         'a_6': 0,
-        'alpha_1': - pi / 2,
+        'alpha_1': pi / 2,
         'alpha_2': 0,
-        'alpha_3': pi / 2,
-        'alpha_4': -pi / 2,
-        'alpha_5': pi / 2,
+        'alpha_3': -pi / 2,
+        'alpha_4': pi / 2,
+        'alpha_5': -pi / 2,
         'alpha_6': 0,
         'd_1': 0.16977,
         'd_2': 0,
         'd_3': 0,
-        'd_4': -0.22263,
+        'd_4': 0.22263,
         'd_5': 0,
         'd_6': 0.03625,
         'displacement_theta_1': 0,
         'displacement_theta_2': 0,
-        'displacement_theta_3': - pi / 2,
+        'displacement_theta_3': 0,
         'displacement_theta_4': 0,
         'displacement_theta_5': 0,
-        'displacement_theta_6': pi
+        'displacement_theta_6': 0
     }
 
     def __init__(self, teensy_port, arduino_port, baud):
+        self.last_matrix = []
         self.ijk = np.array([])
         self.time_sleep = 3
         self.points = ""
@@ -737,6 +764,7 @@ class Manipulator:
                   self.DH[f'a_{i + 1}'] * sin(cja[i] + d)],
                  [0, sin(self.DH[f'alpha_{i + 1}']), cos(self.DH[f'alpha_{i + 1}']), self.DH[f'd_{i + 1}']],
                  [0, 0, 0, 1]]))
+        self.last_matrix = T
         return T
     def matrix_dot_all(self, array_matrix):
         T0_6 = ((((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(
@@ -1869,6 +1897,7 @@ class Manipulator:
         plt.gca().invert_yaxis()
         plt.show()
     def display_axis2(self, vector_matrix):
+
         # a = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
         # b = vector_matrix
         # vec = np.hstack([a, b])
