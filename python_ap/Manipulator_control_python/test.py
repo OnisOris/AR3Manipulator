@@ -16,7 +16,7 @@ arduino_port = 6
 r = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 r.print()
 r.joints[0].current_joint_angle = 0
-r.joints[1].current_joint_angle = 0
+r.joints[1].current_joint_angle = -90
 r.joints[2].current_joint_angle = 0
 r.joints[3].current_joint_angle = 0
 r.joints[4].current_joint_angle = 0
