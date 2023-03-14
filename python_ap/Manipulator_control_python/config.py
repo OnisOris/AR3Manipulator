@@ -4,12 +4,14 @@ DEFAULT_SETTINGS = {
     'J1_positive_angle_limit': 170,
     'J1_negative_angle_limit': -170,
     'J1_step_limit': 15110,
+    'J1_dir': 1,
 
     'J2_current_step': 2321,
     'J2_current_angle': -87.81,
     'J2_positive_angle_limit': 0,
     'J2_negative_angle_limit': -129.6,
     'J2_step_limit': 7198,
+    'J2_dir': 1,
 
     'J3_current_step': 3,
     'J3_current_angle': 1.05,
@@ -18,24 +20,28 @@ DEFAULT_SETTINGS = {
     'J3_negative_angle_limit': 1,
     'J3_step_limit': 7984,
     # 'J3_step_limit': 7984,
+    'J3_dir': 1,
 
     'J4_current_step': 7599,
     'J4_current_angle': 13.37,
     'J4_positive_angle_limit': 164.5,
     'J4_negative_angle_limit': -164.5,
     'J4_step_limit': 14056,
+    'J4_dir': 1,
 
     'J5_current_step': 2281,
     'J5_current_angle': 0.05,
-    'J5_positive_angle_limit': 104.15+90,
-    'J5_negative_angle_limit': -104.15+90,
+    'J5_positive_angle_limit': 194.15,
+    'J5_negative_angle_limit': 14.15,
     'J5_step_limit': 4560,
+    'J5_dir': 1,
 
     'J6_current_step': 3313,
     'J6_current_angle': 7.17,
     'J6_positive_angle_limit': 148.1,
     'J6_negative_angle_limit': -148.1,
     'J6_step_limit': 6320,
+    'J6_dir': 1,
 
     'program_name': "my_test_program",
 

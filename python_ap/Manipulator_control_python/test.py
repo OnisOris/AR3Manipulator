@@ -43,3 +43,5 @@ ijk = ijk.dot(m02[0:3, 0:3])
 print(ijk)
 
 r.display_axis(ijk)
+
+print(r.joints[1].motor_direction)

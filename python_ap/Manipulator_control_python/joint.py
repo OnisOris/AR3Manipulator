@@ -6,6 +6,7 @@ class Joint:
     def __init__(self, number_joint, positive_angle_limit, negative_angle_limit, step_limit):
         self.name_joint = None
         self.motor_direction = 0
+        self.motor_dir = 1 # позже нужно удалить
         self.number_joint = number_joint
         self.positive_angle_limit = float(positive_angle_limit)
         self.negative_angle_limit = float(negative_angle_limit)
