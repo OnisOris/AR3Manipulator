@@ -112,7 +112,7 @@ class Manipulator:
         'd_3': 0,
         'd_4': 0.22263,
         'd_5': 0,
-        'd_6': 0.03625,
+        'd_6': 0.125,  #0.03625,
         'displacement_theta_1': 0,
         'displacement_theta_2': 0,
         'displacement_theta_3': pi/2,
@@ -121,7 +121,7 @@ class Manipulator:
         'displacement_theta_6': 0
     }
 
-    def __init__(self, teensy_port, arduino_port, baud):
+    def __init__(self, teensy_port, arduino_port, baud): # theta = 89.999999999999 phi = -89.999999999999 psi = -179.999999999999
         self.last_matrix = []
         self.ijk = np.array([])
         self.time_sleep = 3
@@ -217,14 +217,24 @@ class Manipulator:
         # Расчет направления двигателей
         x = joint.current_joint_angle
         arc = abs(angle-x)
-        if (angle > x):
-            drive_direction = 1
-        if (angle < x):
-            drive_direction = 0
-        if (angle == x):
-            logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
-            drive_direction = 1
-            arc = 0
+        if (joint.motor_dir == 1):
+            if (angle > x):
+                drive_direction = 0
+            if (angle < x):
+                drive_direction = 1
+            if (angle == x):
+                logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
+                drive_direction = 1
+                arc = 0
+        if (joint.motor_dir == -1):
+            if (angle > x):
+                drive_direction = 1
+            if (angle < x):
+                drive_direction = 0
+            if (angle == x):
+                logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
+                drive_direction = 1
+                arc = 0
         #
         # logger.debug(arc)
         # logger.debug(drive_direction)
@@ -244,14 +254,18 @@ class Manipulator:
         for i in range(6):
             d = self.calc_angle(degrees[i], self.joints[i])
             arc = d[0]
-            direction = d[1]*self.joints[i].motor_dir
+            logger.debug(self.joints[i].motor_dir)
+            direction = d[1]#*self.joints[i].motor_dir
+            #logger.debug(direction)
             j_jog_steps = abs(int(arc / self.joints[i].degrees_per_step))
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
             self.joints[i].current_joint_angle = degrees[i]
         command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
         # logger.debug(f'joint_commands = {joint_commands}')
         # logger.debug(f' command  = {command}')
+        logger.debug(command)
         self.teensy_push(command)
+        self.calculate_direct_kinematics_problem()
 
         #
         # joints_current_steps = [f"{joint.get_name_joint()}{joint.current_joint_step}" for joint in self.joints]
@@ -478,7 +492,7 @@ class Manipulator:
         self.save_data()
 
     def teensy_push(self, command):
-        logger.debug("")
+        logger.debug(f'Teensy push {command}')
         self.serial_teensy.write(command.encode())
 
     def arduino_push(self, command):
@@ -616,11 +630,29 @@ class Manipulator:
             for joint, cd, axis in zip(self.joints, self.calibration_direction, axes):
                 if axis == '1':
                     if cd == '0':
-                        joint.current_joint_step = 0
-                        joint.current_joint_angle = joint.negative_angle_limit
+                        if(joint.motor_dir == 1 or joint.motor_dir == 2):
+                            joint.current_joint_step = 0
+                            joint.current_joint_angle = joint.positive_angle_limit
+                            logger.debug("------------loh1")
+                        # elif(joint.motor_dir == 2):
+                        #     d = 0
+                        else:
+                            joint.current_joint_step = joint.step_limit
+                            joint.current_joint_angle = joint.negative_angle_limit
+                            logger.debug("------------loh2")
+                        # joint.current_joint_angle = joint.negative_angle_limit
+                        logger.debug("------------lohCD0")
                     else:
-                        joint.current_joint_step = joint.step_limit
-                        joint.current_joint_angle = joint.positive_angle_limit
+                        if(joint.motor_dir == -1):
+                            joint.current_joint_step = joint.step_limit
+                            joint.current_joint_angle = joint.negative_angle_limit
+                            logger.debug("------------loh3")
+                        else:
+                            joint.current_joint_step = 0
+                            joint.current_joint_angle = joint.positive_angle_limit
+                            logger.debug("------------loh4")
+                        logger.debug("------------lohCDAnother")
+
             logger.success('CALIBRATION SUCCESSFUL')
         elif calibration_value == b'F':
             # calibration_status = 0
@@ -639,7 +671,7 @@ class Manipulator:
     def auto_calibrate(self):
         self.calibrate('111111', '40')
         cd = self.get_calibration_drive_auto() # направление калибровки
-        command = f"MJA{cd[0]}500B{cd[1]}500C{cd[2]}500D{cd[3]}1300E{cd[4]}500F{cd[5]}0" \
+        command = f"MJA{cd[0]}500B{cd[1]}500C{cd[2]}500D{cd[3]}500E{cd[4]}500F{cd[5]}0" \
                   f"S15G10H10I10K10\n"
         self.teensy_push(command)
         logger.debug(f"Write to teensy: {command.strip()}")
@@ -648,9 +680,12 @@ class Manipulator:
         self.calibrate('111111', '8')
         # TODO: узнать, что такое blockEncPosCal
         position = [68.944, 0.0, 733.607, -90.0, 1.05, -90.0]
-        logger.debug(DEFAULT_SETTINGS['DH_r_1'])
-        self.move_xyz(position)
-        # # blockEncPosCal = 1
+        # logger.debug(DEFAULT_SETTINGS['DH_r_1'])
+        angles = [-90, 90, 0, 0, 0, 0]
+        self.jog_joints(angles)
+        self.calculate_direct_kinematics_problem()
+        #self.move_xyz(position)
+        # # blockEncPosCal = 1  need_angles=(8.391331785652922e-05, -89.99514827193128, 1.0385111119522037, 0.013274359904453395, 0.006637160177256035, -0.01319046058787876)
         # calibration_axes = "111110"
         # speed = '40'
         # self.calibrate(calibration_axes, speed)
@@ -739,7 +774,6 @@ class Manipulator:
         p = [p[0] * 1000, p[1] * 1000, p[2] * 1000]  # перевод
         angles = self.angular_Euler_calculation(self.matrix_dot(transform_matrix, 0, 6))  # theta, fi, psi
         angles = [angles[0] / pi * 180, angles[1] / pi * 180, angles[2] / pi * 180]
-
         self.position.change(*list(p), *angles)
         return [*list(p), *angles]
 
@@ -826,30 +860,36 @@ class Manipulator:
         return matrix
 
     def angular_Euler_calculation(self, transform_matrix0_6):
-        # global theta, fi, psi
-        rotation_matrix = transform_matrix0_6[0:3, 0:3]
-        r3_3 = transform_matrix0_6[2, 2]
-        r2_3 = transform_matrix0_6[1, 2]
-        r1_3 = transform_matrix0_6[0, 2]
-        r3_2 = transform_matrix0_6[2, 1]
-        r3_1 = transform_matrix0_6[2, 0]
-        r1_1 = transform_matrix0_6[0, 0]
-        r2_1 = transform_matrix0_6[1, 0]
-        r1_2 = transform_matrix0_6[0, 1]
-        if r3_3 != 1 or -1:
-            theta = atan2(sqrt(1 - r3_3 ** 2), r3_3)
-            fi = atan2(r2_3, r1_3)
-            psi = atan2(r3_2, -r3_1)
-        if r3_3 == 1:
-            theta = 0
-            fi = atan2(r2_1, r1_1)
-            psi = 0
-        if r3_3 == -1:
-            theta = pi
-            fi = atan2(-r1_2, -r1_1)
-            psi = 0
-
-        return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат TODO: точно такой порядок углов???
+        # # global theta, fi, psi
+        rot = transform_matrix0_6[0:3, 0:3]
+        # r3_3 = transform_matrix0_6[2, 2]
+        # r2_3 = transform_matrix0_6[1, 2]
+        # r1_3 = transform_matrix0_6[0, 2]
+        # r3_2 = transform_matrix0_6[2, 1]
+        # r3_1 = transform_matrix0_6[2, 0]
+        # r1_1 = transform_matrix0_6[0, 0]
+        # r2_1 = transform_matrix0_6[1, 0]
+        # r1_2 = transform_matrix0_6[0, 1]
+        # if r3_3 != 1 or -1:
+        #     theta = atan2(sqrt(1 - r3_3 ** 2), r3_3)
+        #     fi = atan2(r2_3, r1_3)
+        #     psi = atan2(r3_2, -r3_1)
+        #
+        # if r3_3 == 1:
+        #     theta = 0
+        #     fi = atan2(r2_1, r1_1)
+        #     psi = 0
+        # if r3_3 == -1:
+        #     theta = pi
+        #     fi = atan2(-r1_2, -r1_1)
+        #     psi = 0
+        r = Rotation.from_matrix(rot)
+        quat = r.as_quat()
+        angles = self.euler_from_quaternion(quat[0], quat[1], quat[2], quat[3])
+        theta = round(angles[0], 4)
+        fi = round(angles[1], 4)
+        psi = round(angles[2], 4)
+        return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат,  fi -z,
 
     # def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi, left):
     #     self.anti_zero()
@@ -1979,5 +2019,27 @@ class Manipulator:
         matrix = np.hstack([T, angles])
         T1 = np.vstack([matrix, [0, 0, 0, 1]])
         logger.debug(T1)
+
+    def euler_from_quaternion(self, x, y, z, w):
+        """
+        Convert a quaternion into euler angles (roll, pitch, yaw)
+        roll is rotation around x in radians (counterclockwise)
+        pitch is rotation around y in radians (counterclockwise)
+        yaw is rotation around z in radians (counterclockwise)
+        """
+        t0 = +2.0 * (w * x + y * z)
+        t1 = +1.0 - 2.0 * (x * x + y * y)
+        roll_x = math.atan2(t0, t1)
+
+        t2 = +2.0 * (w * y - z * x)
+        t2 = +1.0 if t2 > +1.0 else t2
+        t2 = -1.0 if t2 < -1.0 else t2
+        pitch_y = math.asin(t2)
+
+        t3 = +2.0 * (w * z + x * y)
+        t4 = +1.0 - 2.0 * (y * y + z * z)
+        yaw_z = math.atan2(t3, t4)
+
+        return [roll_x, pitch_y, yaw_z]  # in radians
 
 
