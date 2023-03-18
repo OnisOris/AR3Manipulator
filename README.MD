@@ -10,12 +10,22 @@ https://www.anninrobotics.com/
 ManipulatorControl/python_ap/Manipulator_control_python/
 
 ## Кинематическая схема
+
 В проекте используется своя кинематическая схема, которая отличается от оригинальной. 
 <div align="center">
-  <img src="img/kscheme.jpg">
+  <img src="/img/kscheme.jpg" alt="">
 </div>
 
+
 ## Команды
+
+Перемещение всех звеньев в заданные углы:
+
+``` move_all -90 0 0 0 0 0```
+
+Вывод в консоль текущих углов и положений в глобальной системе координат
+
+```print```
 
 ## Примеры
 
