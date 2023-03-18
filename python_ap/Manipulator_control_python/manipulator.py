@@ -927,10 +927,13 @@ class Manipulator:
         # Теперь делаем все по методе Спонга
         # Первые три джойнта
         d6 = self.DH['d_6']
-        R = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])  # матрица поворота относительно глобальной системы координат
-        xc = x_y_z_phi_theta_psi[0]-d6*R[0, 2]
-        yc = x_y_z_phi_theta_psi[1]-d6*R[1, 2]
-        zc = x_y_z_phi_theta_psi[2]-d6*R[2, 2]
+        # R = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])  # матрица поворота относительно глобальной системы координат
+        # xc = x_y_z_phi_theta_psi[0]-d6*R[0, 2]
+        # yc = x_y_z_phi_theta_psi[1]-d6*R[1, 2]
+        # zc = x_y_z_phi_theta_psi[2]-d6*R[2, 2]
+        xc = x_y_z_phi_theta_psi[0]
+        yc = x_y_z_phi_theta_psi[1]
+        zc = x_y_z_phi_theta_psi[2]
         d = 0.0642
         d1 = 0.16977
         a2 = 0.305
@@ -939,7 +942,7 @@ class Manipulator:
        # logger.debug(r)
         s = zc - d1
         D = (r ** 2 + s ** 2 - a2 ** 2 - a3 ** 2) / (2 * a2 * a3)  # (r^2+s^2-a2^2-a3^2)/(2*a2*a3)
-        print(f"D = {D}")
+        # print(f"D = {D}")
         # print(D)
         Theta3 = atan2(D, sqrt(1 - D ** 2))
 
@@ -950,15 +953,15 @@ class Manipulator:
         else:
             Theta1 = atan2(xc, yc) + atan2(-sqrt(r ** 2 - d ** 2), -d)
 
-        # Сферическое запястье
-        T0_3 = self.matrix_create()[0:3]
-        logger.debug(T0_3)
-        R0_3 = np.dot(T0_3[0], T0_3[1]).dot(T0_3[2])  # TODO: проверить матрицу
-        logger.debug("------------------------------------------")
-        logger.debug(R0_3)
-        R0_3_T = np.transpose(R0_3[0:3, 0:3])
-        R3_6 = np.dot(R0_3_T, R)
-        logger.debug(R3_6)
+        # # Сферическое запястье
+        # T0_3 = self.matrix_create()[0:3]
+        # logger.debug(T0_3)
+        # R0_3 = np.dot(T0_3[0], T0_3[1]).dot(T0_3[2])  # TODO: проверить матрицу
+        # logger.debug("------------------------------------------")
+        # logger.debug(R0_3)
+        # R0_3_T = np.transpose(R0_3[0:3, 0:3])
+        # R3_6 = np.dot(R0_3_T, R)
+        # logger.debug(R3_6)
 
 
 
