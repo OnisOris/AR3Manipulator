@@ -1,6 +1,8 @@
 # AR3 manipulator
+
 В проекте используется манипулятор, созданный
 Chris Annin.
+
 https://github.com/Chris-Annin
 
 https://www.anninrobotics.com/
