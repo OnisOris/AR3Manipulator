@@ -8,7 +8,9 @@ https://github.com/Chris-Annin
 https://www.anninrobotics.com/
 
 Прошивка для teensy и arduino mega используется с официального сайта. 
+
 Приложение для управления находится в папке:
+
 ManipulatorControl/python_ap/Manipulator_control_python/
 
 ## Кинематическая схема
