@@ -980,7 +980,7 @@ class Manipulator:
        # logger.debug(r)
         s = zc - d1
         D = (r ** 2 + s ** 2 - a2 ** 2 - a3 ** 2) / (2 * a2 * a3)  # (r^2+s^2-a2^2-a3^2)/(2*a2*a3)
-        print(f"D = {D}")
+        # print(f"D = {D}")
         # print(D)
         Theta3 = atan2(D, sqrt(1 - D ** 2))
 
@@ -993,17 +993,17 @@ class Manipulator:
 
         # Сферическое запястье
         T0_3 = self.matrix_create()[0:3]
-        logger.debug(T0_3)
+        # logger.debug(T0_3)
         R0_3 = np.dot(T0_3[0], T0_3[1]).dot(T0_3[2])  # TODO: проверить матрицу
-        logger.debug("------------------------------------------")
-        logger.debug(R0_3)
+        # logger.debug("------------------------------------------")
+        # logger.debug(R0_3)
         R0_3_T = np.transpose(R0_3[0:3, 0:3])
         R3_6 = np.dot(R0_3_T, R)
-        logger.debug(R3_6)
+        # logger.debug(R3_6)
 
 
 
-        cja = [Theta1, Theta2, -Theta3]
+        cja = [Theta1, -Theta2, Theta3]
         return cja
 
     def length_vector(self, point_A, point_B):

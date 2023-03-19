@@ -16,15 +16,15 @@ arduino_port = 6
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 # robot.print()
 # robot.calibrate('000010', '30')
-# robot.auto_calibrate()
+robot.auto_calibrate()
 # # robot.teensy_push("MJA10B17198C10D10E10F10S30G15H10I20K5")
-# robot.print()
+robot.print()
 # print(robot.joints[0].motor_dir)
 # robot.joints[0].current_joint_angle = 170
 
 # R = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 2]])
 # logger.debug(R[2, 2])
-ang = np.degrees(robot.calculate_inverse_kinematic_problem([0.5, 0.1, 0.5], True))
+ang = np.degrees(robot.calculate_inverse_kinematic_problem([0.5, -0.5, 0.5], True))
 # robot.auto_calibrate()
 # # time.sleep(3)
 # # robot.time_sleep = 1
@@ -38,7 +38,9 @@ logger.debug(ang)
 #robot.visual2()
 # logger.debug(robot.joints[1].current_joint_angle)
 # robot.jog_joints([robot.joints[0].current_joint_angle, robot.joints[1].current_joint_angle, robot.joints[2].current_joint_angle, robot.joints[3].current_joint_angle, -90, robot.joints[5].current_joint_angle])
+robot.jog_joints([ang[0], ang[1], ang[2], robot.joints[3].current_joint_angle, -90, robot.joints[5].current_joint_angle])
 # robot.jog_joints([170, 0, 143, 164, 104, 148])
+robot.print()
 
 # Отрицательный лимит 1го звена: -170
 # Положительный лимит 1го звена: 170
