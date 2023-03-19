@@ -59,19 +59,28 @@ while (True):
         elif (inp_c[0] == "save"):
                 robot.write_point(robot.points)
         elif (inp_c[0] == "txmove"):
-            ang = np.degrees(robot.calculate_inverse_kinematic_problem(
-                [float(inp_c[1]), float(inp_c[2]), float(inp_c[3]), robot.joints[3].current_joint_angle,
-                 robot.joints[4].current_joint_angle, robot.joints[5].current_joint_angle], True))
-            robot.jog_joints(
-                [ang[0], ang[1], ang[2], robot.joints[3].current_joint_angle, robot.joints[4].current_joint_angle,
-                 robot.joints[5].current_joint_angle])
+            # logger.debug([float(inp_c[1]), float(inp_c[2]), float(inp_c[3]), float(inp_c[4]),
+            #      float(inp_c[5]), float(inp_c[6])])
+
+            inv = robot.calculate_inverse_kinematic_problem(
+                [float(inp_c[1]), float(inp_c[2]), float(inp_c[3]),  np.radians(float(inp_c[4])),
+                 np.radians(float(inp_c[5])), np.radians(float(inp_c[6]))])
+            logger.debug(inv)
+            ang = np.degrees(inv[0])
+            if(inv[1] == True):
+                robot.jog_joints(
+                    [ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
+            else:
+                logger.debug("Неправильно решенная ОЗК")
+        elif (inp_c[0] == "vis"):
+            robot.show()
         else:
             print("Неправильная команда")
     except ValueError:
         print("Из этого положения нельзя передвинуться в новое")
 
 # move_all 68 -34 87 0 -60 0
-#position = [68.944, 0.0, 733.607, -90.0, 1.05, -90.0]
+#position = [68.944, 0.0, 733.607, -90.0, 1.05, -90.0] txmove 0.1 -0.5 0.3 0 pi 0
 #logger.debug(robot.calculate_direct_kinematics_problem2(8.391331785652922e-05, -89.99514827193128, 1.0385111119522037, 0.013274359904453395, 0.006637160177256035, -0.01319046058787876))
 # robot.joints[0].current_joint_angle = 170
 # robot.joints[1].current_joint_angle = -129.6

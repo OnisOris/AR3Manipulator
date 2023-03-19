@@ -222,8 +222,14 @@ class Manipulator:
 
     def calc_angle(self, angle, joint: Joint):
         angle = float(angle)
-        if(angle > joint.positive_angle_limit or angle < joint.negative_angle_limit):
-            logger.error("Угол превышает лимит")
+        if(joint.positive_angle_limit > 0):
+            if(angle > joint.positive_angle_limit or angle < joint.negative_angle_limit):
+                logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
+                return [0, 0]
+        if(joint.positive_angle_limit < 0):
+            if(angle < joint.positive_angle_limit or angle > joint.negative_angle_limit):
+                logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
+                return [0, 0]
         # Расчет направления двигателей
         x = joint.current_joint_angle
         arc = abs(angle-x)
@@ -269,7 +275,8 @@ class Manipulator:
             #logger.debug(direction)
             j_jog_steps = abs(int(arc / self.joints[i].degrees_per_step))
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
-            self.joints[i].current_joint_angle = degrees[i]
+            if(arc != 0):
+                self.joints[i].current_joint_angle = degrees[i]
         command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
         # logger.debug(f'joint_commands = {joint_commands}')
         # logger.debug(f' command  = {command}')
@@ -727,45 +734,10 @@ class Manipulator:
         # blockEncPosCal = 1
 
     def move_xyz(self, pos):  # mm, grad
-        Code = 0
-        print(f'pos: {pos}')
-        # need_angles = self.calculate_inverse_kinematic_problem([pos.x_m, pos.y_m, pos.z_m, pos.theta_rad, pos.phi_rad, pos.psi_rad], "left")
-        need_angles = self.calculate_inverse_kinematics_problem2(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], 'F', 0,
-                                                                 0, 0, 0, 0, 0)
-        # need_angles = list(map(math.degrees, need_angles))
-
-        # need_angles = [0.005, -81.87, 1.04, 13.37, 0.05, 7.17]
-        logger.debug(f"{need_angles=}")
-
-        joint_commands = []
-        joint_angels = []
-        letter = 85
-        if not self._check_axis_limit(need_angles): #
-            for i, (joint, angle) in enumerate(zip(self.joints, need_angles)):
-                if float(angle) >= float(joint.current_joint_angle):
-                    direction = 1 if joint.motor_direction == 0 else 0
-                    calc_angle = float(angle) - float(joint.current_joint_angle)
-                    steps = int(calc_angle / joint.degrees_per_step)
-                    if Code != 3:
-                        joint.current_joint_step += steps
-                        joint.current_joint_angle = round(
-                            joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step), 2)
-                else:
-                    direction = joint.motor_direction
-                    calc_angle = float(joint.current_joint_angle) - float(angle)
-                    steps = int(calc_angle / joint.degrees_per_step)
-                    if Code != 3:
-                        joint.current_joint_step -= steps
-                        joint.current_joint_angle = round(
-                            joint.negative_angle_limit + (joint.current_joint_step * joint.degrees_per_step), 2)
-                joint_commands.append(f"{joint.get_name_joint()}{direction}{steps}")
-                joint_angels.append(f"{chr(letter + i)}{joint.current_joint_step}")
-
-            commandCalc = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
-            logger.debug(commandCalc.strip())
-            self.teensy_push(commandCalc)
-        self.calculate_direct_kinematics_problem2()
-        self.save_data()
+        pos = np.array([pos])
+        need_angles = self.calculate_inverse_kinematic_problem(pos)
+        self.jog_joints(need_angles)
+        self.calculate_direct_kinematics_problem()
 
     def _check_axis_limit(self, angles) -> bool: # TODO: проверить, высчитывается ли модуль растояния
         axis_limit = False
@@ -785,9 +757,23 @@ class Manipulator:
         # angles = self.angular_Euler_calculation(self.matrix_dot(transform_matrix, 0, 6))  # theta, fi, psi
         # angles = [angles[0] / pi * 180, angles[1] / pi * 180, angles[2] / pi * 180]
         # self.position.change(*list(p), *angles)
-        theta = np.array([self.joints[0], self.joints[1], self.joints[2], self.joints[3], self.joints[4], self.joints[5]])
+        theta = np.array([np.radians(self.joints[0].current_joint_angle),
+                          np.radians(self.joints[1].current_joint_angle),
+                          np.radians(self.joints[2].current_joint_angle),
+                          np.radians(self.joints[3].current_joint_angle),
+                          np.radians(self.joints[4].current_joint_angle),
+                          np.radians(self.joints[5].current_joint_angle)])
+        f = self.robot.forward(theta)
+        logger.debug(f"xyz = {f.t_3_1.reshape([3, ])}, abc = {np.degrees(f.euler_3)}")
+        x = f.t_3_1.reshape([3, ])[0]
+        y = f.t_3_1.reshape([3, ])[1]
+        z = f.t_3_1.reshape([3, ])[2]
+        theta = f.euler_3[0]
+        phi = f.euler_3[1]
+        psi = f.euler_3[2]
+        self.position.change(x, y, z, theta, phi, psi)
 
-        return [*list(p), *angles]
+        return np.hstack([f.t_3_1.reshape([3, ]), f.euler_3])
 
     def matrix_create(self):
         cja = [float(self.joints[0].current_joint_angle), float(self.joints[1].current_joint_angle),
@@ -993,9 +979,9 @@ class Manipulator:
         robot.inverse(end)
         print("inverse is successful: {0}".format(robot.is_reachable_inverse))
         print("axis values: \n{0}".format(robot.axis_values))
-        robot.show()
+        #robot.show()
         # logger.debug(robot.axis_values)
-        return robot.axis_values
+        return robot.axis_values, robot.is_reachable_inverse
        #  #self.anti_zero()
        #  # Теперь делаем все по методе Спонга
        #  # Первые три джойнта
@@ -1026,7 +1012,7 @@ class Manipulator:
        #  # Сферическое запястье
        #  T0_3 = self.matrix_create()[0:3]
        #  # logger.debug(T0_3)
-       #  R0_3 = np.dot(T0_3[0], T0_3[1]).dot(T0_3[2])  # TODO: проверить матрицу
+       #  R0_3 = np.dot(T0_3[0], T0_3[1]).dot(T0_3[2])
        #  # logger.debug("------------------------------------------")
        #  # logger.debug(R0_3)
        #  R0_3_T = np.transpose(R0_3[0:3, 0:3])
@@ -1519,7 +1505,8 @@ class Manipulator:
             f"x_m = {self.position.x_m} y_m = {self.position.y_m} z_m = {self.position.z_m} theta_m = {self.position.theta_rad} phi_m = {self.position.phi_rad} psi_m = {self.position.psi_rad}")
         for i in range(6):
             logger.debug(f"joint number {i + 1} have angle = {self.joints[i].current_joint_angle}")
-
+    def show(self):
+        self.robot.show()
     def calculate_direct_kinematics_problem2(self):
         # XcurPos = self.position.x
         # YcurPos = self.position.y
