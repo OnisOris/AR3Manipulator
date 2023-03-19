@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import plotly.graph_objects as go
-
+from visual_kinematics.RobotSerial import *
+from visual_kinematics.RobotTrajectory import *
 # from parse import parse
 
 
@@ -121,7 +122,16 @@ class Manipulator:
         'displacement_theta_6': 0
     }
 
-    def __init__(self, teensy_port, arduino_port, baud): # theta = 89.999999999999 phi = -89.999999999999 psi = -179.999999999999
+    dh_params = np.array([[DH['d_1'], DH['a_1'], DH['alpha_1'], DH['displacement_theta_1']],
+                          [DH['d_2'], DH['a_2'], DH['alpha_2'], DH['displacement_theta_2']],
+                          [DH['d_3'], DH['a_3'], DH['alpha_3'], DH['displacement_theta_3']],
+                          [DH['d_4'], DH['a_4'], DH['alpha_4'], DH['displacement_theta_4']],
+                          [DH['d_5'], DH['a_5'], DH['alpha_5'], DH['displacement_theta_5']],
+                          [DH['d_6'], DH['a_6'], DH['alpha_6'], DH['displacement_theta_6']]
+                          ])
+
+    def __init__(self, teensy_port, arduino_port, baud):
+        self.robot = RobotSerial(self.dh_params)
         self.last_matrix = []
         self.ijk = np.array([])
         self.time_sleep = 3
@@ -768,13 +778,15 @@ class Manipulator:
     def calculate_direct_kinematics_problem(self):
         for joint in self.joints:
             if joint.get_current_joint_angle() == 0:
-                joint.current_joint_angle = 0.000000000001  # TODO: разобраться с необходимостью данных операций upd. Влияет на знак в углах эйлера, пока не понятно как
-        transform_matrix = self.matrix_create()
-        p = self.take_coordinate(transform_matrix, 0, 6)
-        p = [p[0] * 1000, p[1] * 1000, p[2] * 1000]  # перевод
-        angles = self.angular_Euler_calculation(self.matrix_dot(transform_matrix, 0, 6))  # theta, fi, psi
-        angles = [angles[0] / pi * 180, angles[1] / pi * 180, angles[2] / pi * 180]
-        self.position.change(*list(p), *angles)
+                joint.current_joint_angle = 0.000000000001
+        # transform_matrix = self.matrix_create()
+        # p = self.take_coordinate(transform_matrix, 0, 6)
+        # p = [p[0] * 1000, p[1] * 1000, p[2] * 1000]  # перевод
+        # angles = self.angular_Euler_calculation(self.matrix_dot(transform_matrix, 0, 6))  # theta, fi, psi
+        # angles = [angles[0] / pi * 180, angles[1] / pi * 180, angles[2] / pi * 180]
+        # self.position.change(*list(p), *angles)
+        theta = np.array([self.joints[0], self.joints[1], self.joints[2], self.joints[3], self.joints[4], self.joints[5]])
+
         return [*list(p), *angles]
 
     def matrix_create(self):
@@ -963,48 +975,68 @@ class Manipulator:
     #     Theta6 = atan2(R36[2, 1], R36[2, 0])
     #
     #     return [Theta1, Theta2, Theta3, Theta4, Theta5, Theta6]
-    def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi, left):
-        #self.anti_zero()
-        # Теперь делаем все по методе Спонга
-        # Первые три джойнта
-        d6 = self.DH['d_6']
-        R = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])  # матрица поворота относительно глобальной системы координат
-        xc = x_y_z_phi_theta_psi[0]-d6*R[0, 2]
-        yc = x_y_z_phi_theta_psi[1]-d6*R[1, 2]
-        zc = x_y_z_phi_theta_psi[2]-d6*R[2, 2]
-        d = 0.0642
-        d1 = 0.16977
-        a2 = 0.305
-        a3 = 0.22263
-        r = xc ** 2 + yc ** 2 - d ** 2
-       # logger.debug(r)
-        s = zc - d1
-        D = (r ** 2 + s ** 2 - a2 ** 2 - a3 ** 2) / (2 * a2 * a3)  # (r^2+s^2-a2^2-a3^2)/(2*a2*a3)
-        # print(f"D = {D}")
-        # print(D)
-        Theta3 = atan2(D, sqrt(1 - D ** 2))
+    def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi):
+        dh_params = np.array([[self.DH['d_1'], self.DH['a_1'], self.DH['alpha_1'], self.DH['displacement_theta_1']],
+                              [self.DH['d_2'], self.DH['a_2'], self.DH['alpha_2'], self.DH['displacement_theta_2']],
+                              [self.DH['d_3'], self.DH['a_3'], self.DH['alpha_3'], self.DH['displacement_theta_3']],
+                              [self.DH['d_4'], self.DH['a_4'], self.DH['alpha_4'], self.DH['displacement_theta_4']],
+                              [self.DH['d_5'], self.DH['a_5'], self.DH['alpha_5'], self.DH['displacement_theta_5']],
+                              [self.DH['d_6'], self.DH['a_6'], self.DH['alpha_6'], self.DH['displacement_theta_6']]
+                              ])
+        robot = RobotSerial(dh_params)
 
-        Theta2 = atan2(r, s) - atan2(a2 + a3 * cos(Theta3), a3 * sin(Theta3))
+        xyz = np.array([[x_y_z_phi_theta_psi[0]], [x_y_z_phi_theta_psi[1]], [x_y_z_phi_theta_psi[2]]])
+        abc = np.array([x_y_z_phi_theta_psi[3], x_y_z_phi_theta_psi[4], x_y_z_phi_theta_psi[5]])  # x x x
+        # logger.debug(xyz)
+        # logger.debug(abc)
+        end = Frame.from_euler_3(abc, xyz)
+        robot.inverse(end)
+        print("inverse is successful: {0}".format(robot.is_reachable_inverse))
+        print("axis values: \n{0}".format(robot.axis_values))
+        robot.show()
+        # logger.debug(robot.axis_values)
+        return robot.axis_values
+       #  #self.anti_zero()
+       #  # Теперь делаем все по методе Спонга
+       #  # Первые три джойнта
+       #  d6 = self.DH['d_6']
+       #  R = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])  # матрица поворота относительно глобальной системы координат
+       #  xc = x_y_z_phi_theta_psi[0]-d6*R[0, 2]
+       #  yc = x_y_z_phi_theta_psi[1]-d6*R[1, 2]
+       #  zc = x_y_z_phi_theta_psi[2]-d6*R[2, 2]
+       #  d = 0.0642
+       #  d1 = 0.16977
+       #  a2 = 0.305
+       #  a3 = 0.22263
+       #  r = xc ** 2 + yc ** 2 - d ** 2
+       # # logger.debug(r)
+       #  s = zc - d1
+       #  D = (r ** 2 + s ** 2 - a2 ** 2 - a3 ** 2) / (2 * a2 * a3)  # (r^2+s^2-a2^2-a3^2)/(2*a2*a3)
+       #  # print(f"D = {D}")
+       #  # print(D)
+       #  Theta3 = atan2(D, sqrt(1 - D ** 2))
+       #
+       #  Theta2 = atan2(r, s) - atan2(a2 + a3 * cos(Theta3), a3 * sin(Theta3))
+       #
+       #  if (left):
+       #      Theta1 = atan2(yc, xc)
+       #  else:
+       #      Theta1 = atan2(xc, yc) + atan2(-sqrt(r ** 2 - d ** 2), -d)
+       #
+       #  # Сферическое запястье
+       #  T0_3 = self.matrix_create()[0:3]
+       #  # logger.debug(T0_3)
+       #  R0_3 = np.dot(T0_3[0], T0_3[1]).dot(T0_3[2])  # TODO: проверить матрицу
+       #  # logger.debug("------------------------------------------")
+       #  # logger.debug(R0_3)
+       #  R0_3_T = np.transpose(R0_3[0:3, 0:3])
+       #  R3_6 = np.dot(R0_3_T, R)
+       #  # logger.debug(R3_6)
 
-        if (left):
-            Theta1 = atan2(yc, xc)
-        else:
-            Theta1 = atan2(xc, yc) + atan2(-sqrt(r ** 2 - d ** 2), -d)
-
-        # Сферическое запястье
-        T0_3 = self.matrix_create()[0:3]
-        # logger.debug(T0_3)
-        R0_3 = np.dot(T0_3[0], T0_3[1]).dot(T0_3[2])  # TODO: проверить матрицу
-        # logger.debug("------------------------------------------")
-        # logger.debug(R0_3)
-        R0_3_T = np.transpose(R0_3[0:3, 0:3])
-        R3_6 = np.dot(R0_3_T, R)
-        # logger.debug(R3_6)
 
 
-
-        cja = [Theta1, -Theta2, Theta3]
-        return cja
+        # cja = [Theta1, -Theta2, Theta3]
+        # return cja
 
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
