@@ -59,9 +59,6 @@ while (True):
         elif (inp_c[0] == "save"):
                 robot.write_point(robot.points)
         elif (inp_c[0] == "txmove"):
-            # logger.debug([float(inp_c[1]), float(inp_c[2]), float(inp_c[3]), float(inp_c[4]),
-            #      float(inp_c[5]), float(inp_c[6])])
-
             inv = robot.calculate_inverse_kinematic_problem(
                 [float(inp_c[1]), float(inp_c[2]), float(inp_c[3]),  np.radians(float(inp_c[4])),
                  np.radians(float(inp_c[5])), np.radians(float(inp_c[6]))])
@@ -74,6 +71,10 @@ while (True):
                 logger.debug("Неправильно решенная ОЗК")
         elif (inp_c[0] == "vis"):
             robot.show()
+        elif (inp_c[0] == "vis_on"):
+            robot.showMode = True
+        elif (inp_c[0] == "vis_off"):
+            robot.showMode = False
         else:
             print("Неправильная команда")
     except ValueError:
