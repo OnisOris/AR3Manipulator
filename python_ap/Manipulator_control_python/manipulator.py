@@ -103,7 +103,7 @@ class Manipulator:
         self.calibration_direction = DEFAULT_SETTINGS['calibration_direction']
         self.motor_direction = DEFAULT_SETTINGS['motor_direction']
         self.position = Position()
-        self.calculate_direct_kinematics_problem2()
+        self.calculate_direct_kinematics_problem()
         self.restore_position()
         try:
             self.serial_teensy: serial.Serial = serial.Serial(teensy_port, baud)
@@ -125,7 +125,6 @@ class Manipulator:
         text = file.read()
         angles = text.split(",")
         for i, angle in enumerate(angles):
-            logger.debug(angle)
             angle = float(angle)
             self.joints[i].current_joint_angle = angle
 
@@ -224,15 +223,17 @@ class Manipulator:
             direction = d[1]
             j_jog_steps = abs(int(arc / self.joints[i].degrees_per_step))
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
-            errors.append(d[3])
+            errors.append(d[2])
             if(d[2] != True):
                 self.joints[i].current_joint_angle = degrees[i]
+        self.calculate_direct_kinematics_problem()
         if (not errors[0] and not errors[1] and  not errors[2] and not errors[3] and not errors[4] and not errors[5]):
             command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
+            self.teensy_push(command)
         else:
             logger.debug("Команда не отправилась, превышен лимит одного из джойнтов")
-        self.calculate_direct_kinematics_problem()
-        self.teensy_push(command)
+            command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
+            self.teensy_push(command)
         self.save_position()
     def jog_joint(self, joint: Joint, speed, degrees):  # degrees - то, на сколько градусов мы двигаем Джойнт
         # Задача направления движения джойнта и отлов ошибок
@@ -492,7 +493,7 @@ class Manipulator:
         else:
             logger.warning('NO CAL FEEDBACK FROM ARDUINO')  # может быть ошибка
 
-        self.calculate_direct_kinematics_problem2()
+        self.calculate_direct_kinematics_problem()
         self.save_data()
         joints_current_steps = [f"{joint.get_name_joint()}{joint.current_joint_step}" for joint in self.joints]
         command = f'LM{"".join(joints_current_steps)}\n'
@@ -541,7 +542,8 @@ class Manipulator:
                           np.radians(self.joints[3].current_joint_angle),
                           np.radians(self.joints[4].current_joint_angle),
                           np.radians(self.joints[5].current_joint_angle)])
-        f = self.robot.forward(theta)
+        robot = RobotSerial(self.dh_params)
+        f = robot.forward(theta)
         logger.debug(f"xyz = {f.t_3_1.reshape([3, ])}, abc = {np.degrees(f.euler_3)}")
         x = f.t_3_1.reshape([3, ])[0]
         y = f.t_3_1.reshape([3, ])[1]
@@ -551,7 +553,7 @@ class Manipulator:
         psi = f.euler_3[2]
         self.position.change(x, y, z, theta, phi, psi)
         if (self.showMode):
-            self.robot.show()
+            robot.show()
         return np.hstack([f.t_3_1.reshape([3, ]), f.euler_3])
 
     def matrix_create(self):
