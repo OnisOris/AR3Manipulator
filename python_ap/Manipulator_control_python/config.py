@@ -14,7 +14,7 @@ DEFAULT_SETTINGS = {
     'J2_dir': 1,
 
     'J3_current_step': 3,
-    'J3_current_angle': 1.05,
+    'J3_current_angle': 1.05, #!!! 58
     'J3_positive_angle_limit': -143.7,
     # 'J3_positive_angle_limit': 253.7,
     'J3_negative_angle_limit': 1,

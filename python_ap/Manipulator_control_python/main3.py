@@ -14,10 +14,14 @@ teensy_port = 3
 arduino_port = 6
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
+inv = robot.calculate_inverse_kinematic_problem([0.4, -0.3, 0.2, 0, pi, 0])
+inv = np.degrees(inv[0])
+logger.debug(inv)
+
 # robot.save_position()
-robot.print()
-robot.restore_position()
-robot.print()
+# robot.print()
+# robot.restore_position()
+# robot.print()
 # file = open("lastPos", "w")
 # file.truncate()
 # file.write("ffff")

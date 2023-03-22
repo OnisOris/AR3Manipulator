@@ -14,7 +14,7 @@ teensy_port = 3
 arduino_port = 6
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
-print ("Начало")
+print("Начало")
 def on_press(key):
     try:
         print(f'Нажата буквенно-цифровая клавиша: {key.char}')
