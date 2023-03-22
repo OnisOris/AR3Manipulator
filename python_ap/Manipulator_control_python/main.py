@@ -75,6 +75,8 @@ while (True):
             robot.showMode = True
         elif (inp_c[0] == "vis_off"):
             robot.showMode = False
+        elif (inp_c[0] == "read"):
+                robot.read_points()
         else:
             print("Неправильная команда")
     except ValueError:
