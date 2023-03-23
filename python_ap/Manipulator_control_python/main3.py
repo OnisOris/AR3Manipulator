@@ -14,11 +14,15 @@ teensy_port = 3
 arduino_port = 6
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
-# inv = robot.calculate_inverse_kinematic_problem([0.4, -0.3, 0.2, 0, pi, 0])
-# inv = np.degrees(inv[0])
+robot.print()
+robot.showMode = True
+inv = robot.calculate_inverse_kinematic_problem([0.41183, 0.2, 0.3, 0, pi, 0])
+inv = np.array([np.degrees(inv[0])])
+logger.debug(inv)
+robot.jog_joints(inv[0])
 var = np.degrees(robot.robot.ws_lim)
 logger.debug(var)
-
+# robot.show_workspace()
 # robot.save_position()
 # robot.print()
 # robot.restore_position()
@@ -56,7 +60,7 @@ logger.debug(var)
 # # robot.visual2()
 # #robot.visual2()
 # # logger.debug(robot.joints[1].current_joint_angle)
-#robot.jog_joints([robot.joints[0].current_joint_angle, robot.joints[1].current_joint_angle, robot.joints[2].current_joint_angle, robot.joints[3].current_joint_angle, -90, robot.joints[5].current_joint_angle])
+#robot.jog_joints([robot.joints[0].current_joint_angle, robot.joints[1].current_joint_angle, robot.joints[2].current_joint_angle, robot.joints[3].current_joint_angle, 0, robot.joints[5].current_joint_angle])
 # # robot.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
 # robot.print()
 # # robot.jog_joints([170, 0, 143, 164, 104, 148])

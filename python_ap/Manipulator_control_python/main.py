@@ -77,9 +77,11 @@ while (True):
             robot.showMode = False
         elif (inp_c[0] == "read"):
                 robot.read_points()
+        elif (inp_c[0] == "calib_axe"):
+                robot.calibrate(str(inp_c[1]), '30')
         else:
             print("Неправильная команда")
-    except ValueError:
+    except Exception:
         print("Из этого положения нельзя передвинуться в новое")
 
 # move_all 68 -34 87 0 -60 0

@@ -107,27 +107,30 @@ class Manipulator:
         self.calibration_direction = DEFAULT_SETTINGS['calibration_direction']
         self.motor_direction = DEFAULT_SETTINGS['motor_direction']
         self.position = Position()
-        self.calculate_direct_kinematics_problem()
         self.restore_position()
+        self.limits = np.radians(
+            np.array([[self.joints[0].negative_angle_limit, self.joints[0].positive_angle_limit],
+                      [self.joints[1].negative_angle_limit, self.joints[1].positive_angle_limit],
+                      [self.joints[2].positive_angle_limit, self.joints[2].negative_angle_limit],
+                      [self.joints[3].negative_angle_limit, self.joints[3].positive_angle_limit],
+                      [self.joints[4].negative_angle_limit, self.joints[4].positive_angle_limit],
+                      [self.joints[5].positive_angle_limit, self.joints[5].negative_angle_limit],
+                      ]))
+        self.robot.ws_lim = self.limits
+        self.calculate_direct_kinematics_problem()
         try:
             self.serial_teensy: serial.Serial = serial.Serial(teensy_port, baud)
             self.serial_arduino: serial.Serial = serial.Serial(arduino_port, baud)
             self.is_connected = True
         except serial.SerialException:
             logger.error("Serial port not defined")
-        self.robot.ws_lim = np.radians(
-            np.array([[self.joints[0].negative_angle_limit, self.joints[0].positive_angle_limit],
-                      [self.joints[1].negative_angle_limit, self.joints[1].positive_angle_limit],
-                      [self.joints[2].negative_angle_limit, self.joints[2].positive_angle_limit],
-                      [self.joints[3].negative_angle_limit, self.joints[3].positive_angle_limit],
-                      [self.joints[4].negative_angle_limit, self.joints[4].positive_angle_limit],
-                      [self.joints[5].negative_angle_limit, self.joints[5].positive_angle_limit],
-                      ]))
+
 
     def show_workspace(self):
         self.robot.ws_division = 6
         self.robot.show(ws=True)
     def save_position(self):
+        logger.debug("Запись в файл")
         file = open("lastPos", "w")
         file.truncate()
         file.write(
@@ -235,6 +238,7 @@ class Manipulator:
         degrees = [float(x) for x in degrees]
         joint_commands = []
         errors = []
+        angles = []
         for i in range(6):
             d = self.calc_angle(degrees[i], self.joints[i])
             arc = d[0]
@@ -243,15 +247,20 @@ class Manipulator:
             j_jog_steps = abs(int(arc / self.joints[i].degrees_per_step))
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
             errors.append(d[2])
-            if (d[2] != True):
-                self.joints[i].current_joint_angle = degrees[i]
-        self.calculate_direct_kinematics_problem()
+            # if (d[2] != True):
+            #     logger.debug(f"Запись в джойнт {i+1}")
+            angles.append(degrees[i])
+                # self.joints[i].current_joint_angle = degrees[i]
         if (not errors[0] and not errors[1] and not errors[2] and not errors[3] and not errors[4] and not errors[5]):
+            for i in range(6):
+                self.joints[i].current_joint_angle = angles[i]
             command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
             self.teensy_push(command)
+            self.save_position()
+            self.calculate_direct_kinematics_problem()
+            logger.debug(f"Запись углов в джойнты: {angles}")
         else:
             logger.debug("Команда не отправилась, превышен лимит одного из джойнтов")
-        self.save_position()
 
     def jog_joint(self, joint: Joint, speed, degrees):  # degrees - то, на сколько градусов мы двигаем Джойнт
         # Задача направления движения джойнта и отлов ошибок
@@ -473,10 +482,8 @@ class Manipulator:
         command = f"LL{''.join(joint_calibration_drive_and_step)}S{speed}\n"
         self.teensy_push(command)
         logger.debug(f"Write to teensy: {command.strip()}")
-
         self.serial_teensy.flushInput()
         calibration_value = self.serial_teensy.read()
-        # TODO: нужно добавить calibration_status в поле manipulitor
         if calibration_value == b'P':
             # calibration_status = 1
             for joint, cd, axis in zip(self.joints, self.calibration_direction, axes):
@@ -485,25 +492,16 @@ class Manipulator:
                         if (joint.motor_dir == 1 or joint.motor_dir == 2):
                             joint.current_joint_step = 0
                             joint.current_joint_angle = joint.positive_angle_limit
-                            logger.debug("------------loh1")
-                        # elif(joint.motor_dir == 2):
-                        #     d = 0
                         else:
                             joint.current_joint_step = joint.step_limit
                             joint.current_joint_angle = joint.negative_angle_limit
-                            logger.debug("------------loh2")
-                        # joint.current_joint_angle = joint.negative_angle_limit
-                        logger.debug("------------lohCD0")
                     else:
                         if (joint.motor_dir == -1):
                             joint.current_joint_step = joint.step_limit
                             joint.current_joint_angle = joint.negative_angle_limit
-                            logger.debug("------------loh3")
                         else:
                             joint.current_joint_step = 0
                             joint.current_joint_angle = joint.positive_angle_limit
-                            logger.debug("------------loh4")
-                        logger.debug("------------lohCDAnother")
 
             logger.success('CALIBRATION SUCCESSFUL')
         elif calibration_value == b'F':
@@ -533,7 +531,7 @@ class Manipulator:
         # TODO: узнать, что такое blockEncPosCal
         position = [68.944, 0.0, 733.607, -90.0, 1.05, -90.0]
         # logger.debug(DEFAULT_SETTINGS['DH_r_1'])
-        angles = [-90, 90, 0, 0, 0, 0]
+        angles = [0, 90, -90, 0, -90, 0]
         self.jog_joints(angles)
         self.calculate_direct_kinematics_problem()
 
@@ -543,7 +541,7 @@ class Manipulator:
         self.jog_joints(need_angles)
         self.calculate_direct_kinematics_problem()
 
-    def _check_axis_limit(self, angles) -> bool:  # TODO: проверить, высчитывается ли модуль растояния
+    def _check_axis_limit(self, angles) -> bool:
         axis_limit = False
         for joint, angle in zip(self.joints, angles):
             if angle < joint.negative_angle_limit or angle > joint.positive_angle_limit:
@@ -554,7 +552,7 @@ class Manipulator:
     def calculate_direct_kinematics_problem(self):
         for joint in self.joints:
             if joint.get_current_joint_angle() == 0:
-                joint.current_joint_angle = 0.000000000001
+                joint.current_joint_angle = 0.0000000001
         theta = np.array([np.radians(self.joints[0].current_joint_angle),
                           np.radians(self.joints[1].current_joint_angle),
                           np.radians(self.joints[2].current_joint_angle),
@@ -562,6 +560,7 @@ class Manipulator:
                           np.radians(self.joints[4].current_joint_angle),
                           np.radians(self.joints[5].current_joint_angle)])
         robot = RobotSerial(self.dh_params)
+        robot.ws_lim = self.limits
         f = robot.forward(theta)
         logger.debug(f"xyz = {f.t_3_1.reshape([3, ])}, abc = {np.degrees(f.euler_3)}")
         x = f.t_3_1.reshape([3, ])[0]
@@ -666,6 +665,11 @@ class Manipulator:
         return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат,  fi -z,
 
     def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi):
+        logger.debug("--------------------------------------------")
+        logger.debug(x_y_z_phi_theta_psi)
+        x_y_z_phi_theta_psi = np.squeeze(x_y_z_phi_theta_psi)
+        logger.debug("--------------------------------------------")
+        logger.debug(x_y_z_phi_theta_psi)
         dh_params = np.array([[self.DH['d_1'], self.DH['a_1'], self.DH['alpha_1'], self.DH['displacement_theta_1']],
                               [self.DH['d_2'], self.DH['a_2'], self.DH['alpha_2'], self.DH['displacement_theta_2']],
                               [self.DH['d_3'], self.DH['a_3'], self.DH['alpha_3'], self.DH['displacement_theta_3']],
@@ -675,14 +679,7 @@ class Manipulator:
                               ])
 
         robot = RobotSerial(dh_params)
-        robot.ws_lim = np.radians(
-            np.array([[self.joints[0].negative_angle_limit, self.joints[0].positive_angle_limit],
-                      [self.joints[1].negative_angle_limit, self.joints[1].positive_angle_limit],
-                      [self.joints[2].negative_angle_limit, self.joints[2].positive_angle_limit],
-                      [self.joints[3].negative_angle_limit, self.joints[3].positive_angle_limit],
-                      [self.joints[4].negative_angle_limit, self.joints[4].positive_angle_limit],
-                      [self.joints[5].negative_angle_limit, self.joints[5].positive_angle_limit],
-                      ]))
+        robot.ws_lim = self.limits
         xyz = np.array([[x_y_z_phi_theta_psi[0]], [x_y_z_phi_theta_psi[1]], [x_y_z_phi_theta_psi[2]]])
         abc = np.array([x_y_z_phi_theta_psi[3], x_y_z_phi_theta_psi[4], x_y_z_phi_theta_psi[5]])  # x x x
         # logger.debug(xyz)
@@ -732,13 +729,14 @@ class Manipulator:
 
     def print(self):
         logger.debug(
-            f"x = {self.position.x} y = {self.position.y} z = {self.position.z} theta = {self.position.theta} phi = {self.position.phi} psi = {self.position.psi}")
-        logger.debug(
-            f"x_m = {self.position.x_m} y_m = {self.position.y_m} z_m = {self.position.z_m} theta_m = {self.position.theta_rad} phi_m = {self.position.phi_rad} psi_m = {self.position.psi_rad}")
+            f"x = {self.position.x} y = {self.position.y} z = {self.position.z} \n theta = {np.degrees(self.position.theta)} phi = {np.degrees(self.position.phi)} psi = {np.degrees(self.position.psi)}")
+       # logger.debug(
+          #  f"x_m = {self.position.x_m} y_m = {self.position.y_m} z_m = {self.position.z_m} theta_m = {np.degrees(self.position.theta_rad)} phi_m = {np.degrees(self.position.phi_rad)} psi_m = {np.degrees(self.position.psi_rad)}")
         for i in range(6):
             logger.debug(f"joint number {i + 1} have angle = {self.joints[i].current_joint_angle}")
 
     def show(self):
+        self.calculate_direct_kinematics_problem()
         self.robot.show()
 
     def move_x(self, lenth_x):
