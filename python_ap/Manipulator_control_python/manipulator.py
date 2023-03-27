@@ -108,7 +108,6 @@ class Manipulator:
         self.motor_direction = DEFAULT_SETTINGS['motor_direction']
         self.position = Position()
         self.restore_position()
-        self.restore_position()
         self.limits = np.radians(
             np.array([[self.joints[0].negative_angle_limit, self.joints[0].positive_angle_limit],
                       [self.joints[1].negative_angle_limit, self.joints[1].positive_angle_limit],
