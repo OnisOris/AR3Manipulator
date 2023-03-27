@@ -108,6 +108,7 @@ class Manipulator:
         self.motor_direction = DEFAULT_SETTINGS['motor_direction']
         self.position = Position()
         self.restore_position()
+        self.restore_position()
         self.limits = np.radians(
             np.array([[self.joints[0].negative_angle_limit, self.joints[0].positive_angle_limit],
                       [self.joints[1].negative_angle_limit, self.joints[1].positive_angle_limit],
@@ -688,6 +689,7 @@ class Manipulator:
         robot.inverse(end)
         print("inverse is successful: {0}".format(robot.is_reachable_inverse))
         print("axis values: \n{0}".format(robot.axis_values))
+        robot.show()
         # robot.show()
         # logger.debug(robot.axis_values)
         return robot.axis_values, robot.is_reachable_inverse
