@@ -15,7 +15,7 @@ arduino_port = 6
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 
-theta = robot.calculate_inverse_kinematic_problem([0.2, -0.2, 0.3])
+theta = robot.calculate_inverse_kinematic_problem([0.2, 0.2, 0.3])
 
 logger.debug(theta)
 logger.debug(np.degrees(theta))

@@ -668,24 +668,27 @@ class Manipulator:
         xc = x_y_z_phi_theta_psi[0]
         yc = x_y_z_phi_theta_psi[1]
         zc = x_y_z_phi_theta_psi[2]
-        d = 0.0642
-        d1 = 0.16977
-        a2 = 0.305
-        a3 = 0.22263
-        r = xc ** 2 + yc ** 2 - d ** 2
+        d1 = self.DH['d_1']
+        a2 = self.DH['a_2']
+        a3 = self.DH['a_3']
+        r = xc ** 2 + yc ** 2
         # logger.debug(r)
         s = zc - d1
         D = (r ** 2 + s ** 2 - a2 ** 2 - a3 ** 2) / (2 * a2 * a3)  # (r^2+s^2-a2^2-a3^2)/(2*a2*a3)
         # print(f"D = {D}")
-        # print(D)
+        logger.debug(D)
         Theta3 = atan2(D, sqrt(1 - D ** 2))
+        logger.debug(Theta3)
+        Theta3 = math.acos(D)
+        logger.debug(Theta3)
+
 
         Theta2 = atan2(r, s) - atan2(a2 + a3 * cos(Theta3), a3 * sin(Theta3))
 
         if (left):
             Theta1 = atan2(yc, xc)
         else:
-            Theta1 = atan2(xc, yc) + atan2(-sqrt(r ** 2 - d ** 2), -d)
+            Theta1 = atan2(xc, yc)
         return Theta1
 
     def length_vector(self, point_A, point_B):
