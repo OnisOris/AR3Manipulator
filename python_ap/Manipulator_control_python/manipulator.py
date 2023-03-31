@@ -125,10 +125,10 @@ class Manipulator:
         except serial.SerialException:
             logger.error("Serial port not defined")
 
-
     def show_workspace(self):
         self.robot.ws_division = 6
         self.robot.show(ws=True)
+
     def save_position(self):
         logger.debug("Запись в файл")
         file = open("lastPos", "w")
@@ -250,7 +250,7 @@ class Manipulator:
             # if (d[2] != True):
             #     logger.debug(f"Запись в джойнт {i+1}")
             angles.append(degrees[i])
-                # self.joints[i].current_joint_angle = degrees[i]
+            # self.joints[i].current_joint_angle = degrees[i]
         if (not errors[0] and not errors[1] and not errors[2] and not errors[3] and not errors[4] and not errors[5]):
             for i in range(6):
                 self.joints[i].current_joint_angle = angles[i]
@@ -302,7 +302,7 @@ class Manipulator:
         if not axis_limit:
             joint.current_joint_angle = round(
                 joint.negative_angle_limit + (
-                            joint.current_joint_step * joint.degrees_per_step))  # Jjogneg J1AngCur = round(J1NegAngLim + (J1StepCur * J1DegPerStep), 2)
+                        joint.current_joint_step * joint.degrees_per_step))  # Jjogneg J1AngCur = round(J1NegAngLim + (J1StepCur * J1DegPerStep), 2)
             # J1AngCur = round(J1NegAngLim + (J1StepCur * J1DegPerStep), 2)
             self.save_data()
             # print(f"Новые координаты: {np.round(np.dot(self.calculate_direct_kinematics_problem(), 180 / pi), 3)}")
@@ -664,34 +664,29 @@ class Manipulator:
         psi = round(angles[2], 4)
         return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат,  fi -z,
 
-    def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi):
-        logger.debug("--------------------------------------------")
-        logger.debug(x_y_z_phi_theta_psi)
-        x_y_z_phi_theta_psi = np.squeeze(x_y_z_phi_theta_psi)
-        logger.debug("--------------------------------------------")
-        logger.debug(x_y_z_phi_theta_psi)
-        dh_params = np.array([[self.DH['d_1'], self.DH['a_1'], self.DH['alpha_1'], self.DH['displacement_theta_1']],
-                              [self.DH['d_2'], self.DH['a_2'], self.DH['alpha_2'], self.DH['displacement_theta_2']],
-                              [self.DH['d_3'], self.DH['a_3'], self.DH['alpha_3'], self.DH['displacement_theta_3']],
-                              [self.DH['d_4'], self.DH['a_4'], self.DH['alpha_4'], self.DH['displacement_theta_4']],
-                              [self.DH['d_5'], self.DH['a_5'], self.DH['alpha_5'], self.DH['displacement_theta_5']],
-                              [self.DH['d_6'], self.DH['a_6'], self.DH['alpha_6'], self.DH['displacement_theta_6']]
-                              ])
+    def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi, left=True):
+        xc = x_y_z_phi_theta_psi[0]
+        yc = x_y_z_phi_theta_psi[1]
+        zc = x_y_z_phi_theta_psi[2]
+        d = 0.0642
+        d1 = 0.16977
+        a2 = 0.305
+        a3 = 0.22263
+        r = xc ** 2 + yc ** 2 - d ** 2
+        # logger.debug(r)
+        s = zc - d1
+        D = (r ** 2 + s ** 2 - a2 ** 2 - a3 ** 2) / (2 * a2 * a3)  # (r^2+s^2-a2^2-a3^2)/(2*a2*a3)
+        # print(f"D = {D}")
+        # print(D)
+        Theta3 = atan2(D, sqrt(1 - D ** 2))
 
-        robot = RobotSerial(dh_params)
-        robot.ws_lim = self.limits
-        xyz = np.array([[x_y_z_phi_theta_psi[0]], [x_y_z_phi_theta_psi[1]], [x_y_z_phi_theta_psi[2]]])
-        abc = np.array([x_y_z_phi_theta_psi[3], x_y_z_phi_theta_psi[4], x_y_z_phi_theta_psi[5]])  # x x x
-        # logger.debug(xyz)
-        # logger.debug(abc)
-        end = Frame.from_euler_3(abc, xyz)
-        robot.inverse(end)
-        print("inverse is successful: {0}".format(robot.is_reachable_inverse))
-        print("axis values: \n{0}".format(robot.axis_values))
-        robot.show()
-        # robot.show()
-        # logger.debug(robot.axis_values)
-        return robot.axis_values, robot.is_reachable_inverse
+        Theta2 = atan2(r, s) - atan2(a2 + a3 * cos(Theta3), a3 * sin(Theta3))
+
+        if (left):
+            Theta1 = atan2(yc, xc)
+        else:
+            Theta1 = atan2(xc, yc) + atan2(-sqrt(r ** 2 - d ** 2), -d)
+        return Theta1
 
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
@@ -731,8 +726,8 @@ class Manipulator:
     def print(self):
         logger.debug(
             f"x = {self.position.x} y = {self.position.y} z = {self.position.z} \n theta = {np.degrees(self.position.theta)} phi = {np.degrees(self.position.phi)} psi = {np.degrees(self.position.psi)}")
-       # logger.debug(
-          #  f"x_m = {self.position.x_m} y_m = {self.position.y_m} z_m = {self.position.z_m} theta_m = {np.degrees(self.position.theta_rad)} phi_m = {np.degrees(self.position.phi_rad)} psi_m = {np.degrees(self.position.psi_rad)}")
+        # logger.debug(
+        #  f"x_m = {self.position.x_m} y_m = {self.position.y_m} z_m = {self.position.z_m} theta_m = {np.degrees(self.position.theta_rad)} phi_m = {np.degrees(self.position.phi_rad)} psi_m = {np.degrees(self.position.psi_rad)}")
         for i in range(6):
             logger.debug(f"joint number {i + 1} have angle = {self.joints[i].current_joint_angle}")
 
