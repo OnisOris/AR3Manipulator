@@ -671,15 +671,16 @@ class Manipulator:
         d1 = self.DH['d_1']
         a2 = self.DH['a_2'] # a2 и a3 по Спонгу - длины второго и третьего плеча
         a3 = self.DH['d_4']
-        r = math.sqrt(xc ** 2 + yc ** 2-self.DH['a_1'])
+        r = math.sqrt(xc ** 2 + yc ** 2)-self.DH['a_1']
         logger.debug(f'a2 {a2} a3 {a3}')
         s = zc - d1
         D = (r ** 2 + s ** 2 - a2 ** 2 - a3 ** 2) / (2 * a2 * a3)  # (r^2+s^2-a2^2-a3^2)/(2*a2*a3)
         # print(f"D = {D}")
         logger.debug(D)
         if(theta3plus == False):
-            Theta3 = -atan2(sqrt(1 - D ** 2), D)
+            Theta3 = atan2(sqrt(1 - D ** 2), D)
             Theta2 = atan2(s, r) + atan2(a3 * sin(Theta3), a2 + a3 * cos(Theta3))
+            Theta3 = -Theta3
         # logger.debug(Theta3)
         # Theta3 = math.acos(D)
             logger.debug(Theta3)
