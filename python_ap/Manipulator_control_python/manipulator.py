@@ -687,15 +687,33 @@ class Manipulator:
         else:
             Theta3 = atan2(sqrt(1 - D ** 2), D)
             Theta2 = atan2(s, r) - atan2(a3 * sin(Theta3), a2 + a3 * cos(Theta3))
-        # if (D > 0 and D <= 1):
-        #     Theta3 = atan2
-
-
-
         if (left):
             Theta1 = atan2(yc, xc)
         else:
             Theta1 = atan2(xc, yc)
+        # if (D > 0 and D <= 1):
+        #     Theta3 = atan2
+        # # Сферическое запястье
+        cja = [Theta1, Theta2,
+               Theta3]
+        T = []
+        for i in range(len(cja)):
+            d = self.DH[f'displacement_theta_{i + 1}']
+            T.append(np.array(
+                [[cos(cja[i] + d), -sin(cja[i] + d) * cos(self.DH[f'alpha_{i + 1}']),
+                  sin(cja[i] + d) * sin(self.DH[f'alpha_{i + 1}'])],
+                 [sin(cja[i] + d), cos(cja[i] + d) * cos(self.DH[f'alpha_{i + 1}']),
+                  -cos(cja[i] + d) * sin(self.DH[f'alpha_{i + 1}'])],
+                 [0, sin(self.DH[f'alpha_{i + 1}']), cos(self.DH[f'alpha_{i + 1}'])]]))
+
+        logger.debug(T[0])
+        R0_3 = np.dot(T[0], T[1]).dot(T[2])  # TODO: проверить матрицу
+        # logger.debug("------------------------------------------")
+        logger.debug(f'R0_3 = {R0_3}')
+        # R0_3_T = np.transpose(R0_3[0:3, 0:3])
+        # R3_6 = np.dot(R0_3_T, R)
+        # logger.debug(R3_6)
+
         return [Theta1, Theta2, Theta3]
 
     def length_vector(self, point_A, point_B):
