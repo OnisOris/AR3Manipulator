@@ -664,28 +664,32 @@ class Manipulator:
         psi = round(angles[2], 4)
         return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат,  fi -z,
 
-    def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi, left=True):
+    def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi, left=True, theta3plus=False):
         xc = x_y_z_phi_theta_psi[0]
         yc = x_y_z_phi_theta_psi[1]
         zc = x_y_z_phi_theta_psi[2]
         d1 = self.DH['d_1']
         a2 = self.DH['a_2'] # a2 и a3 по Спонгу - длины второго и третьего плеча
         a3 = self.DH['d_4']
-        r = xc ** 2 + yc ** 2-self.DH['a_1']
+        r = math.sqrt(xc ** 2 + yc ** 2-self.DH['a_1'])
         logger.debug(f'a2 {a2} a3 {a3}')
         s = zc - d1
         D = (r ** 2 + s ** 2 - a2 ** 2 - a3 ** 2) / (2 * a2 * a3)  # (r^2+s^2-a2^2-a3^2)/(2*a2*a3)
         # print(f"D = {D}")
         logger.debug(D)
-        Theta3 = atan2(sqrt(1 - D ** 2), D)
+        if(theta3plus == False):
+            Theta3 = -atan2(sqrt(1 - D ** 2), D)
+            Theta2 = atan2(s, r) + atan2(a3 * sin(Theta3), a2 + a3 * cos(Theta3))
         # logger.debug(Theta3)
         # Theta3 = math.acos(D)
-        logger.debug(Theta3)
+            logger.debug(Theta3)
+        else:
+            Theta3 = atan2(sqrt(1 - D ** 2), D)
+            Theta2 = atan2(s, r) - atan2(a3 * sin(Theta3), a2 + a3 * cos(Theta3))
         # if (D > 0 and D <= 1):
         #     Theta3 = atan2
 
 
-        Theta2 = atan2(s, r) - atan2(a3 * sin(Theta3), a2 + a3 * cos(Theta3))
 
         if (left):
             Theta1 = atan2(yc, xc)
