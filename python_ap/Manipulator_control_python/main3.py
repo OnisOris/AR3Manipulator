@@ -14,11 +14,13 @@ teensy_port = 3
 arduino_port = 6
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
+T = robot.matrix_create()
+logger.debug(T[4])
 # logger.debug(math.degrees(math.atan2(3, 6)))
-theta = robot.calculate_inverse_kinematic_problem([0.2, 0.5, 0.35], True) #угол звена B превышен при theta2 = -16.6 Град
-# logger.debug(theta)
+theta = robot.calculate_inverse_kinematic_problem([0.2, 0.4, 0.35, pi, pi/3, 0], True) #угол звена B превышен при theta2 = -16.6 Град
+logger.debug(theta)
 #
-# logger.debug(np.degrees(theta))
+logger.debug(np.degrees(theta))
 # theta = np.degrees(theta)
 # logger.debug(np.degrees(theta))
 
@@ -69,6 +71,8 @@ theta = robot.calculate_inverse_kinematic_problem([0.2, 0.5, 0.35], True) #уг�
 # # robot.visual2()
 # #robot.visual2()
 # # logger.debug(robot.joints[1].current_joint_angle)
+robot.jog_joints([theta[0], theta[1], theta[2], theta[3],
+                  theta[4], theta[5]])
 #robot.jog_joints([theta[0], theta[1], theta[2], robot.joints[3].current_joint_angle, robot.joints[4].current_joint_angle, robot.joints[5].current_joint_angle])
 # # robot.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
 # robot.print()

@@ -665,37 +665,57 @@ class Manipulator:
         return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат,  fi -z,
 
     def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi, left=True, theta3plus=False):
-        xc = x_y_z_phi_theta_psi[0]
-        yc = x_y_z_phi_theta_psi[1]
-        zc = x_y_z_phi_theta_psi[2]
+        xRot = Rotation.from_euler('x', [x_y_z_phi_theta_psi[3]]).as_matrix()
+        yRot = Rotation.from_euler('y', [x_y_z_phi_theta_psi[4]]).as_matrix()
+        zRot = Rotation.from_euler('z', [x_y_z_phi_theta_psi[5]]).as_matrix()
+        R = np.squeeze(np.dot(np.dot(xRot, yRot), zRot))
+        r11 = R[0, 0]
+        r12 = R[0, 1]
+        r13 = R[0, 2]
+
+        r21 = R[1, 0]
+        r22 = R[1, 1]
+        r23 = R[1, 2]
+
+        r31 = R[2, 0]
+        r32 = R[2, 1]
+        r33 = R[2, 2]
+        logger.debug(f'R = {R}')
+        # xc = x_y_z_phi_theta_psi[0]
+        # yc = x_y_z_phi_theta_psi[1]
+        # zc = x_y_z_phi_theta_psi[2]
+        xc = x_y_z_phi_theta_psi[0] - self.DH['d_6']*R[0, 2]
+        yc = x_y_z_phi_theta_psi[1] - self.DH['d_6']*R[1, 2]
+        zc = x_y_z_phi_theta_psi[2] - self.DH['d_6']*R[2, 2]
+        logger.debug(f'xc = {xc}, yc = {yc}, zc = {zc}')
         d1 = self.DH['d_1']
         a2 = self.DH['a_2'] # a2 и a3 по Спонгу - длины второго и третьего плеча
         a3 = self.DH['d_4']
         r = math.sqrt(xc ** 2 + yc ** 2)-self.DH['a_1']
-        logger.debug(f'a2 {a2} a3 {a3}')
+        #logger.debug(f'a2 {a2} a3 {a3}')
         s = zc - d1
         D = (r ** 2 + s ** 2 - a2 ** 2 - a3 ** 2) / (2 * a2 * a3)  # (r^2+s^2-a2^2-a3^2)/(2*a2*a3)
         # print(f"D = {D}")
-        logger.debug(D)
+        #logger.debug(D)
         if(theta3plus == False):
-            Theta3 = atan2(sqrt(1 - D ** 2), D)
-            Theta2 = atan2(s, r) + atan2(a3 * sin(Theta3), a2 + a3 * cos(Theta3))
-            Theta3 = -Theta3
-        # logger.debug(Theta3)
-        # Theta3 = math.acos(D)
-            logger.debug(Theta3)
+            theta_3 = atan2(sqrt(1 - D ** 2), D)
+            theta_2 = atan2(s, r) + atan2(a3 * sin(theta_3), a2 + a3 * cos(theta_3))
+            theta_3 = -theta_3
+        # logger.debug(theta_3)
+        # theta_3 = math.acos(D)
+            logger.debug(theta_3)
         else:
-            Theta3 = atan2(sqrt(1 - D ** 2), D)
-            Theta2 = atan2(s, r) - atan2(a3 * sin(Theta3), a2 + a3 * cos(Theta3))
+            theta_3 = atan2(sqrt(1 - D ** 2), D)
+            theta_2 = atan2(s, r) - atan2(a3 * sin(theta_3), a2 + a3 * cos(theta_3))
         if (left):
-            Theta1 = atan2(yc, xc)
+            theta_1 = atan2(yc, xc)
         else:
-            Theta1 = atan2(xc, yc)
+            theta_1 = atan2(xc, yc)
         # if (D > 0 and D <= 1):
-        #     Theta3 = atan2
+        #     theta_3 = atan2
         # # Сферическое запястье
-        cja = [Theta1, Theta2,
-               Theta3]
+        cja = [theta_1, theta_2,
+               theta_3]
         T = []
         for i in range(len(cja)):
             d = self.DH[f'displacement_theta_{i + 1}']
@@ -706,15 +726,35 @@ class Manipulator:
                   -cos(cja[i] + d) * sin(self.DH[f'alpha_{i + 1}'])],
                  [0, sin(self.DH[f'alpha_{i + 1}']), cos(self.DH[f'alpha_{i + 1}'])]]))
 
-        logger.debug(T[0])
-        R0_3 = np.dot(T[0], T[1]).dot(T[2])  # TODO: проверить матрицу
+        #logger.debug(T[0])
+        R0_3 = np.dot(T[0], T[1]).dot(T[2])
+        theta_5 = atan2(sqrt(1 - (R[0, 2]*cos(theta_1)*cos(theta_2 + theta_3) + R[1, 2]*sin(theta_1)*cos(theta_2 + theta_3)
+                                + R[2, 2]*sin(theta_2 + theta_3))**2), R[0, 2]*cos(theta_1)*cos(theta_2 + theta_3) +
+                                R[1, 2]*sin(theta_1)*cos(theta_2 + theta_3) + R[2, 2]*sin(theta_2 + theta_3))
+        # logger.debug(f'Theta5 (rad) = {theta_5}')
+        # logger.debug(f'Theta5 (grad) = {np.degrees(theta_5)}')
+
+        theta_4 = atan2((r13*sin(theta_1) - r23*cos(theta_1))/sqrt(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3) + r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 + theta_3))**2), sqrt(1 - (r13*sin(theta_1) - r23*cos(theta_1))**2/(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3) + r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 + theta_3))**2)))
+        # logger.debug(f'Theta4 (rad) = {theta_4}')
+        # logger.debug(f'Theta4 (grad) = {np.degrees(theta_4)}')
+
+        theta_6 = atan2((r12*cos(theta_1)*cos(theta_2 + theta_3) + r22*sin(theta_1)*cos(theta_2 + theta_3)
+                        + r32*sin(theta_2 + theta_3))/sqrt(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3)
+                        + r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 + theta_3))**2),
+                        sqrt(((r12*cos(theta_1)*cos(theta_2 + theta_3) + r22*sin(theta_1)*cos(theta_2 + theta_3)
+                        + r32*sin(theta_2 + theta_3))**2 + (r13*cos(theta_1)*cos(theta_2 + theta_3)
+                        + r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 +
+                        theta_3))**2 - 1)/((r13*cos(theta_1)*cos(theta_2 + theta_3) + r23*sin(theta_1)*cos(theta_2 +
+                        theta_3) + r33*sin(theta_2 + theta_3))**2 - 1)))
+        # logger.debug(f'Theta6 (rad) = {theta_6}')
+        # logger.debug(f'Theta6 (grad) = {np.degrees(theta_6)}')
         # logger.debug("------------------------------------------")
-        logger.debug(f'R0_3 = {R0_3}')
+        #logger.debug(f'R0_3 = {R0_3}')
         # R0_3_T = np.transpose(R0_3[0:3, 0:3])
         # R3_6 = np.dot(R0_3_T, R)
         # logger.debug(R3_6)
 
-        return [Theta1, Theta2, Theta3]
+        return [theta_1, theta_2, theta_3, theta_4, theta_5, theta_6]
 
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
