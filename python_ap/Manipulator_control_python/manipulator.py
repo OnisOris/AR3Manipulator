@@ -535,9 +535,12 @@ class Manipulator:
         self.jog_joints(angles)
         self.calculate_direct_kinematics_problem()
 
-    def move_xyz(self, pos):  # mm, grad
-        pos = np.array([pos])
+    def move_xyz(self, pos):
+        pos = np.array([pos[0]/1000, pos[1]/1000, pos[2]/1000,
+                        0, pi, 0])#np.radians(pos[3]), np.radians(pos[4]), np.radians(pos[5])])
+        logger.debug(pos)
         need_angles = self.calculate_inverse_kinematic_problem(pos)
+        need_angles = np.degrees(need_angles)
         self.jog_joints(need_angles)
         self.calculate_direct_kinematics_problem()
 
@@ -562,7 +565,7 @@ class Manipulator:
         robot = RobotSerial(self.dh_params)
         robot.ws_lim = self.limits
         f = robot.forward(theta)
-        logger.debug(f"xyz = {f.t_3_1.reshape([3, ])}, abc = {np.degrees(f.euler_3)}")
+        logger.debug(f"xyz = {np.round(f.t_3_1.reshape([3, ]), 4)}, abc = {np.round(np.degrees(f.euler_3), 4)}")
         x = f.t_3_1.reshape([3, ])[0]
         y = f.t_3_1.reshape([3, ])[1]
         z = f.t_3_1.reshape([3, ])[2]
@@ -728,7 +731,7 @@ class Manipulator:
 
         #logger.debug(T[0])
         R0_3 = np.dot(T[0], T[1]).dot(T[2])
-        theta_5 = atan2(sqrt(1 - (R[0, 2]*cos(theta_1)*cos(theta_2 + theta_3) + R[1, 2]*sin(theta_1)*cos(theta_2 + theta_3)
+        theta_5 = atan2(-sqrt(1 - (R[0, 2]*cos(theta_1)*cos(theta_2 + theta_3) + R[1, 2]*sin(theta_1)*cos(theta_2 + theta_3)
                                 + R[2, 2]*sin(theta_2 + theta_3))**2), R[0, 2]*cos(theta_1)*cos(theta_2 + theta_3) +
                                 R[1, 2]*sin(theta_1)*cos(theta_2 + theta_3) + R[2, 2]*sin(theta_2 + theta_3))
         # logger.debug(f'Theta5 (rad) = {theta_5}')
@@ -803,7 +806,7 @@ class Manipulator:
         self.calculate_direct_kinematics_problem()
         self.robot.show()
 
-    def move_x(self, lenth_x):
+    def move_x(self, lenth_x):  # принимаем мм
         position = [self.position.x + lenth_x, self.position.y, self.position.z, self.position.theta, self.position.phi,
                     self.position.psi]
         self.move_xyz(position)
