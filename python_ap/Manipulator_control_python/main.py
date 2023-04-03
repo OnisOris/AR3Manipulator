@@ -60,15 +60,11 @@ while (True):
                 robot.write_point(robot.points)
         elif (inp_c[0] == "txmove"):
             inv = robot.calculate_inverse_kinematic_problem(
-                [float(inp_c[1]), float(inp_c[2]), float(inp_c[3]),  np.radians(float(inp_c[4])),
+                [float(inp_c[1])/1000, float(inp_c[2])/1000, float(inp_c[3])/1000,  np.radians(float(inp_c[4])),
                  np.radians(float(inp_c[5])), np.radians(float(inp_c[6]))])
             logger.debug(inv)
-            ang = np.degrees(inv[0])
-            if(inv[1] == True):
-                robot.jog_joints(
-                    [ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
-            else:
-                logger.debug("Неправильно решенная ОЗК")
+            ang = np.degrees(inv)
+            robot.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
         elif (inp_c[0] == "vis"):
             robot.show()
         elif (inp_c[0] == "vis_on"):

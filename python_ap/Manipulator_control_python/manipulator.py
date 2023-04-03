@@ -174,7 +174,7 @@ class Manipulator:
                 elif (angles[g] == "sleep"):
                     logger.debug("sleep------------------------------------->")
                     time.sleep(float(angles[g + 1]))
-                    self.absolve()
+                    #self.absolve()
                 else:
                     mas.append(float(angles[g]))
             if (len(mas) > 2):
@@ -668,10 +668,10 @@ class Manipulator:
         return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат,  fi -z,
 
     def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi, left=True, theta3plus=False):
-        xRot = Rotation.from_euler('x', [x_y_z_phi_theta_psi[3]]).as_matrix()
+        xRot = Rotation.from_euler('x', [x_y_z_phi_theta_psi[5]]).as_matrix()
         yRot = Rotation.from_euler('y', [x_y_z_phi_theta_psi[4]]).as_matrix()
-        zRot = Rotation.from_euler('z', [x_y_z_phi_theta_psi[5]]).as_matrix()
-        R = np.squeeze(np.dot(np.dot(xRot, yRot), zRot))
+        zRot = Rotation.from_euler('z', [x_y_z_phi_theta_psi[3]]).as_matrix()
+        R = np.squeeze(np.dot(np.dot(zRot, yRot), xRot))
         r11 = R[0, 0]
         r12 = R[0, 1]
         r13 = R[0, 2]
@@ -731,6 +731,7 @@ class Manipulator:
 
         #logger.debug(T[0])
         R0_3 = np.dot(T[0], T[1]).dot(T[2])
+        # TODO: добавлен минус перед корнем (взято второе решение), необходимо добавить это файл решение
         theta_5 = atan2(-sqrt(1 - (R[0, 2]*cos(theta_1)*cos(theta_2 + theta_3) + R[1, 2]*sin(theta_1)*cos(theta_2 + theta_3)
                                 + R[2, 2]*sin(theta_2 + theta_3))**2), R[0, 2]*cos(theta_1)*cos(theta_2 + theta_3) +
                                 R[1, 2]*sin(theta_1)*cos(theta_2 + theta_3) + R[2, 2]*sin(theta_2 + theta_3))
@@ -740,7 +741,6 @@ class Manipulator:
         theta_4 = atan2((r13*sin(theta_1) - r23*cos(theta_1))/sqrt(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3) + r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 + theta_3))**2), sqrt(1 - (r13*sin(theta_1) - r23*cos(theta_1))**2/(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3) + r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 + theta_3))**2)))
         # logger.debug(f'Theta4 (rad) = {theta_4}')
         # logger.debug(f'Theta4 (grad) = {np.degrees(theta_4)}')
-
         theta_6 = atan2((r12*cos(theta_1)*cos(theta_2 + theta_3) + r22*sin(theta_1)*cos(theta_2 + theta_3)
                         + r32*sin(theta_2 + theta_3))/sqrt(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3)
                         + r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 + theta_3))**2),
@@ -757,7 +757,7 @@ class Manipulator:
         # R3_6 = np.dot(R0_3_T, R)
         # logger.debug(R3_6)
 
-        return [theta_1, theta_2, theta_3, theta_4, theta_5, theta_6]
+        return [theta_1, theta_2, theta_3, theta_4, theta_5, -theta_6]
 
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)

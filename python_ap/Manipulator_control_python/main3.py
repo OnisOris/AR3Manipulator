@@ -15,14 +15,14 @@ arduino_port = 6
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 #robot.move_x()
-theta = robot.calculate_inverse_kinematic_problem([0.3, 0, 0.4, 0, pi, 0], True) #угол звена B превышен при theta2 = -16.6 Град
+theta = robot.calculate_inverse_kinematic_problem([0, -0.3, 0.3, pi, 0, pi], True) #угол звена B превышен при theta2 = -16.6 Град
 logger.debug(f'theta (rad) = {theta}')
 logger.debug(f'theta (grad) = {np.round(np.degrees(theta), 3)}')
 theta = np.degrees(theta)
 
 robot.jog_joints([theta[0], theta[1], theta[2], theta[3],
                   theta[4], theta[5]])
-robot.move_x(10)
+#robot.move_x(10)
 
 # logger.debug(np.degrees(theta))
 
