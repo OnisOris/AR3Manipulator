@@ -70,7 +70,7 @@ class Manipulator:
         'd_3': 0,
         'd_4': 0.22263,
         'd_5': 0,
-        'd_6': 0.125,  # 0.03625,
+        'd_6': 0.185,#0.125,  # 0.03625,
         'displacement_theta_1': 0,
         'displacement_theta_2': 0,
         'displacement_theta_3': pi / 2,
