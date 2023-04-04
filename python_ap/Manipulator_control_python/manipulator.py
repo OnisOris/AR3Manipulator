@@ -70,7 +70,7 @@ class Manipulator:
         'd_3': 0,
         'd_4': 0.22263,
         'd_5': 0,
-        'd_6': 0.185,#0.125,  # 0.03625,
+        'd_6': 0.185,  # 0.125,  # 0.03625,
         'displacement_theta_1': 0,
         'displacement_theta_2': 0,
         'displacement_theta_3': pi / 2,
@@ -88,11 +88,12 @@ class Manipulator:
                           ])
 
     def __init__(self, teensy_port, arduino_port, baud):
-        self.logging = False
-        self.showMode = False
+        self.test_mode = False  # данное поле можно включить, если нет подключения по сериал порту
+        self.last_inverse_pos = []  # хранит последние заданные координаты в обратную задачу кинематики
+        self.logging = False  # включает вывод в консоль информацию
+        self.showMode = False  # включает мод отображения в отдельном окне положения манипулятора
         self.robot = RobotSerial(self.dh_params)
-        self.last_matrix = []
-        self.ijk = np.array([])
+        self.last_matrix = []  # содержит последнии матрицы преобразования
         self.time_sleep = 3
         self.points = ""
         self.delta = 10
@@ -179,7 +180,7 @@ class Manipulator:
                     if (self.logging == True):
                         logger.debug("sleep------------------------------------->")
                     time.sleep(float(angles[g + 1]))
-                    #self.absolve()
+                    # self.absolve()
                 else:
                     mas.append(float(angles[g]))
             if (len(mas) > 2):
@@ -299,16 +300,18 @@ class Manipulator:
                 joint.current_joint_angle = round(joint.negative_angle_limit + (joint.current_joint_step *
                                                                                 joint.degrees_per_step), 2)
                 # self.stop_program()
-        self.calculate_direct_kinematics_problem2()
+        self.calculate_direct_kinematics_problem()
         self.save_data()
 
     def teensy_push(self, command):
         logger.debug(f'Teensy push {command}')
-        self.serial_teensy.write(command.encode())
+        if not self.test_mode:
+            self.serial_teensy.write(command.encode())
 
     def arduino_push(self, command):
-        logger.debug("")
-        self.serial_arduino.write(command.encode())
+        logger.debug(f'Arduino push: {command}')
+        if not self.test_mode:
+            self.serial_arduino.write(command.encode())
 
     def save_data(self):
         for index, joint in enumerate(self.joints):
@@ -485,16 +488,6 @@ class Manipulator:
         self.jog_joints(angles)
         self.calculate_direct_kinematics_problem()
 
-    def move_xyz(self, pos):
-        pos = np.array([pos[0]/1000, pos[1]/1000, pos[2]/1000,
-                        0, pi, 0])
-        if (self.logging == True):
-            logger.debug(pos)
-        need_angles = self.calculate_inverse_kinematic_problem(pos)
-        need_angles = np.degrees(need_angles)
-        self.jog_joints(need_angles)
-        self.calculate_direct_kinematics_problem()
-
     def _check_axis_limit(self, angles) -> bool:
         axis_limit = False
         for joint, angle in zip(self.joints, angles):
@@ -619,7 +612,8 @@ class Manipulator:
         psi = round(angles[2], 4)
         return [theta, fi, psi]  # углы Эйлера схвата в главной системе координат,  fi -z,
 
-    def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi, left=True, theta3plus=False):
+    def calculate_inverse_kinematic_problem(self, x_y_z_phi_theta_psi, theta3plus=False):
+        self.last_inverse_pos = x_y_z_phi_theta_psi
         xRot = Rotation.from_euler('x', [x_y_z_phi_theta_psi[5]]).as_matrix()
         yRot = Rotation.from_euler('y', [x_y_z_phi_theta_psi[4]]).as_matrix()
         zRot = Rotation.from_euler('z', [x_y_z_phi_theta_psi[3]]).as_matrix()
@@ -636,30 +630,26 @@ class Manipulator:
         r32 = R[2, 1]
         r33 = R[2, 2]
 
-        xc = x_y_z_phi_theta_psi[0] - self.DH['d_6']*R[0, 2]
-        yc = x_y_z_phi_theta_psi[1] - self.DH['d_6']*R[1, 2]
-        zc = x_y_z_phi_theta_psi[2] - self.DH['d_6']*R[2, 2]
-        if (self.logging == True):
+        xc = x_y_z_phi_theta_psi[0] - self.DH['d_6'] * R[0, 2]
+        yc = x_y_z_phi_theta_psi[1] - self.DH['d_6'] * R[1, 2]
+        zc = x_y_z_phi_theta_psi[2] - self.DH['d_6'] * R[2, 2]
+        if self.logging:
             logger.debug(f'xc = {xc}, yc = {yc}, zc = {zc}')
         d1 = self.DH['d_1']
-        a2 = self.DH['a_2'] # a2 и a3 по Спонгу - длины второго и третьего плеча
+        a2 = self.DH['a_2']  # a2 и a3 по Спонгу - длины второго и третьего плеча
         a3 = self.DH['d_4']
-        r = math.sqrt(xc ** 2 + yc ** 2)-self.DH['a_1']
+        r = math.sqrt(xc ** 2 + yc ** 2) - self.DH['a_1']
         s = zc - d1
         D = (r ** 2 + s ** 2 - a2 ** 2 - a3 ** 2) / (2 * a2 * a3)
-        if(theta3plus == False):
+        if not theta3plus:
             theta_3 = atan2(sqrt(1 - D ** 2), D)
             theta_2 = atan2(s, r) + atan2(a3 * sin(theta_3), a2 + a3 * cos(theta_3))
             theta_3 = -theta_3
+            logger.debug("fffffffffffffffffffffffff")
         else:
             theta_3 = atan2(sqrt(1 - D ** 2), D)
             theta_2 = atan2(s, r) - atan2(a3 * sin(theta_3), a2 + a3 * cos(theta_3))
-        if (left):
-            theta_1 = atan2(yc, xc)
-        else:
-            theta_1 = atan2(xc, yc)
-        # if (D > 0 and D <= 1):
-        #     theta_3 = atan2
+        theta_1 = atan2(yc, xc)
         # # Сферическое запястье
         cja = [theta_1, theta_2,
                theta_3]
@@ -672,36 +662,34 @@ class Manipulator:
                  [sin(cja[i] + d), cos(cja[i] + d) * cos(self.DH[f'alpha_{i + 1}']),
                   -cos(cja[i] + d) * sin(self.DH[f'alpha_{i + 1}'])],
                  [0, sin(self.DH[f'alpha_{i + 1}']), cos(self.DH[f'alpha_{i + 1}'])]]))
-
-        R0_3 = np.dot(T[0], T[1]).dot(T[2])
-        # TODO: добавлен минус перед корнем (взято второе решение)
-        theta_5 = atan2(-sqrt(1 - (R[0, 2]*cos(theta_1)*cos(theta_2 + theta_3)
-                          + R[1, 2]*sin(theta_1)*cos(theta_2 + theta_3)
-                          + R[2, 2]*sin(theta_2 + theta_3))**2), R[0, 2]*cos(theta_1)*cos(theta_2 + theta_3) +
-                          R[1, 2]*sin(theta_1)*cos(theta_2 + theta_3) + R[2, 2]*sin(theta_2 + theta_3))
-        theta_4 = atan2(-(r13*sin(theta_1) - r23*cos(theta_1))/sqrt(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3) +
-                                                                         r23*sin(theta_1)*cos(theta_2 + theta_3) +
-                                                                         r33*sin(theta_2 + theta_3))**2),
-                        sqrt(1 - (r13*sin(theta_1) - r23*cos(theta_1))**2/(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3)
-                                                                                + r23*sin(theta_1)*cos(theta_2 +
+        theta_5 = atan2(-sqrt(1 - (R[0, 2] * cos(theta_1) * cos(theta_2 + theta_3)
+                                   + R[1, 2] * sin(theta_1) * cos(theta_2 + theta_3)
+                                   + R[2, 2] * sin(theta_2 + theta_3)) ** 2),
+                        R[0, 2] * cos(theta_1) * cos(theta_2 + theta_3) +
+                        R[1, 2] * sin(theta_1) * cos(theta_2 + theta_3) + R[2, 2] * sin(theta_2 + theta_3))
+        theta_4 = atan2(
+            -(r13 * sin(theta_1) - r23 * cos(theta_1)) / sqrt(1 - (r13 * cos(theta_1) * cos(theta_2 + theta_3) +
+                                                                   r23 * sin(theta_1) * cos(theta_2 + theta_3) +
+                                                                   r33 * sin(theta_2 + theta_3)) ** 2),
+            sqrt(1 - (r13 * sin(theta_1) - r23 * cos(theta_1)) ** 2 / (1 - (r13 * cos(theta_1) * cos(theta_2 + theta_3)
+                                                                            + r23 * sin(theta_1) * cos(theta_2 +
                                                                                                        theta_3) +
-                                                                                r33*sin(theta_2 + theta_3))**2)))
-        theta_6 = atan2((r12*cos(theta_1)*cos(theta_2 + theta_3) + r22*sin(theta_1)*cos(theta_2 + theta_3) +
-                          r32*sin(theta_2 + theta_3))/sqrt(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3) +
-                          r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 + theta_3))**2),
-                          sqrt(((r12*cos(theta_1)*cos(theta_2 + theta_3) + r22*sin(theta_1)*cos(theta_2 + theta_3) +
-                          r32*sin(theta_2 + theta_3))**2 + (r13*cos(theta_1)*cos(theta_2 + theta_3) +
-                          r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 +
-                          theta_3))**2 - 1)/((r13*cos(theta_1)*cos(theta_2 + theta_3) + r23*sin(theta_1)*cos(theta_2 +
-                          theta_3) + r33*sin(theta_2 + theta_3))**2 - 1)))
+                                                                            r33 * sin(theta_2 + theta_3)) ** 2)))
+        theta_6 = atan2((r12 * cos(theta_1) * cos(theta_2 + theta_3) + r22 * sin(theta_1) * cos(theta_2 + theta_3) +
+                         r32 * sin(theta_2 + theta_3)) / sqrt(1 - (r13 * cos(theta_1) * cos(theta_2 + theta_3) +
+                                                                   r23 * sin(theta_1) * cos(
+                    theta_2 + theta_3) + r33 * sin(theta_2 + theta_3)) ** 2),
+                        sqrt(((r12 * cos(theta_1) * cos(theta_2 + theta_3) + r22 * sin(theta_1) * cos(
+                            theta_2 + theta_3) +
+                               r32 * sin(theta_2 + theta_3)) ** 2 + (r13 * cos(theta_1) * cos(theta_2 + theta_3) +
+                                                                     r23 * sin(theta_1) * cos(
+                                    theta_2 + theta_3) + r33 * sin(theta_2 +
+                                                                   theta_3)) ** 2 - 1) / ((r13 * cos(theta_1) * cos(
+                            theta_2 + theta_3) + r23 * sin(theta_1) * cos(theta_2 +
+                                                                          theta_3) + r33 * sin(
+                            theta_2 + theta_3)) ** 2 - 1)))
         return [theta_1, theta_2, theta_3, theta_4, theta_5, theta_6]
-
-    def length_vector(self, point_A, point_B):
-        length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
-        return length
-
     def take_coordinate(self, array_matrix, number_of_matrix1, number_of_matrix2):
-        # T = self.matrix_create()
         matrix = self.matrix_dot(array_matrix, number_of_matrix1, number_of_matrix2)
         vector_xyz = matrix[0:3, 3]
         return vector_xyz
@@ -715,12 +703,6 @@ class Manipulator:
         for joint in self.joints:
             if joint.current_joint_angle == 0:
                 joint.current_joint_angle = 0.00001
-
-    def inverse(self, xyz_angles, left_or_right):
-        xyz_new = [xyz_angles[0] / 1000, xyz_angles[1] / 1000, xyz_angles[2] / 1000, xyz_angles[0] * pi / 180,
-                   xyz_angles[1] * pi / 180, xyz_angles[2] * pi / 180]
-        return self.calculate_inverse_kinematic_problem(xyz_new, left_or_right)
-
     def check_all(self):
         for i in self.joints:
             print(f"{i} -> {i.current_joint_angle}")
@@ -743,34 +725,63 @@ class Manipulator:
         self.calculate_direct_kinematics_problem()
         self.robot.show()
 
+
+    def move_xyz(self, pos):
+        #pos = np.array([pos[0] / 1000, pos[1] / 1000, pos[2] / 1000,
+        #                0, pi, 0])
+        if (self.logging == True):
+            logger.debug(pos)
+        need_angles = self.calculate_inverse_kinematic_problem(pos)
+        need_angles = np.degrees(need_angles)
+        self.jog_joints(need_angles)
+        self.calculate_direct_kinematics_problem()
+
     def move_x(self, lenth_x):  # принимаем мм
-        position = [self.position.x + lenth_x, self.position.y, self.position.z, self.position.theta, self.position.phi,
-                    self.position.psi]
+        lenth_x = lenth_x/1000
+        position = self.last_inverse_pos
+        logger.debug(position)
+        position[0] = position[0] + lenth_x
+        logger.debug(position)
         self.move_xyz(position)
 
     def move_y(self, lenth_y):
-        position = [self.position.x, self.position.y + lenth_y, self.position.z, self.position.theta, self.position.phi,
-                    self.position.psi]
+        lenth_y = lenth_y/1000
+        position = self.last_inverse_pos
+        logger.debug(position)
+        position[1] = position[1]+lenth_y
+        logger.debug(position)
         self.move_xyz(position)
 
     def move_z(self, lenth_z):
-        position = [self.position.x, self.position.y, self.position.z + lenth_z, self.position.theta, self.position.phi,
-                    self.position.psi]
+        lenth_z = lenth_z/1000
+        position = self.last_inverse_pos
+        logger.debug(position)
+        position[2] = position[2] + lenth_z
+        logger.debug(position)
         self.move_xyz(position)
 
     def move_theta(self, lenth_theta):
-        position = [self.position.x, self.position.y, self.position.z, self.position.theta + lenth_theta,
-                    self.position.phi, self.position.psi]
+        lenth_theta = np.radians(lenth_theta)
+        position = self.last_inverse_pos
+        logger.debug(position)
+        position[3] = position[3] + lenth_theta
+        logger.debug(position)
         self.move_xyz(position)
 
     def move_phi(self, lenth_phi):
-        position = [self.position.x, self.position.y, self.position.z, self.position.theta,
-                    self.position.phi + lenth_phi, self.position.psi]
+        lenth_theta = np.radians(lenth_phi)
+        position = self.last_inverse_pos
+        logger.debug(position)
+        position[4] = position[4] + lenth_phi
+        logger.debug(position)
         self.move_xyz(position)
 
     def move_psi(self, lenth_psi):
-        position = [self.position.x, self.position.y, self.position.z, self.position.theta, self.position.phi,
-                    self.position.psi + lenth_psi]
+        lenth_theta = np.radians(lenth_psi)
+        position = self.last_inverse_pos
+        logger.debug(position)
+        position[5] = position[5] + lenth_psi
+        logger.debug(position)
         self.move_xyz(position)
 
     def grab(self):
