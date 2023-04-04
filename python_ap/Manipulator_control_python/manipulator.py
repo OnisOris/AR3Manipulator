@@ -686,7 +686,7 @@ class Manipulator:
                                                                                 + r23*sin(theta_1)*cos(theta_2 +
                                                                                                        theta_3) +
                                                                                 r33*sin(theta_2 + theta_3))**2)))
-        theta_6 = atan2(-(r12*cos(theta_1)*cos(theta_2 + theta_3) + r22*sin(theta_1)*cos(theta_2 + theta_3) +
+        theta_6 = atan2((r12*cos(theta_1)*cos(theta_2 + theta_3) + r22*sin(theta_1)*cos(theta_2 + theta_3) +
                           r32*sin(theta_2 + theta_3))/sqrt(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3) +
                           r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 + theta_3))**2),
                           sqrt(((r12*cos(theta_1)*cos(theta_2 + theta_3) + r22*sin(theta_1)*cos(theta_2 + theta_3) +
