@@ -692,7 +692,7 @@ class Manipulator:
                         + r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 +
                         theta_3))**2 - 1)/((r13*cos(theta_1)*cos(theta_2 + theta_3) + r23*sin(theta_1)*cos(theta_2 +
                         theta_3) + r33*sin(theta_2 + theta_3))**2 - 1)))
-        return [theta_1, theta_2, theta_3, theta_4, theta_5, -theta_6]
+        return [theta_1, theta_2, theta_3, theta_4, theta_5, theta_6]
 
     def length_vector(self, point_A, point_B):
         length = sqrt((point_A[0] - point_B[0]) ** 2 + (point_A[1] - point_B[1]) ** 2 + (point_A[2] - point_B[2]) ** 2)
