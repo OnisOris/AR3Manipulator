@@ -674,24 +674,26 @@ class Manipulator:
                  [0, sin(self.DH[f'alpha_{i + 1}']), cos(self.DH[f'alpha_{i + 1}'])]]))
 
         R0_3 = np.dot(T[0], T[1]).dot(T[2])
-        # TODO: добавлен минус перед корнем (взято второе решение), необходимо добавить это файл решение
+        # TODO: добавлен минус перед корнем (взято второе решение)
         theta_5 = atan2(-sqrt(1 - (R[0, 2]*cos(theta_1)*cos(theta_2 + theta_3)
-                                + R[1, 2]*sin(theta_1)*cos(theta_2 + theta_3)
-                                + R[2, 2]*sin(theta_2 + theta_3))**2), R[0, 2]*cos(theta_1)*cos(theta_2 + theta_3) +
-                                R[1, 2]*sin(theta_1)*cos(theta_2 + theta_3) + R[2, 2]*sin(theta_2 + theta_3))
-
-        theta_4 = atan2((r13*sin(theta_1) - r23*cos(theta_1))/sqrt(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3)
-                                + r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 + theta_3))**2),
-                        sqrt(1 - (r13*sin(theta_1) - r23*cos(theta_1))**2/(1 - (r13*cos(theta_1)*cos(theta_2 +
-                        theta_3) + r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 + theta_3))**2)))
-        theta_6 = atan2((r12*cos(theta_1)*cos(theta_2 + theta_3) + r22*sin(theta_1)*cos(theta_2 + theta_3)
-                        + r32*sin(theta_2 + theta_3))/sqrt(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3)
-                        + r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 + theta_3))**2),
-                        sqrt(((r12*cos(theta_1)*cos(theta_2 + theta_3) + r22*sin(theta_1)*cos(theta_2 + theta_3)
-                        + r32*sin(theta_2 + theta_3))**2 + (r13*cos(theta_1)*cos(theta_2 + theta_3)
-                        + r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 +
-                        theta_3))**2 - 1)/((r13*cos(theta_1)*cos(theta_2 + theta_3) + r23*sin(theta_1)*cos(theta_2 +
-                        theta_3) + r33*sin(theta_2 + theta_3))**2 - 1)))
+                          + R[1, 2]*sin(theta_1)*cos(theta_2 + theta_3)
+                          + R[2, 2]*sin(theta_2 + theta_3))**2), R[0, 2]*cos(theta_1)*cos(theta_2 + theta_3) +
+                          R[1, 2]*sin(theta_1)*cos(theta_2 + theta_3) + R[2, 2]*sin(theta_2 + theta_3))
+        theta_4 = atan2(-(r13*sin(theta_1) - r23*cos(theta_1))/sqrt(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3) +
+                                                                         r23*sin(theta_1)*cos(theta_2 + theta_3) +
+                                                                         r33*sin(theta_2 + theta_3))**2),
+                        sqrt(1 - (r13*sin(theta_1) - r23*cos(theta_1))**2/(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3)
+                                                                                + r23*sin(theta_1)*cos(theta_2 +
+                                                                                                       theta_3) +
+                                                                                r33*sin(theta_2 + theta_3))**2)))
+        theta_6 = atan2(-(r12*cos(theta_1)*cos(theta_2 + theta_3) + r22*sin(theta_1)*cos(theta_2 + theta_3) +
+                          r32*sin(theta_2 + theta_3))/sqrt(1 - (r13*cos(theta_1)*cos(theta_2 + theta_3) +
+                          r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 + theta_3))**2),
+                          sqrt(((r12*cos(theta_1)*cos(theta_2 + theta_3) + r22*sin(theta_1)*cos(theta_2 + theta_3) +
+                          r32*sin(theta_2 + theta_3))**2 + (r13*cos(theta_1)*cos(theta_2 + theta_3) +
+                          r23*sin(theta_1)*cos(theta_2 + theta_3) + r33*sin(theta_2 +
+                          theta_3))**2 - 1)/((r13*cos(theta_1)*cos(theta_2 + theta_3) + r23*sin(theta_1)*cos(theta_2 +
+                          theta_3) + r33*sin(theta_2 + theta_3))**2 - 1)))
         return [theta_1, theta_2, theta_3, theta_4, theta_5, theta_6]
 
     def length_vector(self, point_A, point_B):
@@ -792,7 +794,7 @@ class Manipulator:
             k.append(np.dot(v, R))
         return k
 
-    def RXY_transform(self, angles):
+    def ZYX_transform(self, angles):
         # angles = [pi/2, 0, 0]
         rotateX = np.array([[1, 0, 0],
                             [0, np.cos(angles[0]), -np.sin(angles[0])],
@@ -803,7 +805,7 @@ class Manipulator:
         rotateZ = np.array([[np.cos(angles[2]), -np.sin(angles[2]), 0],
                             [np.sin(angles[2]), np.cos(angles[2]), 0],
                             [0, 0, 1]])
-        T = np.dot(rotateX, rotateY).dot(rotateZ)
+        T = np.dot(rotateZ, rotateY).dot(rotateX)
         return T
 
     def RZYZ_transform(self, angles):
