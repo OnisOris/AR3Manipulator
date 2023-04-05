@@ -644,8 +644,7 @@ class Manipulator:
         if not theta3plus:
             theta_3 = atan2(sqrt(1 - D ** 2), D)
             theta_2 = atan2(s, r) + atan2(a3 * sin(theta_3), a2 + a3 * cos(theta_3))
-            theta_3 = -theta_3
-            logger.debug("fffffffffffffffffffffffff")
+            theta_3 = -theta_3  # инвертирование угла необходимо, так как в эту сторону мы вращаемся отрицательно
         else:
             theta_3 = atan2(sqrt(1 - D ** 2), D)
             theta_2 = atan2(s, r) - atan2(a3 * sin(theta_3), a2 + a3 * cos(theta_3))
