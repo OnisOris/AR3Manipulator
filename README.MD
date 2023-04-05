@@ -17,7 +17,7 @@ ManipulatorControl/python_ap/Manipulator_control_python/
 
 В проекте используется своя кинематическая схема, которая отличается от оригинальной. 
 <div align="center">
-  <img src="/img/kscheme.jpg" alt="">
+  <img src="/img/scheme.png" alt="">
 </div>
 
 
@@ -30,6 +30,38 @@ ManipulatorControl/python_ap/Manipulator_control_python/
 Вывод в консоль текущих углов и положений в глобальной системе координат
 
 ```print```
+
+```move_x```
+
+```move_y```
+
+```move_z```
+
+```servo```
+
+```grab```
+
+```absolve```
+
+```move```
+
+```move_all```
+
+```add```
+
+```save```
+
+```txmove```
+
+```vis```
+
+```vis_on```
+
+```vis_off```
+
+```read```
+
+```calib_axe```
 
 ## Примеры
 
