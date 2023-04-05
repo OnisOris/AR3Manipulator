@@ -10,7 +10,6 @@ from config import DEFAULT_SETTINGS
 from joint import Joint
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import plotly.graph_objects as go
 from visual_kinematics.RobotSerial import *
