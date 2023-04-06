@@ -10,7 +10,7 @@ from pynput import keyboard
 ############## Настройки программы ##############
 baud = 115200
 teensy_port = 3
-arduino_port = 6
+arduino_port = 5
 ################# Конец настроек #################
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)

@@ -14,7 +14,7 @@ class arucoOdometry:
     #positionByMarkers={"id":[],"coordinates":{"x":[],"y":[],"z":[],"theta":[],"phi":[],"psi":[]}, "time":[]}
     #currentCoordinate={"x":0,"y":0,"z":0,"theta":0,"phi":0,"psi":0,"time":0}
     ARUCO_DICT = {
-      "DICT_4X4_50": cv2.aruco.DICT_4X4_50,
+      "DICT_4X4_50": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50),#cv2.aruco.DICT_4X4_50,
       "DICT_4X4_100": cv2.aruco.DICT_4X4_100,
       "DICT_4X4_250": cv2.aruco.DICT_4X4_250,
       "DICT_4X4_1000": cv2.aruco.DICT_4X4_1000,
