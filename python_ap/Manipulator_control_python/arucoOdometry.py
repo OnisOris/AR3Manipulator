@@ -14,34 +14,33 @@ class arucoOdometry:
     #positionByMarkers={"id":[],"coordinates":{"x":[],"y":[],"z":[],"theta":[],"phi":[],"psi":[]}, "time":[]}
     #currentCoordinate={"x":0,"y":0,"z":0,"theta":0,"phi":0,"psi":0,"time":0}
     ARUCO_DICT = {
-      "DICT_4X4_50": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50),#cv2.aruco.DICT_4X4_50,
-      "DICT_4X4_100": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_100),
-      "DICT_4X4_250": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250),
-      "DICT_4X4_1000": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_1000),
-      "DICT_5X5_50": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50),
-      "DICT_5X5_100": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_100),
-      "DICT_5X5_250": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_250),
-      "DICT_5X5_1000": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_1000),
-      "DICT_6X6_50": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_50),
-      "DICT_6X6_100": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_100),
-      "DICT_6X6_250": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250),
-      "DICT_6X6_1000": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_1000),
-      "DICT_7X7_50": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_7X7_50),
-      "DICT_7X7_100": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_7X7_100),
-      "DICT_7X7_250": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_7X7_250),
-      "DICT_7X7_1000": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_7X7_1000),
-      "DICT_ARUCO_ORIGINAL": cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+      "DICT_4X4_50": cv2.aruco.DICT_4X4_50,#cv2.aruco.DICT_4X4_50,
+      "DICT_4X4_100":  cv2.aruco.DICT_4X4_100,
+      "DICT_4X4_250":  cv2.aruco.DICT_4X4_250,
+      "DICT_4X4_1000":  cv2.aruco.DICT_4X4_1000,
+      "DICT_5X5_50":  cv2.aruco.DICT_5X5_50,
+      "DICT_5X5_100":  cv2.aruco.DICT_5X5_100,
+      "DICT_5X5_250":  cv2.aruco.DICT_5X5_250,
+      "DICT_5X5_1000":  cv2.aruco.DICT_5X5_1000,
+      "DICT_6X6_50":  cv2.aruco.DICT_6X6_50,
+      "DICT_6X6_100":  cv2.aruco.DICT_6X6_100,
+      "DICT_6X6_250":  cv2.aruco.DICT_6X6_250,
+      "DICT_6X6_1000":  cv2.aruco.DICT_6X6_1000,
+      "DICT_7X7_50":  cv2.aruco.DICT_7X7_50,
+      "DICT_7X7_100":  cv2.aruco.DICT_7X7_100,
+      "DICT_7X7_250":  cv2.aruco.DICT_7X7_250,
+      "DICT_7X7_1000":  cv2.aruco.DICT_7X7_1000,
+      "DICT_ARUCO_ORIGINAL":  cv2.aruco.DICT_ARUCO_ORIGINAL
     }
 
-    
-    aruco_dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
-    aruco_parameters = cv2.aruco.DetectorParameters_create()
     mtx=None
     dst=None
     aruco_length=0.031
 
 
     def __init__(self):
+        self.aruco_dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+        self.aruco_parameters = cv2.aruco.DetectorParameters()
         pass
     def addMarker(self,marker):
         self.arucoMarkers["id"].append(marker["id"])
@@ -72,8 +71,8 @@ class arucoOdometry:
         # Load the ArUco dictionary
         #print("[INFO] detecting '{}' markers...".format(
         #  aruco_dictionary_name))
-        self.aruco_dictionary = cv2.aruco.Dictionary_get(self.ARUCO_DICT[arucoDictName])
-        self.aruco_parameters = cv2.aruco.DetectorParameters_create()
+        self.aruco_dictionary = cv2.aruco.getPredefinedDictionary(self.ARUCO_DICT[arucoDictName])
+        self.aruco_parameters = cv2.aruco.DetectorParameters()
 
 
     def euler_from_quaternion(self,x, y, z, w):
@@ -100,9 +99,9 @@ class arucoOdometry:
 
     def updateCameraPoses(self,frame,frameTime,markerTargetID):   
         # Detect ArUco markers in the video frame
-        (corners, marker_ids, rejected) = cv2.aruco.detectMarkers(
-            frame, self.aruco_dictionary, parameters=self.aruco_parameters,
-            cameraMatrix=self.mtx, distCoeff=self.dst)
+        detector = cv2.aruco.ArucoDetector(self.aruco_dictionary, self.aruco_parameters)
+        (corners, marker_ids, rejected) = detector.detectMarkers(
+            frame)#, cameraMatrix=self.mtx, distCoeff=self.dst)
         # Check that at least one ArUco marker was detected
         x,y,z,a_x,a_y,a_z=0,0,0,0,0,0
         if marker_ids is not None and markerTargetID in marker_ids:
