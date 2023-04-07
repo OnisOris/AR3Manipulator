@@ -520,6 +520,33 @@ class Manipulator:
         if (self.showMode):
             robot.show()
         return np.hstack([f.t_3_1.reshape([3, ]), f.euler_3])
+    def calculate_direct2(self):
+        cja = [float(self.joints[0].current_joint_angle), float(self.joints[1].current_joint_angle),
+               float(self.joints[2].current_joint_angle),
+               float(self.joints[3].current_joint_angle), float(self.joints[4].current_joint_angle),
+               float(self.joints[5].current_joint_angle)]
+        cja = [0.0, 0, 0, 0.0, 0, 0]
+        cja = list(map(radians, cja))
+
+        T = []
+        for i in range(6):
+            d = self.DH[f'displacement_theta_{i + 1}']
+            T.append(np.array(
+                [[cos(cja[i] + d), -sin(cja[i] + d) * cos(self.DH[f'alpha_{i + 1}']),
+                  sin(cja[i] + d) * sin(self.DH[f'alpha_{i + 1}']),
+                  self.DH[f'a_{i + 1}'] * cos(cja[i] + d)],
+                 [sin(cja[i] + d), cos(cja[i] + d) * cos(self.DH[f'alpha_{i + 1}']),
+                  -cos(cja[i] + d) * sin(self.DH[f'alpha_{i + 1}']),
+                  self.DH[f'a_{i + 1}'] * sin(cja[i] + d)],
+                 [0, sin(self.DH[f'alpha_{i + 1}']), cos(self.DH[f'alpha_{i + 1}']), self.DH[f'd_{i + 1}']],
+                 [0, 0, 0, 1]]))
+        self.last_matrix = T
+        return T
+
+    def matrix_dot_all(self, array_matrix):
+        T0_6 = ((((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(
+            array_matrix[4])).dot(array_matrix[5])
+        return T0_6
 
     def matrix_create(self):
         cja = [float(self.joints[0].current_joint_angle), float(self.joints[1].current_joint_angle),
@@ -734,8 +761,17 @@ class Manipulator:
         self.jog_joints(need_angles)
         self.calculate_direct_kinematics_problem()
 
+    def move_all_xyz(self, xyz):
+        lenth_x = xyz[0] / 1000
+        lenth_y = xyz[1] / 1000
+        lenth_z = xyz[2] / 1000
+        position = self.last_inverse_pos
+        position[0] = position[0] + lenth_x
+        position[1] = position[1] + lenth_y
+        position[2] = position[2] + lenth_z
+        self.move_xyz(position)
     def move_x(self, lenth_x):  # принимаем мм
-        lenth_x = lenth_x/1000
+
         position = self.last_inverse_pos
         logger.debug(position)
         position[0] = position[0] + lenth_x
