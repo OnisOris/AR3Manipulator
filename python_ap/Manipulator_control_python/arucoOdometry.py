@@ -160,7 +160,7 @@ class arucoOdometry:
 
                 x,y,z,a_x,a_y,a_z=transform_translation_x, transform_translation_y, transform_translation_z, roll_x, pitch_y, yaw_z
                 print(camera_pos,camera_euler)
-                x,y,z,a_x,a_y,a_z=camera_pos[0], camera_pos[1], camera_pos[2], camera_euler[0], camera_euler[1], camera_euler[2]
+                #x,y,z,a_x,a_y,a_z=camera_pos[0], camera_pos[1], camera_pos[2], camera_euler[0], camera_euler[1], camera_euler[2]
 
 
 
@@ -180,7 +180,8 @@ class arucoOdometry:
                 
 
 
-                cv2.aruco.drawAxis(frame, self.mtx, self.dst, rvecs[i], tvecs[i], self.aruco_length)
+                # cv2.aruco.drawAxis(frame, self.mtx, self.dst, rvecs[i], tvecs[i], self.aruco_length)
+                cv2.drawFrameAxes(frame, self.mtx, self.dst, rvecs[i], tvecs[i], self.aruco_length)
         return frame, x,y,z,a_x,a_y,a_z
                 
 

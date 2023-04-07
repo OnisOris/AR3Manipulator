@@ -247,7 +247,7 @@ class Manipulator:
         for i in range(6):
             d = self.calc_angle(degrees[i], self.joints[i])
             arc = d[0]
-            logger.debug(self.joints[i].motor_dir)
+            # logger.debug(self.joints[i].motor_dir)
             direction = d[1]
             j_jog_steps = abs(int(arc / self.joints[i].degrees_per_step))
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
