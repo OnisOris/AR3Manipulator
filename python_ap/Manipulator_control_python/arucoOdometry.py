@@ -41,6 +41,7 @@ class arucoOdometry:
     def __init__(self):
         self.aruco_dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
         self.aruco_parameters = cv2.aruco.DetectorParameters()
+        self.arucoDictName = ""
         pass
     def addMarker(self,marker):
         self.arucoMarkers["id"].append(marker["id"])

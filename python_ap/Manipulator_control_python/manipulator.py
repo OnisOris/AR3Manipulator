@@ -667,13 +667,17 @@ class Manipulator:
         r = math.sqrt(xc ** 2 + yc ** 2) - self.DH['a_1']
         s = zc - d1
         D = (r ** 2 + s ** 2 - a2 ** 2 - a3 ** 2) / (2 * a2 * a3)
-        if not theta3plus:
-            theta_3 = atan2(sqrt(1 - D ** 2), D)
-            theta_2 = atan2(s, r) + atan2(a3 * sin(theta_3), a2 + a3 * cos(theta_3))
-            theta_3 = -theta_3  # инвертирование угла необходимо, так как в эту сторону мы вращаемся отрицательно
-        else:
-            theta_3 = atan2(sqrt(1 - D ** 2), D)
-            theta_2 = atan2(s, r) - atan2(a3 * sin(theta_3), a2 + a3 * cos(theta_3))
+        try:
+            if not theta3plus:
+                theta_3 = atan2(sqrt(1 - D ** 2), D)
+                theta_2 = atan2(s, r) + atan2(a3 * sin(theta_3), a2 + a3 * cos(theta_3))
+                theta_3 = -theta_3  # инвертирование угла необходимо, так как в эту сторону мы вращаемся отрицательно
+            else:
+                theta_3 = atan2(sqrt(1 - D ** 2), D)
+                theta_2 = atan2(s, r) - atan2(a3 * sin(theta_3), a2 + a3 * cos(theta_3))
+        except:
+            logger.error(ValueError)
+            return [0,0,0,0,0,0]
         theta_1 = atan2(yc, xc)
         # # Сферическое запястье
         cja = [theta_1, theta_2,
@@ -762,13 +766,14 @@ class Manipulator:
         self.calculate_direct_kinematics_problem()
 
     def move_all_xyz(self, xyz):
-        lenth_x = xyz[0] / 1000
-        lenth_y = xyz[1] / 1000
-        lenth_z = xyz[2] / 1000
+        lenth_x = xyz[0]
+        lenth_y = xyz[1]
+        lenth_z = xyz[2]
+        # logger.debug(lenth_y)
         position = self.last_inverse_pos
+        # logger.debug(position)
         position[0] = position[0] + lenth_x
         position[1] = position[1] + lenth_y
-        position[2] = position[2] + lenth_z
         self.move_xyz(position)
     def move_x(self, lenth_x):  # принимаем мм
 
@@ -899,3 +904,21 @@ class Manipulator:
         yaw_z = math.atan2(t3, t4)
 
         return [roll_x, pitch_y, yaw_z]
+
+    def trans(self, xyzabc):
+        theta = xyzabc[5]
+        x = xyzabc[0]
+        y = xyzabc[1]
+        z = xyzabc[2]
+        T6_7 = np.array([[cos(theta), -sin(theta), 0, x * cos(theta)],
+                         [sin(theta), cos(theta), 0, y * sin(theta)],
+                         [0, 0, 1, z],
+                         [0, 0, 0, 1]])
+        T0_6 = self.matrix_dot(self.calculate_direct2(), 0, 6)
+        angles = self.angular_Euler_calculation(T0_6[0:3, 0:3])
+        # logger.debug(np.degrees(angles))
+        T0_7 = np.dot(T0_6, T6_7)
+        # logger.debug(T0_7)
+        angles = self.angular_Euler_calculation(T0_7[0:3, 0:3])
+        # logger.debug(np.degrees(angles))
+        return [T6_7[0, 3], T6_7[1, 3], T6_7[2, 3]]
