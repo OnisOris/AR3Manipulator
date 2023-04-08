@@ -17,7 +17,7 @@ robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 while (True):
     inp = input("Введите команду \n")
     inp_c = inp.split()
-    try:
+    if (True):
         if(inp ==  "exit"):
             break
         elif(inp ==  "calib"):
@@ -75,10 +75,10 @@ while (True):
                 robot.read_points()
         elif (inp_c[0] == "calib_axe"):
                 robot.calibrate(str(inp_c[1]), '30')
+        elif (inp_c[0] == "opencv"):
+                robot.openCV()
         else:
             print("Неправильная команда")
-    except Exception:
-        print("Из этого положения нельзя передвинуться в новое")
 
 # move_all 68 -34 87 0 -60 0
 #position = [68.944, 0.0, 733.607, -90.0, 1.05, -90.0] txmove 0.1 -0.5 0.3 0 pi 0

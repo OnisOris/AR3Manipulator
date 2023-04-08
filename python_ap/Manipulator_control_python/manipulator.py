@@ -14,6 +14,8 @@ import numpy as np
 import plotly.graph_objects as go
 from visual_kinematics.RobotSerial import *
 from visual_kinematics.RobotTrajectory import *
+import cv2
+import arucoOdometry
 
 
 # from parse import parse
@@ -906,14 +908,20 @@ class Manipulator:
         return [roll_x, pitch_y, yaw_z]
 
     def trans(self, xyzabc):
-        theta = xyzabc[5]
+        theta = pi/2
+        phi = pi
         x = xyzabc[0]
         y = xyzabc[1]
         z = xyzabc[2]
-        T6_7 = np.array([[cos(theta), -sin(theta), 0, x * cos(theta)],
+        T6_7_z = np.array([[cos(theta), -sin(theta), 0, x * cos(theta)],
                          [sin(theta), cos(theta), 0, y * sin(theta)],
                          [0, 0, 1, z],
                          [0, 0, 0, 1]])
+        T6_7_x = np.array([[1, 0, 0, 0],
+                         [0, cos(phi), -sin(phi), 0],
+                         [0, sin(phi), cos(phi), 0],
+                         [0, 0, 0, 1]])
+        T6_7 = np.dot(T6_7_z, T6_7_x)
         T0_6 = self.matrix_dot(self.calculate_direct2(), 0, 6)
         angles = self.angular_Euler_calculation(T0_6[0:3, 0:3])
         # logger.debug(np.degrees(angles))
@@ -922,3 +930,61 @@ class Manipulator:
         angles = self.angular_Euler_calculation(T0_7[0:3, 0:3])
         # logger.debug(np.degrees(angles))
         return [T6_7[0, 3], T6_7[1, 3], T6_7[2, 3]]
+
+    def openCV(self):
+        aruco_marker_side_length = 0.0344
+        aruco_dictionary_name = "DICT_4X4_50"
+        camera_calibration_parameters_filename = 'calibration_chessboardDEXP1080.yaml'
+        cap = cv2.VideoCapture(0)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        logger.debug("cap.set")
+        odom = arucoOdometry.arucoOdometry()
+        odom.setCameraParams(camera_calibration_parameters_filename)
+        odom.setArucoLength(aruco_marker_side_length)
+        odom.setArucoDict(aruco_dictionary_name)
+        markers = [{"id": 5, "size": aruco_marker_side_length}, {"id": 6, "size": aruco_marker_side_length}]
+        odom.setMarkers(markers)
+
+        startTime = time.time() * 1000
+        cycle = 5
+        array = np.array([0, 0, 0, 0, 0, 0])
+        i = 0
+        logger.debug("begin cycle")
+        while (True):
+            ret, frame = cap.read()
+            frame, x, y, z, a_x, a_y, a_z = odom.updateCameraPoses(frame, time.time() * 1000 - startTime, 5)
+            cv2.imshow("im", frame)
+            cv2.waitKey(1)
+            logger.debug("waitkey")
+            # logger.debug(x)
+            if not x == 0 or not y == 0 or not z == 0:
+                i += 1
+                xyz = np.array([x, y, z, a_x, a_y, a_z])
+                array = np.vstack([array, xyz])
+
+                logger.debug(xyz)
+                logger.debug(f'------array = {array}')
+            if i > 5:
+                break
+            #     logger.debug(f'1 x = {x} y = {y} z = {z}')
+            #     xyz = self.trans([x, y, z, a_x, a_y, a_z])
+            #     logger.debug(f'2 ---- x = {xyz[0]} y = {xyz[1]} z = {xyz[2]}')
+                # xyz[0] = -xyz[0]
+                # xyz[1] = -xyz[1]
+
+            # np.vstack([array, xyz])
+        array = np.delete(array, 0, 0)
+        logger.debug(array)
+        mean_array = np.mean(array, axis=0)
+        logger.debug(mean_array)
+        coord = self.trans(mean_array)
+        logger.debug(coord)
+
+
+                # time.sleep(0.3)
+            # inp = input("Введите команду \n")
+            # inp_c = inp.split()
+            # if inp == "exit":
+            #     break
+
