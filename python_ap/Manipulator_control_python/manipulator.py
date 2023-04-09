@@ -906,32 +906,101 @@ class Manipulator:
         yaw_z = math.atan2(t3, t4)
 
         return [roll_x, pitch_y, yaw_z]
+    def rotate_from_angle(self, angle, axis, l4x4=False):
+        if (l4x4==False):
+            if (axis == 'x'):
+                rotate = np.array([[1, 0, 0],
+                                    [0, np.cos(angle), -np.sin(angle)],
+                                    [0, np.sin(angle), np.cos(angle)]])
+
+            if (axis == 'y'):
+                rotate = np.array([[np.cos(angle), 0, np.sin(angle)],
+                                    [0, 1, 0],
+                                    [-np.sin(angle), 0, np.cos(angle)]])
+            if (axis == 'z'):
+                rotate =  np.array([[np.cos(angle), -np.sin(angle), 0],
+                                    [np.sin(angle), np.cos(angle), 0],
+                                    [0, 0, 1]])
+        if (l4x4 == True):
+            if (axis == 'x'):
+                rotate = np.array([[1, 0, 0, 0],
+                                   [0, np.cos(angle), -np.sin(angle), 0],
+                                   [0, np.sin(angle), np.cos(angle), 0],
+                                   [0, 0, 0, 1]])
+
+            if (axis == 'y'):
+                rotate = np.array([[np.cos(angle), 0, np.sin(angle), 0],
+                                        [0, 1, 0, 0],
+                                        [-np.sin(angle), 0, np.cos(angle), 0],
+                                        [0, 0, 0, 1]])
+            if (axis == 'z'):
+                rotate = np.array([[np.cos(angle), -np.sin(angle), 0, 0],
+                                        [np.sin(angle), np.cos(angle), 0, 0],
+                                        [0, 0, 1, 0],
+                                        [0, 0, 0, 1]])
+        return rotate
 
     def trans(self, xyzabc):
-        theta = pi/2
-        phi = pi
-        x = xyzabc[0]
-        y = xyzabc[1]
-        z = xyzabc[2]
-        T6_7_z = np.array([[cos(theta), -sin(theta), 0, x * cos(theta)],
-                         [sin(theta), cos(theta), 0, y * sin(theta)],
-                         [0, 0, 1, z],
-                         [0, 0, 0, 1]])
-        T6_7_x = np.array([[1, 0, 0, 0],
-                         [0, cos(phi), -sin(phi), 0],
-                         [0, sin(phi), cos(phi), 0],
-                         [0, 0, 0, 1]])
-        T6_7 = np.dot(T6_7_z, T6_7_x)
-        T0_6 = self.matrix_dot(self.calculate_direct2(), 0, 6)
-        angles = self.angular_Euler_calculation(T0_6[0:3, 0:3])
-        # logger.debug(np.degrees(angles))
-        T0_7 = np.dot(T0_6, T6_7)
-        # logger.debug(T0_7)
-        angles = self.angular_Euler_calculation(T0_7[0:3, 0:3])
-        # logger.debug(np.degrees(angles))
-        return [T6_7[0, 3], T6_7[1, 3], T6_7[2, 3]]
+
+        angle_z = pi/2
+        angle_x = pi
+        # смещение относительно системы координат камеры
+        xc = 0.
+        yc = -0.035
+        zc = 0.
+        #logger.debug(f'xyzabc[1] = {xyzabc[1]}')
+        xyzabc[0] = xyzabc[0] + xc
+        xyzabc[1] = xyzabc[1] + yc
+        #logger.debug(f'xyzabc[1] = {xyzabc[1]}')
+        xyzabc[2] = xyzabc[2] + zc
+        # смещение относительно системы координат схвата
+        x = 0
+        y = 0
+        z = 0
+        Td = np.array([[1, 0, 0, x],
+                      [0, 1, 0, y],
+                      [0, 0, 1, z],
+                      [0, 0, 0, 1]])
+        Tz = self.rotate_from_angle(angle_z, 'z', True)
+        Tx = self.rotate_from_angle(angle_x, 'x', True)
+       # logger.debug(Tz)
+        #logger.debug(Tx)
+        T = np.dot(Td, Tz)
+        #logger.debug(f"Td*Tz {T}")
+        T = np.dot(T, Tx)
+        #logger.debug(f"Td*Tz*Tx {T[0:3, 0:3]}")
+        vector_xyz = np.array([xyzabc[0],
+                                xyzabc[1],
+                                xyzabc[2]])
+       # logger.debug(vector_xyz)
+        # Координаты арукомаркера относительно системы маркера
+        coordinates = np.dot(vector_xyz, T[0:3, 0:3])
+       # logger.debug(coordinates)
+        coordinates[2] = - coordinates[2] # инвертируем ось z, потому что другая тройка векторов
+        return coordinates
+
+
+
+        # T6_7_z = np.array([[cos(theta), -sin(theta), 0, x * cos(theta)],
+        #                  [sin(theta), cos(theta), 0, y * sin(theta)],
+        #                  [0, 0, 1, z],
+        #                  [0, 0, 0, 1]])
+        # T6_7_x = np.array([[1, 0, 0, 0],
+        #                  [0, cos(phi), -sin(phi), 0],
+        #                  [0, sin(phi), cos(phi), 0],
+        #                  [0, 0, 0, 1]])
+        # T6_7 = np.dot(T6_7_z, T6_7_x)
+        # T0_6 = self.matrix_dot(self.calculate_direct2(), 0, 6)
+        # angles = self.angular_Euler_calculation(T0_6[0:3, 0:3])
+        # # logger.debug(np.degrees(angles))
+        # T0_7 = np.dot(T0_6, T6_7)
+        # # logger.debug(T0_7)
+        # angles = self.angular_Euler_calculation(T0_7[0:3, 0:3])
+        # # logger.debug(np.degrees(angles))
+        # return [T6_7[0, 3], T6_7[1, 3], T6_7[2, 3]]
 
     def openCV(self):
+        self.move_xyz([0.28683, 0.1, 0.05, 0, pi, 0])
         aruco_marker_side_length = 0.0344
         aruco_dictionary_name = "DICT_4X4_50"
         camera_calibration_parameters_filename = 'calibration_chessboardDEXP1080.yaml'
@@ -947,7 +1016,7 @@ class Manipulator:
         odom.setMarkers(markers)
 
         startTime = time.time() * 1000
-        cycle = 5
+        cycle = 20
         array = np.array([0, 0, 0, 0, 0, 0])
         i = 0
         logger.debug("begin cycle")
@@ -963,9 +1032,9 @@ class Manipulator:
                 xyz = np.array([x, y, z, a_x, a_y, a_z])
                 array = np.vstack([array, xyz])
 
-                logger.debug(xyz)
-                logger.debug(f'------array = {array}')
-            if i > 5:
+                #logger.debug(xyz)
+                #logger.debug(f'------array = {array}')
+            if i > cycle:
                 break
             #     logger.debug(f'1 x = {x} y = {y} z = {z}')
             #     xyz = self.trans([x, y, z, a_x, a_y, a_z])
@@ -980,6 +1049,7 @@ class Manipulator:
         logger.debug(mean_array)
         coord = self.trans(mean_array)
         logger.debug(coord)
+        self.move_all_xyz([coord[0], coord[1], 0])
 
 
                 # time.sleep(0.3)

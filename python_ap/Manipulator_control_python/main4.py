@@ -15,5 +15,4 @@ arduino_port = 5
 
 r = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 
-ddd = r.calculate_direct2()
-logger.debug(ddd)
+r.trans([1,2,1])
