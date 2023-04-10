@@ -12,7 +12,12 @@ baud = 115200
 teensy_port = 3
 arduino_port = 5
 ################# Конец настроек #################
-
-r = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
-
-r.trans([1,2,1])
+#
+# r = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
+#
+# r.trans([1,2,1])
+# f = [1, 7]
+# d = [1, 7]
+# f = [1, 7]
+# d = np.array([1, 7])
+# print(f.shape[0])

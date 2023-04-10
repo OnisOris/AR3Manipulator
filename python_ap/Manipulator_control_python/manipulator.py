@@ -27,17 +27,11 @@ class Position:
     Class for keeping global position and orientation of manipulitor's wrist
     """
     x: float = 0  # mm
-    x_m = x / 1000  # m
     y: float = 0  # mm
-    y_m = y / 1000  # m
     z: float = 0  # mm
-    z_m = z / 1000  # m
     theta: float = 0  # grad
-    theta_rad = theta * pi / 180  # rad
     phi: float = 0  # grad
-    phi_rad = phi * pi / 180  # rad
     psi: float = 0  # grad
-    psi_rad = psi * pi / 180  # rad
     speed: int = 30
 
     def change(self, x, y, z, theta, phi, psi):
@@ -758,10 +752,17 @@ class Manipulator:
 
 
     def move_xyz(self, pos):
+        pos = np.array(pos)
+        len = pos.shape[0]
+        if len == 3:
+            pos = np.hstack([pos, [0, pi, 0]])
+        if len == 2:
+            pos = np.hstack([pos, [self.position.z, 0, pi, 0]])
         #pos = np.array([pos[0] / 1000, pos[1] / 1000, pos[2] / 1000,
         #                0, pi, 0])
         if (self.logging == True):
             logger.debug(pos)
+        logger.debug(pos)
         need_angles = self.calculate_inverse_kinematic_problem(pos)
         need_angles = np.degrees(need_angles)
         self.jog_joints(need_angles)
@@ -772,8 +773,14 @@ class Manipulator:
         lenth_y = xyz[1]
         lenth_z = xyz[2]
         # logger.debug(lenth_y)
-        position = self.last_inverse_pos
-        # logger.debug(position)
+        if len(self.last_inverse_pos) != 0:
+            position = self.last_inverse_pos
+        else:
+            self.calculate_direct_kinematics_problem()
+            position = [self.position.x, self.position.y, self.position.z,
+                        self.position.theta, self.position.phi, self.position.psi]
+            logger.debug(f"position in direct if = {position}")
+        logger.debug(position)
         position[0] = position[0] + lenth_x
         position[1] = position[1] + lenth_y
         self.move_xyz(position)
@@ -999,12 +1006,12 @@ class Manipulator:
         # # logger.debug(np.degrees(angles))
         # return [T6_7[0, 3], T6_7[1, 3], T6_7[2, 3]]
 
-    def openCV(self):
+    def openCV(self,id_camera, id_marker=0):
         # self.move_xyz([0.28683, 0.1, 0.05, 0, pi, 0])
         aruco_marker_side_length = 0.0344
         aruco_dictionary_name = "DICT_4X4_50"
         camera_calibration_parameters_filename = 'calibration_chessboardDEXP1080.yaml'
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(id_camera)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         logger.debug("cap.set")
@@ -1012,11 +1019,11 @@ class Manipulator:
         odom.setCameraParams(camera_calibration_parameters_filename)
         odom.setArucoLength(aruco_marker_side_length)
         odom.setArucoDict(aruco_dictionary_name)
-        markers = [{"id": 5, "size": aruco_marker_side_length}, {"id": 6, "size": aruco_marker_side_length}]
+        markers = [{"id": id_marker, "size": aruco_marker_side_length}, {"id": 5, "size": aruco_marker_side_length}] #, {"id": id2, "size": aruco_marker_side_length}]
         odom.setMarkers(markers)
 
         startTime = time.time() * 1000
-        cycle = 20
+        cycle = 5
         array = np.array([0, 0, 0, 0, 0, 0])
         i = 0
         logger.debug("begin cycle")
@@ -1049,7 +1056,50 @@ class Manipulator:
         logger.debug(mean_array)
         coord = self.trans(mean_array)
         logger.debug(coord)
-        self.move_all_xyz([coord[0], coord[1], 0])
+        # self.move_all_xyz([coord[0], coord[1], 0])
+        return coord
+
+    def camera_calibrate(self):
+        d = 0.1
+        xyz_0 = self.openCV(0, 11)
+        print(1)
+        current_coord = self.calculate_direct_kinematics_problem()
+        # координаты предварительно вычесленного центра
+        x0 = current_coord[0] + xyz_0[0]
+        y0 = current_coord[1] + xyz_0[1]
+        xy0 = np.array([x0, y0])
+        logger.debug(f'x0 = {x0}, y0 = {y0}')
+        D1 = [x0, y0 - d]
+        D2 = [x0 - d, y0]
+        D3 = [x0, y0 + d]
+        D4 = [x0 + d, y0]
+
+        # Калибровка оси x
+        #self.move_all_xyz(D1)
+        self.move_xyz(D1)
+        d1 = self.openCV(0, 11)
+        self.move_xyz(D3)
+        d3 = self.openCV(0, 11)
+
+        dx0 = (d1 + d3) / 2
+        logger.debug(dx0)
+
+        # # Калибровка оси y
+        # self.move_xyz(D2)
+        # d2 = self.openCV(0, 11)
+        # self.move_xyz(D4)
+        # d4 = self.openCV(0, 11)
+        #
+        # dy0 = (d2 + d4) / 2
+        #
+        # ######### усредняем ###########
+        #
+        # dxy = np.vstack(dx0, dy0)
+        # xy_mean = np.mean(dxy, axis=0)
+
+
+
+
 
 
                 # time.sleep(0.3)
