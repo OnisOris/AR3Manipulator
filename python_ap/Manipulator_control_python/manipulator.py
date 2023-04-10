@@ -1000,7 +1000,7 @@ class Manipulator:
         # return [T6_7[0, 3], T6_7[1, 3], T6_7[2, 3]]
 
     def openCV(self):
-        self.move_xyz([0.28683, 0.1, 0.05, 0, pi, 0])
+        # self.move_xyz([0.28683, 0.1, 0.05, 0, pi, 0])
         aruco_marker_side_length = 0.0344
         aruco_dictionary_name = "DICT_4X4_50"
         camera_calibration_parameters_filename = 'calibration_chessboardDEXP1080.yaml'
