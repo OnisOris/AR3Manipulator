@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-04-11T13:08:40.453Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/111.0" etag="oK4Gw0ReHS40zpVSlF2v" version="21.1.4" type="github">
+<mxfile host="app.diagrams.net" modified="2023-04-11T13:15:12.097Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/111.0" etag="1fzMN8-6mOKdPe7_nkAX" version="21.1.4" type="github">
   <diagram name="Страница 1" id="ei1KMzxly2sDSdpJQlML">
     <mxGraphModel dx="691" dy="384" grid="1" gridSize="5" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -251,8 +251,8 @@
         <mxCell id="mHlTOlF-FuA04QRJyh8s-136" value="&lt;font color=&quot;#9673a6&quot;&gt;3&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="480" y="425" width="10" height="15" as="geometry" />
         </mxCell>
-        <mxCell id="mHlTOlF-FuA04QRJyh8s-139" value="&lt;div&gt;1 (x_current, y_current)&lt;/div&gt;&lt;div&gt;2 (x_current+&lt;font color=&quot;#ff3333&quot;&gt;x0_cam&lt;/font&gt;, y_current+&lt;font color=&quot;#ff3333&quot;&gt;y0_cam&lt;/font&gt;)&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="660" y="290" width="240" height="70" as="geometry" />
+        <mxCell id="mHlTOlF-FuA04QRJyh8s-139" value="&lt;div&gt;1 (x_current, y_current)&lt;/div&gt;&lt;div&gt;2 D0 = (x_current +&lt;font color=&quot;#ff3333&quot;&gt; x0_cam&lt;/font&gt;, y_current +&lt;font color=&quot;#ff3333&quot;&gt; y0_cam&lt;/font&gt;) = (x0, y0)&lt;br&gt;&lt;/div&gt;&lt;div&gt;3 (x0, y0 - d)&lt;br&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="655" y="290" width="475" height="70" as="geometry" />
         </mxCell>
         <mxCell id="mHlTOlF-FuA04QRJyh8s-141" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;fillColor=#e1d5e7;strokeColor=#9673a6;" edge="1" parent="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
