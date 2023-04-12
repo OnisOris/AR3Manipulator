@@ -76,9 +76,9 @@ while (True):
         elif (inp_c[0] == "calib_axe"):
                 robot.calibrate(str(inp_c[1]), '30')
         elif (inp_c[0] == "opencv"):
-                coord = robot.openCV(0, 12)
+                coord = robot.openCV(0, 5)
                 logger.debug(f'coord in main = {coord}')
-                robot.move_all_xyz([coord[0], coord[1], 0])
+                #robot.move_all_xyz([coord[0], coord[1], 0])
         elif (inp_c[0] == "cam"):
                 robot.camera_calibrate()
         else:

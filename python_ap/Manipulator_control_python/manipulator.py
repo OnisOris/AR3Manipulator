@@ -983,12 +983,10 @@ class Manipulator:
                                 xyzabc[1],
                                 xyzabc[2]])
        # logger.debug(vector_xyz)
-        # Координаты арукомаркера относительно системы маркера
+        # Координаты арукомаркера относительно системы камеры
         coordinates = np.dot(vector_xyz, T[0:3, 0:3])
        # logger.debug(coordinates)
         coordinates[2] = - coordinates[2] # инвертируем ось z, потому что другая тройка векторов
-        # переход в глобальную систему координат манипулятора:
-        coordinates = coordinates.dot(self.last_dot_matrix[0:3, 0:3])
         return coordinates
 
 
@@ -1024,7 +1022,7 @@ class Manipulator:
         odom.setCameraParams(camera_calibration_parameters_filename)
         odom.setArucoLength(aruco_marker_side_length)
         odom.setArucoDict(aruco_dictionary_name)
-        markers = [{"id": id_marker, "size": aruco_marker_side_length}, {"id": 5, "size": aruco_marker_side_length}] #, {"id": id2, "size": aruco_marker_side_length}]
+        markers = [{"id": id_marker, "size": aruco_marker_side_length}] #, {"id": id2, "size": aruco_marker_side_length}]
         odom.setMarkers(markers)
 
         startTime = time.time() * 1000
@@ -1034,7 +1032,7 @@ class Manipulator:
         logger.debug("begin cycle")
         while (True):
             ret, frame = cap.read()
-            frame, x, y, z, a_x, a_y, a_z = odom.updateCameraPoses(frame, time.time() * 1000 - startTime, 5)
+            frame, x, y, z, a_x, a_y, a_z = odom.updateCameraPoses(frame, time.time() * 1000 - startTime, id_marker)
             cv2.imshow("im", frame)
             cv2.waitKey(1)
             logger.debug("waitkey")
@@ -1065,7 +1063,7 @@ class Manipulator:
         return coord
 
     def camera_calibrate(self):
-        d = 0.1
+        d = 0.02
         xyz_0 = self.openCV(0, 11)
         print(1)
         current_coord = self.calculate_direct_kinematics_problem()
@@ -1075,23 +1073,32 @@ class Manipulator:
         xy0 = np.array([x0, y0])
         logger.debug(f'x0 = {x0}, y0 = {y0}')
         D1 = [x0, y0 - d]
-        D2 = [x0 - d, y0]
         D3 = [x0, y0 + d]
+        D2 = [x0 - d, y0]
+        # D3 = [x0, y0 + d]
         D4 = [x0 + d, y0]
-
+        xy_massive = []
         # Калибровка оси x
-        #self.move_all_xyz(D1)
         self.move_xyz(D1)
         d1 = self.openCV(0, 11)
-        
-        # Скорректированная точка 1
-        Dc1 = xy0 + d1
+        xy_massive.append([self.position.x + d1[0], self.position.y + d1[1]])
 
         self.move_xyz(D3)
         d3 = self.openCV(0, 11)
+        xy_massive.append([self.position.x + d3[0], self.position.y + d3[1]])
 
-        dx0 = (d1 + d3) / 2
-        logger.debug(dx0)
+        # Калибровка оси y
+        self.move_xyz(D2)
+        d2 = self.openCV(0, 11)
+        xy_massive.append([self.position.x + d2[0], self.position.y + d2[1]])
+
+        self.move_xyz(D4)
+        d4 = self.openCV(0, 11)
+        xy_massive.append([self.position.x + d4[0], self.position.y + d4[1]])
+
+        xy_mean = np.mean(xy_massive, axis=0)
+        logger.debug(xy_mean)
+        self.move_xyz(xy_mean)
 
         # # Калибровка оси y
         # self.move_xyz(D2)
