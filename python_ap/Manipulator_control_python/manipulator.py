@@ -88,7 +88,8 @@ class Manipulator:
         self.logging = False  # включает вывод в консоль информацию
         self.showMode = False  # включает мод отображения в отдельном окне положения манипулятора
         self.robot = RobotSerial(self.dh_params)
-        self.last_matrix = []  # содержит последнии матрицы преобразования
+        self.last_matrix = []  # содержит последнии матрицы преобразования координат
+        self.last_dot_matrix = np.array([]) # содержит последнии перемноженные матрицы преобразования координат
         self.time_sleep = 3
         self.points = ""
         self.delta = 10
@@ -542,6 +543,7 @@ class Manipulator:
     def matrix_dot_all(self, array_matrix):
         T0_6 = ((((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(
             array_matrix[4])).dot(array_matrix[5])
+        self.last_dot_matrix = T0_6
         return T0_6
 
     def matrix_create(self):
@@ -568,6 +570,7 @@ class Manipulator:
     def matrix_dot_all(self, array_matrix):
         T0_6 = ((((array_matrix[0].dot(array_matrix[1])).dot(array_matrix[2])).dot(array_matrix[3])).dot(
             array_matrix[4])).dot(array_matrix[5])
+
         return T0_6
 
     def matrix_dot(self, array_matrix, num1, num2):
@@ -984,6 +987,8 @@ class Manipulator:
         coordinates = np.dot(vector_xyz, T[0:3, 0:3])
        # logger.debug(coordinates)
         coordinates[2] = - coordinates[2] # инвертируем ось z, потому что другая тройка векторов
+        # переход в глобальную систему координат манипулятора:
+        coordinates = coordinates.dot(self.last_dot_matrix[0:3, 0:3])
         return coordinates
 
 
@@ -1078,6 +1083,10 @@ class Manipulator:
         #self.move_all_xyz(D1)
         self.move_xyz(D1)
         d1 = self.openCV(0, 11)
+        
+        # Скорректированная точка 1
+        Dc1 = xy0 + d1
+
         self.move_xyz(D3)
         d3 = self.openCV(0, 11)
 
