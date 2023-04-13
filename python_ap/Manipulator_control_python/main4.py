@@ -6,18 +6,13 @@ import numpy as np
 from math import (pi)
 from loguru import logger
 from pynput import keyboard
+import cv2
 
 ############## Настройки программы ##############
 baud = 115200
 teensy_port = 3
 arduino_port = 5
 ################# Конец настроек #################
-#
-# r = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
-#
-# r.trans([1,2,1])
-# f = [1, 7]
-# d = [1, 7]
-# f = [1, 7]
-# d = np.array([1, 7])
-# print(f.shape[0])
+cap = cv2.VideoCapture(0)
+# cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)

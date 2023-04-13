@@ -83,6 +83,9 @@ class Manipulator:
                           ])
 
     def __init__(self, teensy_port, arduino_port, baud):
+        self.cap = cv2.VideoCapture(0)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         self.test_mode = False  # данное поле можно включить, если нет подключения по сериал порту
         self.last_inverse_pos = []  # хранит последние заданные координаты в обратную задачу кинематики
         self.logging = False  # включает вывод в консоль информацию
@@ -137,6 +140,13 @@ class Manipulator:
             f"{self.joints[2].current_joint_angle}, {self.joints[3].current_joint_angle}, "
             f"{self.joints[4].current_joint_angle}, {self.joints[5].current_joint_angle}")
         file.close()
+        file = open("lastInversePos", "w")
+        file.truncate()
+        file.write(
+            f"{self.last_inverse_pos[0]}, {self.last_inverse_pos[1]}, "
+            f"{self.last_inverse_pos[2]}, {self.last_inverse_pos[3]}, "
+            f"{self.last_inverse_pos[4]}, {self.last_inverse_pos[5]}")
+        file.close()
 
     def restore_position(self):
         file = open("lastPos", "r")
@@ -145,6 +155,14 @@ class Manipulator:
         for i, angle in enumerate(angles):
             angle = float(angle)
             self.joints[i].current_joint_angle = angle
+        file = open("lastInversePos", "r")
+        text = file.read()
+        angles = text.split(",")
+        massive = []
+        for i, xyzabc in enumerate(angles):
+            xyzabc = float(xyzabc)
+            massive.append(xyzabc)
+        self.last_inverse_pos = np.array(massive)
 
     def finish(self):
         self.serial_teensy.close()
@@ -716,6 +734,8 @@ class Manipulator:
                             theta_2 + theta_3) + r23 * sin(theta_1) * cos(theta_2 +
                                                                           theta_3) + r33 * sin(
                             theta_2 + theta_3)) ** 2 - 1)))
+        self.last_inverse_pos = x_y_z_phi_theta_psi
+        self.save_position()
         return [theta_1, theta_2, theta_3, theta_4, theta_5, theta_6]
     def take_coordinate(self, array_matrix, number_of_matrix1, number_of_matrix2):
         matrix = self.matrix_dot(array_matrix, number_of_matrix1, number_of_matrix2)
@@ -788,7 +808,7 @@ class Manipulator:
         position[1] = position[1] + lenth_y
         self.move_xyz(position)
     def move_x(self, lenth_x):  # принимаем мм
-
+        lenth_x = lenth_x / 1000
         position = self.last_inverse_pos
         logger.debug(position)
         position[0] = position[0] + lenth_x
@@ -836,13 +856,13 @@ class Manipulator:
         self.move_xyz(position)
 
     def grab(self):
-        command = f"SV{0}P{135}\n"
+        command = f"SV{0}P{1}\n"
         if (self.logging == True):
             logger.debug(command)
         self.arduino_push(command)
 
     def absolve(self):
-        command = f"SV{0}P{1}\n"
+        command = f"SV{0}P{135}\n"
         if (self.logging == True):
             logger.debug(command)
         self.arduino_push(command)
@@ -955,8 +975,8 @@ class Manipulator:
         angle_z = pi/2
         angle_x = pi
         # смещение относительно системы координат камеры
-        xc = 0.
-        yc = -0.035
+        xc = -0.03
+        yc = -0.03+0.1
         zc = 0.
         #logger.debug(f'xyzabc[1] = {xyzabc[1]}')
         xyzabc[0] = xyzabc[0] + xc
@@ -1008,15 +1028,19 @@ class Manipulator:
         # angles = self.angular_Euler_calculation(T0_7[0:3, 0:3])
         # # logger.debug(np.degrees(angles))
         # return [T6_7[0, 3], T6_7[1, 3], T6_7[2, 3]]
-
+    def camera_init(self):
+        cap = cv2.VideoCapture(0)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        return cap
     def openCV(self,id_camera, id_marker=0):
         # self.move_xyz([0.28683, 0.1, 0.05, 0, pi, 0])
         aruco_marker_side_length = 0.0344
         aruco_dictionary_name = "DICT_4X4_50"
         camera_calibration_parameters_filename = 'calibration_chessboardDEXP1080.yaml'
-        cap = cv2.VideoCapture(id_camera)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        cap = self.cap
+        # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         logger.debug("cap.set")
         odom = arucoOdometry.arucoOdometry()
         odom.setCameraParams(camera_calibration_parameters_filename)
@@ -1036,6 +1060,7 @@ class Manipulator:
             cv2.imshow("im", frame)
             cv2.waitKey(1)
             logger.debug("waitkey")
+            # y -= 0.1
             # logger.debug(x)
             if not x == 0 or not y == 0 or not z == 0:
                 i += 1
@@ -1057,22 +1082,27 @@ class Manipulator:
         logger.debug(array)
         mean_array = np.mean(array, axis=0)
         logger.debug(mean_array)
+        # смещение по оси y камеры
+        mean_array[1] -= 0.02
         coord = self.trans(mean_array)
         logger.debug(coord)
+
         # self.move_all_xyz([coord[0], coord[1], 0])
         return coord
 
     def camera_calibrate(self):
-        d = 0.02
+        d = 0.01
         xyz_0 = self.openCV(0, 11)
         print(1)
         current_coord = self.calculate_direct_kinematics_problem()
         # координаты предварительно вычесленного центра
         x0 = current_coord[0] + xyz_0[0]
         y0 = current_coord[1] + xyz_0[1]
+        z0 = current_coord[2] - xyz_0[2] + 0.25
+
         xy0 = np.array([x0, y0])
         logger.debug(f'x0 = {x0}, y0 = {y0}')
-        D1 = [x0, y0 - d]
+        D1 = [x0, y0 - d, z0]
         D3 = [x0, y0 + d]
         D2 = [x0 - d, y0]
         # D3 = [x0, y0 + d]
@@ -1080,47 +1110,33 @@ class Manipulator:
         xy_massive = []
         # Калибровка оси x
         self.move_xyz(D1)
+        time.sleep(5)
         d1 = self.openCV(0, 11)
         xy_massive.append([self.position.x + d1[0], self.position.y + d1[1]])
 
         self.move_xyz(D3)
+        time.sleep(2)
         d3 = self.openCV(0, 11)
         xy_massive.append([self.position.x + d3[0], self.position.y + d3[1]])
 
         # Калибровка оси y
         self.move_xyz(D2)
+        time.sleep(2)
         d2 = self.openCV(0, 11)
         xy_massive.append([self.position.x + d2[0], self.position.y + d2[1]])
 
         self.move_xyz(D4)
+        time.sleep(2)
         d4 = self.openCV(0, 11)
         xy_massive.append([self.position.x + d4[0], self.position.y + d4[1]])
 
         xy_mean = np.mean(xy_massive, axis=0)
         logger.debug(xy_mean)
+        xy_mean[0] -= 0.1
         self.move_xyz(xy_mean)
 
-        # # Калибровка оси y
-        # self.move_xyz(D2)
-        # d2 = self.openCV(0, 11)
-        # self.move_xyz(D4)
-        # d4 = self.openCV(0, 11)
-        #
-        # dy0 = (d2 + d4) / 2
-        #
-        # ######### усредняем ###########
-        #
-        # dxy = np.vstack(dx0, dy0)
-        # xy_mean = np.mean(dxy, axis=0)
+    def take_object(self):
+        self.move_xyz([self.position.x + 0.045, self.position.y, self.position.z])
+        self.move_xyz([self.position.x, self.position.y + 0.0025, self.position.z - 0.1])
 
-
-
-
-
-
-                # time.sleep(0.3)
-            # inp = input("Введите команду \n")
-            # inp_c = inp.split()
-            # if inp == "exit":
-            #     break
 
