@@ -502,6 +502,12 @@ class Manipulator:
         self.jog_joints(angles)
         self.calculate_direct_kinematics_problem()
 
+    def null_position(self):
+        self.move_z(100)
+        angles = [0, 90, -90, 0, -90, 0]
+        self.jog_joints(angles)
+        self.calculate_direct_kinematics_problem()
+
     def _check_axis_limit(self, angles) -> bool:
         axis_limit = False
         for joint, angle in zip(self.joints, angles):
@@ -1091,7 +1097,7 @@ class Manipulator:
         return coord
 
     def camera_calibrate(self):
-        d = 0.01
+        d = 0.03
         xyz_0 = self.openCV(0, 11)
         print(1)
         current_coord = self.calculate_direct_kinematics_problem()
@@ -1136,7 +1142,7 @@ class Manipulator:
         self.move_xyz(xy_mean)
 
     def take_object(self):
-        self.move_xyz([self.position.x + 0.045, self.position.y, self.position.z])
-        self.move_xyz([self.position.x, self.position.y + 0.0025, self.position.z - 0.1])
+        self.move_xyz([self.position.x + 0.038, self.position.y, self.position.z])
+        self.move_xyz([self.position.x, self.position.y + 0.0042, self.position.z - 0.1])
 
 
