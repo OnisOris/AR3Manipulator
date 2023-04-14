@@ -780,13 +780,15 @@ class Manipulator:
         self.robot.show()
 
 
-    def move_xyz(self, pos):
+    def move_xyz(self, pos, relative_angles=False):
         pos = np.array(pos)
         len = pos.shape[0]
         if len == 3:
             pos = np.hstack([pos, [0, pi, 0]])
         if len == 2:
             pos = np.hstack([pos, [self.position.z, 0, pi, 0]])
+        if relative_angles == True:
+            logger.debug("---lll")
         #pos = np.array([pos[0] / 1000, pos[1] / 1000, pos[2] / 1000,
         #                0, pi, 0])
         if (self.logging == True):
@@ -1158,11 +1160,12 @@ class Manipulator:
         a_z = xyz_0[5]
         xy0 = np.array([x0, y0])
         logger.debug(f'x0 = {x0}, y0 = {y0}')
-        D1 = [x0, y0 - d, z0, a_z, pi, 0]
+        D1 = [x0, y0 - d, z0, -a_z, pi, 0]
         D3 = [x0, y0 + d]
         D2 = [x0 - d, y0]
         # D3 = [x0, y0 + d]
         D4 = [x0 + d, y0]
         xy_massive = []
         # Калибровка оси x
-        self.move_xyz(D1)
+        self.move_xyz(D1, True)
+
