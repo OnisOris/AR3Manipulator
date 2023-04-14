@@ -1092,7 +1092,8 @@ class Manipulator:
         mean_array[1] -= 0.02
         coord = self.trans(mean_array)
         logger.debug(coord)
-
+        coord = np.hstack([coord, [a_x, a_y, a_z]])
+        logger.debug(coord)
         # self.move_all_xyz([coord[0], coord[1], 0])
         return coord
 
@@ -1146,3 +1147,22 @@ class Manipulator:
         self.move_xyz([self.position.x, self.position.y + 0.0042, self.position.z - 0.1])
 
 
+    def camera_calibrate_rot(self):
+        d = 0.03
+        xyz_0 = self.openCV(0, 11)
+        current_coord = self.calculate_direct_kinematics_problem()
+        # координаты предварительно вычесленного центра
+        x0 = current_coord[0] + xyz_0[0]
+        y0 = current_coord[1] + xyz_0[1]
+        z0 = current_coord[2] - xyz_0[2] + 0.25
+        a_z = xyz_0[5]
+        xy0 = np.array([x0, y0])
+        logger.debug(f'x0 = {x0}, y0 = {y0}')
+        D1 = [x0, y0 - d, z0, a_z, pi, 0]
+        D3 = [x0, y0 + d]
+        D2 = [x0 - d, y0]
+        # D3 = [x0, y0 + d]
+        D4 = [x0 + d, y0]
+        xy_massive = []
+        # Калибровка оси x
+        self.move_xyz(D1)

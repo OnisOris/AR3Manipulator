@@ -57,7 +57,7 @@ odom = arucoOdometry.arucoOdometry()
 odom.setCameraParams(camera_calibration_parameters_filename)
 odom.setArucoLength(aruco_marker_side_length)
 odom.setArucoDict(aruco_dictionary_name)
-markers=[{"id": 5, "size": aruco_marker_side_length}, {"id": 6, "size": aruco_marker_side_length}]
+markers=[{"id": 10, "size": aruco_marker_side_length}, {"id": 6, "size": aruco_marker_side_length}]
 odom.setMarkers(markers)
 
 startTime=time.time() * 1000
@@ -67,23 +67,19 @@ while(True):
     # This method returns True/False as well
     # as the video frame.
     ret, frame = cap.read()
-    frame,x,y,z,a_x,a_y,a_z = odom.updateCameraPoses(frame,time.time()*1000-startTime,5)
+    frame,x,y,z,a_x,a_y,a_z = odom.updateCameraPoses(frame,time.time()*1000-startTime,10)
     cv2.imshow("im",frame)
     cv2.waitKey(1)
     if not x == 0 or not y == 0 or not z == 0:
         logger.debug(f'1 x = {x} y = {y} z = {z}')
-        xyz = trans([x, y, z, a_x, a_y, a_z])
-        logger.debug(f'2 ---- x = {xyz[0]} y = {xyz[1]} z = {xyz[2]}')
+        #xyz = trans([x, y, z, a_x, a_y, a_z])
+        #logger.debug(f'2 ---- x = {xyz[0]} y = {xyz[1]} z = {xyz[2]}')
         # xyz[0] = -xyz[0]
         # xyz[1] = -xyz[1]
         # xyz[2] = -xyz[2]
-        k = 0.5
-        r.move_all_xyz([-xyz[0]*k, -xyz[1]*k, 0])
+       # k = 0.5
+        #r.move_all_xyz([-xyz[0]*k, -xyz[1]*k, 0])
         #time.sleep(0.3)
-        inp = input("Введите команду \n")
-        inp_c = inp.split()
-        if inp == "exit":
-            break
 
 # Fail to create pixmap with Tk_GetPixmap in TkImgPhotoInstanceSetSize
 

@@ -81,6 +81,8 @@ while (True):
                 #robot.move_all_xyz([coord[0], coord[1], 0])
         elif (inp_c[0] == "cam"):
                 robot.camera_calibrate()
+        elif (inp_c[0] == "camm"):
+                robot.camera_calibrate_rot()
         elif (inp_c[0] == "take"):
                 robot.take_object()
         elif (inp_c[0] == "speed"):
