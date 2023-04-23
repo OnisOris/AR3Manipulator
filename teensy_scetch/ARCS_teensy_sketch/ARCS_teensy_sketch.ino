@@ -193,8 +193,9 @@ void loop() {
         int enc4 = J4encPos.read();// / J4encMult;
         int enc5 = J5encPos.read();// / J5encMult;
         int enc6 = J6encPos.read();// / J6encMult;
-        Serial.print("enc1 = ");
-        Serial.println(enc1);
+        // Serial.print("enc1 = ");
+        Serial.print(enc1);
+        Serial.println();
       }
 
 
