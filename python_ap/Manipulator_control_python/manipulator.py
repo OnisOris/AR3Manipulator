@@ -1047,9 +1047,6 @@ class Manipulator:
         aruco_dictionary_name = "DICT_4X4_50"
         camera_calibration_parameters_filename = 'calibration_chessboardDEXP1080.yaml'
         cap = self.cap
-        # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-        logger.debug("cap.set")
         odom = arucoOdometry.arucoOdometry()
         odom.setCameraParams(camera_calibration_parameters_filename)
         odom.setArucoLength(aruco_marker_side_length)
@@ -1099,7 +1096,126 @@ class Manipulator:
         # self.move_all_xyz([coord[0], coord[1], 0])
         return coord
 
+    def openCV2(self, id_camera, id_marker=0, id_marker2=1):
+        # self.move_xyz([0.28683, 0.1, 0.05, 0, pi, 0])
+        aruco_marker_side_length = 0.0344
+        aruco_dictionary_name = "DICT_4X4_50"
+        camera_calibration_parameters_filename = 'calibration_chessboardDEXP1080.yaml'
+        cap = self.cap
+        odom = arucoOdometry.arucoOdometry()
+        odom.setCameraParams(camera_calibration_parameters_filename)
+        odom.setArucoLength(aruco_marker_side_length)
+        odom.setArucoDict(aruco_dictionary_name)
+        markers = [{"id": id_marker, "size": aruco_marker_side_length, "id": id_marker, "size": aruco_marker_side_length}]
+        odom.setMarkers(markers)
+
+        startTime = time.time() * 1000
+        cycle = 5
+        array = np.array([0, 0, 0, 0, 0, 0])
+        i = 0
+        logger.debug("begin cycle")
+        while (True):
+            ret, frame = cap.read()
+            frame, x, y, z, a_x, a_y, a_z = odom.updateCameraPoses(frame, time.time() * 1000 - startTime, id_marker)
+            cv2.imshow("im", frame)
+            cv2.waitKey(1)
+            #logger.debug("waitkey")
+            # y -= 0.1
+            # logger.debug(x)
+            if not x == 0 or not y == 0 or not z == 0:
+                i += 1
+                xyz = np.array([x, y, z, a_x, a_y, a_z])
+                array = np.vstack([array, xyz])
+
+                #logger.debug(xyz)
+                #logger.debug(f'------array = {array}')
+            if i > cycle:
+                break
+        array = np.delete(array, 0, 0)
+        mean_array = np.mean(array, axis=0)
+        # смещение по оси y камеры
+        mean_array[1] -= 0.02
+        coord1 = self.trans(mean_array)
+        coord1 = np.hstack([coord1, [a_x, a_y, a_z]])
+        logger.debug(coord1)
+
+        #########################################################
+        # Второй marker
+        #########################################################
+        array2 = np.array([0, 0, 0, 0, 0, 0])
+        i = 0
+        logger.debug("begin cycle2")
+        while (True):
+            ret, frame = cap.read()
+            frame, x, y, z, a_x, a_y, a_z = odom.updateCameraPoses(frame, time.time() * 1000 - startTime, id_marker2)
+            cv2.imshow("im", frame)
+            cv2.waitKey(1)
+            #logger.debug("waitkey")
+            # y -= 0.1
+            # logger.debug(x)
+            if not x == 0 or not y == 0 or not z == 0:
+                i += 1
+                xyz = np.array([x, y, z, a_x, a_y, a_z])
+                array2 = np.vstack([array2, xyz])
+
+                # logger.debug(xyz)
+                # logger.debug(f'------array = {array}')
+            if i > cycle:
+                break
+        array2 = np.delete(array2, 0, 0)
+        mean_array2 = np.mean(array2, axis=0)
+        # смещение по оси y камеры
+        mean_array2[1] -= 0.02
+        coord2 = self.trans(mean_array2)
+        coord2 = np.hstack([coord2, [a_x, a_y, a_z]])
+        logger.debug(coord2)
+
+        return coord1, coord2
     def camera_calibrate(self):
+        d = 0.03
+        xyz_0 = self.openCV(0, 11)
+        print(1)
+        current_coord = self.calculate_direct_kinematics_problem()
+        # координаты предварительно вычесленного центра
+        x0 = current_coord[0] + xyz_0[0]
+        y0 = current_coord[1] + xyz_0[1]
+        z0 = current_coord[2] - xyz_0[2] + 0.25
+
+        xy0 = np.array([x0, y0])
+        logger.debug(f'x0 = {x0}, y0 = {y0}')
+        D1 = [x0, y0 - d, z0]
+        D3 = [x0, y0 + d]
+        D2 = [x0 - d, y0]
+        # D3 = [x0, y0 + d]
+        D4 = [x0 + d, y0]
+        xy_massive = []
+        # Калибровка оси x
+        self.move_xyz(D1)
+        time.sleep(5)
+        d1 = self.openCV(0, 11)
+        xy_massive.append([self.position.x + d1[0], self.position.y + d1[1]])
+
+        self.move_xyz(D3)
+        time.sleep(2)
+        d3 = self.openCV(0, 11)
+        xy_massive.append([self.position.x + d3[0], self.position.y + d3[1]])
+
+        # Калибровка оси y
+        self.move_xyz(D2)
+        time.sleep(2)
+        d2 = self.openCV(0, 11)
+        xy_massive.append([self.position.x + d2[0], self.position.y + d2[1]])
+
+        self.move_xyz(D4)
+        time.sleep(2)
+        d4 = self.openCV(0, 11)
+        xy_massive.append([self.position.x + d4[0], self.position.y + d4[1]])
+
+        xy_mean = np.mean(xy_massive, axis=0)
+        logger.debug(xy_mean)
+        xy_mean[0] -= 0.1
+        self.move_xyz(xy_mean)
+    def camera_calibrate2(self):
         d = 0.03
         xyz_0 = self.openCV(0, 11)
         print(1)

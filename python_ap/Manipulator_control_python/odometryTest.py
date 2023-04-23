@@ -57,7 +57,7 @@ odom = arucoOdometry.arucoOdometry()
 odom.setCameraParams(camera_calibration_parameters_filename)
 odom.setArucoLength(aruco_marker_side_length)
 odom.setArucoDict(aruco_dictionary_name)
-markers=[{"id": 10, "size": aruco_marker_side_length}, {"id": 6, "size": aruco_marker_side_length}]
+markers=[{"id": 10, "size": aruco_marker_side_length}, {"id": 11, "size": aruco_marker_side_length}]
 odom.setMarkers(markers)
 
 startTime=time.time() * 1000

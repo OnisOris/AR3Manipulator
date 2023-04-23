@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import pandas as pd
 from scipy.signal import savgol_filter
+from loguru import logger
 class arucoOdometry:
     arucoMarkers={"id":[],"coordinates":{"x":[],"y":[],"z":[],"theta":[],"phi":[],"psi":[]},"size":[]}
     #positionByMarkers={"id":[],"coordinates":{"x":[],"y":[],"z":[],"theta":[],"phi":[],"psi":[]}, "time":[]}
@@ -120,7 +121,7 @@ class arucoOdometry:
           # y-axis points straight down towards your toes
           # z-axis points straight ahead away from your eye, out of the camera
           for i, marker_id in enumerate(marker_ids):
-            if(marker_id == markerTargetID):
+            if (marker_id == markerTargetID):
                 # Get the rotation and translation vectors
                 rvecs, tvecs, obj_points = cv2.aruco.estimatePoseSingleMarkers(
                 corners,
@@ -184,6 +185,88 @@ class arucoOdometry:
                 # cv2.aruco.drawAxis(frame, self.mtx, self.dst, rvecs[i], tvecs[i], self.aruco_length)
                 cv2.drawFrameAxes(frame, self.mtx, self.dst, rvecs[i], tvecs[i], self.aruco_length)
         return frame, x,y,z,a_x,a_y,a_z
-                
 
+    def updateCameraPoses2(self, frame, frameTime, markerTargetID):
+        # Detect ArUco markers in the video frame
+        detector = cv2.aruco.ArucoDetector(self.aruco_dictionary, self.aruco_parameters)
+        (corners, marker_ids, rejected) = detector.detectMarkers(
+            frame)  # , cameraMatrix=self.mtx, distCoeff=self.dst)
+        # Check that at least one ArUco marker was detected
+        x, y, z, a_x, a_y, a_z = 0, 0, 0, 0, 0, 0
+        x2, y2, z2, a_x2, a_y2, a_z2 = 0, 0, 0, 0, 0, 0
+        if marker_ids is not None and markerTargetID in marker_ids:
+
+            # Draw a square around detected markers in the video frame
+            cv2.aruco.drawDetectedMarkers(frame, corners, marker_ids)
+
+            # Print the pose for the ArUco marker
+            # The pose of the marker is with respect to the camera lens frame.
+            # Imagine you are looking through the camera viewfinder,
+            # the camera lens frame's:
+            # x-axis points to the right
+            # y-axis points straight down towards your toes
+            # z-axis points straight ahead away from your eye, out of the camera
+            for i, marker_id in enumerate(marker_ids):
+                if (marker_id == markerTargetID):
+                    # Get the rotation and translation vectors
+                    rvecs, tvecs, obj_points = cv2.aruco.estimatePoseSingleMarkers(
+                        corners,
+                        self.getMarker(marker_id)["size"],
+                        self.mtx,
+                        self.dst)
+
+                    # Store the translation (i.e. position) information
+                    transform_translation_x = tvecs[i][0][0]
+                    transform_translation_y = tvecs[i][0][1]
+                    transform_translation_z = tvecs[i][0][2]
+                    logger.debug(f'i = {i}')
+                    logger.debug(f'tvecs = {tvecs}')
+
+                    # Store the rotation information
+                    rotation_matrix = np.eye(4)
+                    rotation_matrix[0:3, 0:3] = cv2.Rodrigues(np.array(rvecs[i][0]))[0]
+                    r = R.from_matrix(rotation_matrix[0:3, 0:3])
+                    rotation_matrix[:3, 3] = np.array(tvecs[i][0])
+                    # rotation_matrix[0,3]
+                    rotation_matrix[1, 3] -= 0.0327  # смещение носика дозатора
+                    rotation_matrix[2, 3] -= 0.088  # смещение носика дозатора
+                    quat = r.as_quat()
+
+                    rInv = np.linalg.inv(rotation_matrix)
+                    camera_pos = rInv[:3, 3]
+
+                    # Углы Эйлера камеры в системе координат камеры
+                    R_camera_to_marker = rInv[:3, :3]
+                    camera_euler = R.from_matrix(R_camera_to_marker).as_euler('xyz', degrees=False)
+
+                    # Quaternion format
+                    transform_rotation_x = quat[0]
+                    transform_rotation_y = quat[1]
+                    transform_rotation_z = quat[2]
+                    transform_rotation_w = quat[3]
+                    # Euler angle format in radians
+                    roll_x, pitch_y, yaw_z = self.euler_from_quaternion(transform_rotation_x, transform_rotation_y,
+                                                                        transform_rotation_z, transform_rotation_w)
+
+                    x, y, z, a_x, a_y, a_z = transform_translation_x, transform_translation_y, transform_translation_z, roll_x, pitch_y, yaw_z
+                    print(camera_pos, camera_euler)
+                    # x,y,z,a_x,a_y,a_z=camera_pos[0], camera_pos[1], camera_pos[2], camera_euler[0], camera_euler[1], camera_euler[2]
+
+                    # Draw the axes on the marker
+                    cv2.putText(frame, "x: {:.3f}".format(float(x)), [10, 450], cv2.FONT_HERSHEY_SIMPLEX, 1,
+                                [50, 50, 255], 2)
+                    cv2.putText(frame, "y: {:.3f}".format(float(y)), [210, 450], cv2.FONT_HERSHEY_SIMPLEX, 1,
+                                [50, 255, 50], 2)
+                    cv2.putText(frame, "z: {:.3f}".format(float(z)), [410, 450], cv2.FONT_HERSHEY_SIMPLEX, 1,
+                                [255, 50, 50], 2)
+                    cv2.putText(frame, "a_x: {:.1f}".format(float(math.degrees(a_x))), [10, 400],
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, [50, 50, 255], 2)
+                    cv2.putText(frame, "a_y: {:.1f}".format(float(math.degrees(a_y))), [210, 400],
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, [50, 255, 50], 2)
+                    cv2.putText(frame, "a_z: {:.1f}".format(float(math.degrees(a_z))), [410, 400],
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, [255, 50, 50], 2)
+
+                    # cv2.aruco.drawAxis(frame, self.mtx, self.dst, rvecs[i], tvecs[i], self.aruco_length)
+                    cv2.drawFrameAxes(frame, self.mtx, self.dst, rvecs[i], tvecs[i], self.aruco_length)
+        return frame, x, y, z, a_x, a_y, a_z
 
