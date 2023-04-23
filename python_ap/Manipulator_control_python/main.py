@@ -89,6 +89,8 @@ while (True):
                 robot.position.speed = int(inp_c[1])
         elif (inp_c[0] == "n"):
                 robot.null_position()
+        elif (inp_c[0] == "enc"):
+                robot.enc()
         else:
             print("Неправильная команда")
 #   x = 0.23378473431949537 y = -0.28243977277327487 z = 0.12367249310609349

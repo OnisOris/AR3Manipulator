@@ -185,6 +185,19 @@ void loop() {
       String function = inData.substring(0, 2); // Первые два символа это команда
 
 
+      if (function == "TT")
+      {
+        int enc1 = J1encPos.read(); // / J1encMult; // read() Возвращает накопленную позицию. Это число может быть положительным или отрицательным.
+        int enc2 = J2encPos.read();// / J2encMult;
+        int enc3 = J3encPos.read();// / J3encMult;
+        int enc4 = J4encPos.read();// / J4encMult;
+        int enc5 = J5encPos.read();// / J5encMult;
+        int enc6 = J6encPos.read();// / J6encMult;
+        Serial.print("enc1 = ");
+        Serial.println(enc1);
+      }
+
+
       //-----COMMAND TO WAIT TIME---------------------------------------------------
       //-----------------------------------------------------------------------
       if (function == "WT")

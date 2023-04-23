@@ -1169,3 +1169,26 @@ class Manipulator:
         # Калибровка оси x
         self.move_xyz(D1, True)
 
+    # def getRobotPosition():
+    #     commandCalc = "GP" + "U" + str(J1StepCur) + "V" + str(J2StepCur) + "W" + str(J3StepCur) + "X" + str(
+    #         J4StepCur) + "Y" + str(J5StepCur) + "Z" + str(J6StepCur) + "\n"
+    #     ser.write(commandCalc.encode())
+    #     RobotCode = str(ser.readline())
+    #     Pcode = RobotCode[2:4]
+    #     if (Pcode == "01"):
+    #         applyRobotCal(RobotCode)
+    def enc(self):
+        command = "TT"
+        self.serial_teensy.flushInput()
+        self.teensy_push(command)
+        # time.sleep(2)
+        # logger.debug(self.serial_teensy.in_waiting)
+        #
+        myBytes = self.serial_teensy.read_all()
+
+        # bufferBytes = self.serial_teensy.inWaiting()
+        # #
+        # # # If exists, it is added to the myBytes variable with previously read information
+        # if bufferBytes:
+        #      myBytes += self.serial_teensy.read(bufferBytes)
+        logger.debug(f"input = {myBytes}")
