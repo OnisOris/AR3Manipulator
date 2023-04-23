@@ -503,7 +503,7 @@ class Manipulator:
         self.calculate_direct_kinematics_problem()
 
     def null_position(self):
-        self.move_z(100)
+        #self.move_z(100)
         angles = [0, 90, -90, 0, -90, 0]
         self.jog_joints(angles)
         self.calculate_direct_kinematics_problem()
@@ -864,13 +864,13 @@ class Manipulator:
         self.move_xyz(position)
 
     def grab(self):
-        command = f"SV{0}P{1}\n"
+        command = f"SV{0}P{20}\n"
         if (self.logging == True):
             logger.debug(command)
         self.arduino_push(command)
 
     def absolve(self):
-        command = f"SV{0}P{135}\n"
+        command = f"SV{0}P{170}\n"
         if (self.logging == True):
             logger.debug(command)
         self.arduino_push(command)
