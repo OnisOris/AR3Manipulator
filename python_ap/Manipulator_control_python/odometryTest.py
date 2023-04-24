@@ -8,7 +8,7 @@ from pynput import keyboard
 ############## Настройки программы ##############
 baud = 115200
 teensy_port = 3
-arduino_port = 5
+arduino_port = 6
 ################# Конец настроек #################
 
 r = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
@@ -57,30 +57,24 @@ odom = arucoOdometry.arucoOdometry()
 odom.setCameraParams(camera_calibration_parameters_filename)
 odom.setArucoLength(aruco_marker_side_length)
 odom.setArucoDict(aruco_dictionary_name)
-markers=[{"id": 10, "size": aruco_marker_side_length}, {"id": 11, "size": aruco_marker_side_length}]
+markers = [{"id": 11, "size": aruco_marker_side_length}, {"id": 12, "size": aruco_marker_side_length}]
 odom.setMarkers(markers)
 
-startTime=time.time() * 1000
+startTime = time.time() * 1000
 r.move_xyz([0.28683, 0, 0.28977, 0, pi, 0])
 while(True):
     # Capture frame-by-frame
     # This method returns True/False as well
     # as the video frame.
     ret, frame = cap.read()
-    frame,x,y,z,a_x,a_y,a_z = odom.updateCameraPoses(frame,time.time()*1000-startTime,10)
-    cv2.imshow("im",frame)
+    massive = odom.updateCameraPoses2(frame, time.time()*1000-startTime, [11, 12])
+    frame = massive[0]
+    xyzabc = massive[1]
+    #odom.updateCameraPoses2(frame, time.time() * 1000 - startTime, [11, 12])
+    cv2.imshow("im", frame)
     cv2.waitKey(1)
-    if not x == 0 or not y == 0 or not z == 0:
-        logger.debug(f'1 x = {x} y = {y} z = {z}')
-        #xyz = trans([x, y, z, a_x, a_y, a_z])
-        #logger.debug(f'2 ---- x = {xyz[0]} y = {xyz[1]} z = {xyz[2]}')
-        # xyz[0] = -xyz[0]
-        # xyz[1] = -xyz[1]
-        # xyz[2] = -xyz[2]
-       # k = 0.5
-        #r.move_all_xyz([-xyz[0]*k, -xyz[1]*k, 0])
-        #time.sleep(0.3)
+    if not xyzabc[0][0] == 0 or not xyzabc[0][1] == 0 or not xyzabc[0][1] == 0:
+         logger.debug(f'xyzabc = {xyzabc}')
 
-# Fail to create pixmap with Tk_GetPixmap in TkImgPhotoInstanceSetSize
 
 
