@@ -83,6 +83,8 @@ while (True):
                 robot.camera_calibrate()
         elif (inp_c[0] == "camm"):
                 robot.camera_calibrate_rot()
+        elif (inp_c[0] == "cam2"):
+                robot.camera_calibrate2()
         elif (inp_c[0] == "take"):
                 robot.take_object()
         elif (inp_c[0] == "speed"):

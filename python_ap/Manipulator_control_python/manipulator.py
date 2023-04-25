@@ -1125,14 +1125,16 @@ class Manipulator:
             ret, frame = cap.read()
             massive = odom.updateCameraPoses2(frame,
                                               time.time() * 1000 - startTime,
-                                              [id_marker0, id_marker1])
+                                              [11, 12])
             frame = massive[0]
+            logger.debug(massive[1])
             xyzabc0 = np.array(massive[1][0])
+            logger.debug(xyzabc0)
             xyzabc1 = np.array(massive[1][1])
             cv2.imshow("im", frame)
             cv2.waitKey(1)
 
-            if not xyzabc0[0][0] == 0 or not xyzabc0[0][1] == 0 or not xyzabc0[0][2] == 0:
+            if not xyzabc0[0] == 0 or not xyzabc0[1] == 0 or not xyzabc0[2] == 0:
                 i += 1
                 array0 = np.vstack([array0, xyzabc0])
                 array1 = np.vstack([array1, xyzabc1])
@@ -1201,48 +1203,49 @@ class Manipulator:
 
     def camera_calibrate2(self):
         d = 0.03
-        xyz_0 = self.openCV(0, 11)
-        print(1)
-        current_coord = self.calculate_direct_kinematics_problem()
-        # координаты предварительно вычесленного центра
-        x0 = current_coord[0] + xyz_0[0]
-        y0 = current_coord[1] + xyz_0[1]
-        z0 = current_coord[2] - xyz_0[2] + 0.25
-
-        xy0 = np.array([x0, y0])
-        logger.debug(f'x0 = {x0}, y0 = {y0}')
-        D1 = [x0, y0 - d, z0]
-        D3 = [x0, y0 + d]
-        D2 = [x0 - d, y0]
+        xyz_0 = self.openCV2(0)
+        logger.debug(xyz_0)
+        #print(1)
+        # current_coord = self.calculate_direct_kinematics_problem()
+        # # координаты предварительно вычесленного центра
+        # x0 = current_coord[0] + xyz_0[0]
+        # y0 = current_coord[1] + xyz_0[1]
+        # z0 = current_coord[2] - xyz_0[2] + 0.25
+        #
+        # xy0 = np.array([x0, y0])
+        # logger.debug(f'x0 = {x0}, y0 = {y0}')
+        # D1 = [x0, y0 - d, z0]
         # D3 = [x0, y0 + d]
-        D4 = [x0 + d, y0]
-        xy_massive = []
-        # Калибровка оси x
-        self.move_xyz(D1)
-        time.sleep(5)
-        d1 = self.openCV(0, 11)
-        xy_massive.append([self.position.x + d1[0], self.position.y + d1[1]])
-
-        self.move_xyz(D3)
-        time.sleep(2)
-        d3 = self.openCV(0, 11)
-        xy_massive.append([self.position.x + d3[0], self.position.y + d3[1]])
-
-        # Калибровка оси y
-        self.move_xyz(D2)
-        time.sleep(2)
-        d2 = self.openCV(0, 11)
-        xy_massive.append([self.position.x + d2[0], self.position.y + d2[1]])
-
-        self.move_xyz(D4)
-        time.sleep(2)
-        d4 = self.openCV(0, 11)
-        xy_massive.append([self.position.x + d4[0], self.position.y + d4[1]])
-
-        xy_mean = np.mean(xy_massive, axis=0)
-        logger.debug(xy_mean)
-        xy_mean[0] -= 0.1
-        self.move_xyz(xy_mean)
+        # D2 = [x0 - d, y0]
+        # # D3 = [x0, y0 + d]
+        # D4 = [x0 + d, y0]
+        # xy_massive = []
+        # # Калибровка оси x
+        # self.move_xyz(D1)
+        # time.sleep(5)
+        # d1 = self.openCV(0, 11)
+        # xy_massive.append([self.position.x + d1[0], self.position.y + d1[1]])
+        #
+        # self.move_xyz(D3)
+        # time.sleep(2)
+        # d3 = self.openCV(0, 11)
+        # xy_massive.append([self.position.x + d3[0], self.position.y + d3[1]])
+        #
+        # # Калибровка оси y
+        # self.move_xyz(D2)
+        # time.sleep(2)
+        # d2 = self.openCV(0, 11)
+        # xy_massive.append([self.position.x + d2[0], self.position.y + d2[1]])
+        #
+        # self.move_xyz(D4)
+        # time.sleep(2)
+        # d4 = self.openCV(0, 11)
+        # xy_massive.append([self.position.x + d4[0], self.position.y + d4[1]])
+        #
+        # xy_mean = np.mean(xy_massive, axis=0)
+        # logger.debug(xy_mean)
+        # xy_mean[0] -= 0.1
+        # self.move_xyz(xy_mean)
 
     def take_object(self):
         self.move_xyz([self.position.x + 0.038, self.position.y, self.position.z])

@@ -61,7 +61,7 @@ markers = [{"id": 11, "size": aruco_marker_side_length}, {"id": 12, "size": aruc
 odom.setMarkers(markers)
 
 startTime = time.time() * 1000
-r.move_xyz([0.28683, 0, 0.28977, 0, pi, 0])
+#r.move_xyz([0.28683, 0, 0.28977, 0, pi, 0])
 while(True):
     # Capture frame-by-frame
     # This method returns True/False as well

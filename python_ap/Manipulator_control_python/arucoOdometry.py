@@ -196,7 +196,7 @@ class arucoOdometry:
         x1, y1, z1, a_x1, a_y1, a_z1 = 0, 0, 0, 0, 0, 0
         if marker_ids is not None and markerTargetID[0] in marker_ids and markerTargetID[1] in marker_ids: # Выполняется, если два маркера в кадре
             cv2.aruco.drawDetectedMarkers(frame, corners, marker_ids)
-            marker_id = markerTargetID[0] # Размер берем по одному из маркеров
+            marker_id = markerTargetID[0]  # Размер берем по одному из маркеров
             logger.debug(f"marker_id = {marker_id}")
             rvecs, tvecs, obj_points = cv2.aruco.estimatePoseSingleMarkers(
             corners,
