@@ -92,7 +92,7 @@ class Manipulator:
         self.showMode = False  # включает мод отображения в отдельном окне положения манипулятора
         self.robot = RobotSerial(self.dh_params)
         self.last_matrix = []  # содержит последнии матрицы преобразования координат
-        self.last_dot_matrix = np.array([]) # содержит последнии перемноженные матрицы преобразования координат
+        self.last_dot_matrix = np.array([])  # содержит последнии перемноженные матрицы преобразования координат
         self.time_sleep = 3
         self.points = ""
         self.delta = 10
@@ -503,7 +503,7 @@ class Manipulator:
         self.calculate_direct_kinematics_problem()
 
     def null_position(self):
-        #self.move_z(100)
+        # self.move_z(100)
         angles = [0, 90, -90, 0, -90, 0]
         self.jog_joints(angles)
         self.calculate_direct_kinematics_problem()
@@ -541,6 +541,7 @@ class Manipulator:
         if (self.showMode):
             robot.show()
         return np.hstack([f.t_3_1.reshape([3, ]), f.euler_3])
+
     def calculate_direct2(self):
         cja = [float(self.joints[0].current_joint_angle), float(self.joints[1].current_joint_angle),
                float(self.joints[2].current_joint_angle),
@@ -700,7 +701,7 @@ class Manipulator:
                 theta_2 = atan2(s, r) - atan2(a3 * sin(theta_3), a2 + a3 * cos(theta_3))
         except:
             logger.error(ValueError)
-            return [0,0,0,0,0,0]
+            return [0, 0, 0, 0, 0, 0]
         theta_1 = atan2(yc, xc)
         # # Сферическое запястье
         cja = [theta_1, theta_2,
@@ -743,6 +744,7 @@ class Manipulator:
         self.last_inverse_pos = x_y_z_phi_theta_psi
         self.save_position()
         return [theta_1, theta_2, theta_3, theta_4, theta_5, theta_6]
+
     def take_coordinate(self, array_matrix, number_of_matrix1, number_of_matrix2):
         matrix = self.matrix_dot(array_matrix, number_of_matrix1, number_of_matrix2)
         vector_xyz = matrix[0:3, 3]
@@ -757,6 +759,7 @@ class Manipulator:
         for joint in self.joints:
             if joint.current_joint_angle == 0:
                 joint.current_joint_angle = 0.00001
+
     def check_all(self):
         for i in self.joints:
             print(f"{i} -> {i.current_joint_angle}")
@@ -779,7 +782,6 @@ class Manipulator:
         self.calculate_direct_kinematics_problem()
         self.robot.show()
 
-
     def move_xyz(self, pos, relative_angles=False):
         pos = np.array(pos)
         len = pos.shape[0]
@@ -789,7 +791,7 @@ class Manipulator:
             pos = np.hstack([pos, [self.position.z, 0, pi, 0]])
         if relative_angles == True:
             logger.debug("---lll")
-        #pos = np.array([pos[0] / 1000, pos[1] / 1000, pos[2] / 1000,
+        # pos = np.array([pos[0] / 1000, pos[1] / 1000, pos[2] / 1000,
         #                0, pi, 0])
         if (self.logging == True):
             logger.debug(pos)
@@ -815,6 +817,7 @@ class Manipulator:
         position[0] = position[0] + lenth_x
         position[1] = position[1] + lenth_y
         self.move_xyz(position)
+
     def move_x(self, lenth_x):  # принимаем мм
         lenth_x = lenth_x / 1000
         position = self.last_inverse_pos
@@ -824,15 +827,15 @@ class Manipulator:
         self.move_xyz(position)
 
     def move_y(self, lenth_y):
-        lenth_y = lenth_y/1000
+        lenth_y = lenth_y / 1000
         position = self.last_inverse_pos
         logger.debug(position)
-        position[1] = position[1]+lenth_y
+        position[1] = position[1] + lenth_y
         logger.debug(position)
         self.move_xyz(position)
 
     def move_z(self, lenth_z):
-        lenth_z = lenth_z/1000
+        lenth_z = lenth_z / 1000
         position = self.last_inverse_pos
         logger.debug(position)
         position[2] = position[2] + lenth_z
@@ -944,21 +947,22 @@ class Manipulator:
         yaw_z = math.atan2(t3, t4)
 
         return [roll_x, pitch_y, yaw_z]
+
     def rotate_from_angle(self, angle, axis, l4x4=False):
-        if (l4x4==False):
+        if (l4x4 == False):
             if (axis == 'x'):
                 rotate = np.array([[1, 0, 0],
-                                    [0, np.cos(angle), -np.sin(angle)],
-                                    [0, np.sin(angle), np.cos(angle)]])
+                                   [0, np.cos(angle), -np.sin(angle)],
+                                   [0, np.sin(angle), np.cos(angle)]])
 
             if (axis == 'y'):
                 rotate = np.array([[np.cos(angle), 0, np.sin(angle)],
-                                    [0, 1, 0],
-                                    [-np.sin(angle), 0, np.cos(angle)]])
+                                   [0, 1, 0],
+                                   [-np.sin(angle), 0, np.cos(angle)]])
             if (axis == 'z'):
-                rotate =  np.array([[np.cos(angle), -np.sin(angle), 0],
-                                    [np.sin(angle), np.cos(angle), 0],
-                                    [0, 0, 1]])
+                rotate = np.array([[np.cos(angle), -np.sin(angle), 0],
+                                   [np.sin(angle), np.cos(angle), 0],
+                                   [0, 0, 1]])
         if (l4x4 == True):
             if (axis == 'x'):
                 rotate = np.array([[1, 0, 0, 0],
@@ -968,56 +972,54 @@ class Manipulator:
 
             if (axis == 'y'):
                 rotate = np.array([[np.cos(angle), 0, np.sin(angle), 0],
-                                        [0, 1, 0, 0],
-                                        [-np.sin(angle), 0, np.cos(angle), 0],
-                                        [0, 0, 0, 1]])
+                                   [0, 1, 0, 0],
+                                   [-np.sin(angle), 0, np.cos(angle), 0],
+                                   [0, 0, 0, 1]])
             if (axis == 'z'):
                 rotate = np.array([[np.cos(angle), -np.sin(angle), 0, 0],
-                                        [np.sin(angle), np.cos(angle), 0, 0],
-                                        [0, 0, 1, 0],
-                                        [0, 0, 0, 1]])
+                                   [np.sin(angle), np.cos(angle), 0, 0],
+                                   [0, 0, 1, 0],
+                                   [0, 0, 0, 1]])
         return rotate
 
     def trans(self, xyzabc):
 
-        angle_z = pi/2
+        angle_z = pi / 2
         angle_x = pi
         # смещение относительно системы координат камеры
-        xc = -0.03
-        yc = -0.03+0.1
+        xc = 0#-0.03
+        yc = 0#-0.03 + 0.1
         zc = 0.
-        #logger.debug(f'xyzabc[1] = {xyzabc[1]}')
+        # logger.debug(f'xyzabc[1] = {xyzabc[1]}')
         xyzabc[0] = xyzabc[0] + xc
         xyzabc[1] = xyzabc[1] + yc
-        #logger.debug(f'xyzabc[1] = {xyzabc[1]}')
+        # logger.debug(f'xyzabc[1] = {xyzabc[1]}')
         xyzabc[2] = xyzabc[2] + zc
         # смещение относительно системы координат схвата
         x = 0
         y = 0
         z = 0
         Td = np.array([[1, 0, 0, x],
-                      [0, 1, 0, y],
-                      [0, 0, 1, z],
-                      [0, 0, 0, 1]])
+                       [0, 1, 0, y],
+                       [0, 0, 1, z],
+                       [0, 0, 0, 1]])
         Tz = self.rotate_from_angle(angle_z, 'z', True)
         Tx = self.rotate_from_angle(angle_x, 'x', True)
-       # logger.debug(Tz)
-        #logger.debug(Tx)
+        # logger.debug(Tz)
+        # logger.debug(Tx)
         T = np.dot(Td, Tz)
-        #logger.debug(f"Td*Tz {T}")
+        # logger.debug(f"Td*Tz {T}")
         T = np.dot(T, Tx)
-        #logger.debug(f"Td*Tz*Tx {T[0:3, 0:3]}")
+        # logger.debug(f"Td*Tz*Tx {T[0:3, 0:3]}")
         vector_xyz = np.array([xyzabc[0],
-                                xyzabc[1],
-                                xyzabc[2]])
-       # logger.debug(vector_xyz)
+                               xyzabc[1],
+                               xyzabc[2]])
+        # logger.debug(vector_xyz)
         # Координаты арукомаркера относительно системы камеры
         coordinates = np.dot(vector_xyz, T[0:3, 0:3])
-       # logger.debug(coordinates)
-        coordinates[2] = - coordinates[2] # инвертируем ось z, потому что другая тройка векторов
+        # logger.debug(coordinates)
+        coordinates[2] = - coordinates[2]  # инвертируем ось z, потому что другая тройка векторов
         return coordinates
-
-
 
         # T6_7_z = np.array([[cos(theta), -sin(theta), 0, x * cos(theta)],
         #                  [sin(theta), cos(theta), 0, y * sin(theta)],
@@ -1036,12 +1038,14 @@ class Manipulator:
         # angles = self.angular_Euler_calculation(T0_7[0:3, 0:3])
         # # logger.debug(np.degrees(angles))
         # return [T6_7[0, 3], T6_7[1, 3], T6_7[2, 3]]
+
     def camera_init(self):
         cap = cv2.VideoCapture(0)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         return cap
-    def openCV(self,id_camera, id_marker=0):
+
+    def openCV(self, id_camera, id_marker=0):
         # self.move_xyz([0.28683, 0.1, 0.05, 0, pi, 0])
         aruco_marker_side_length = 0.0344
         aruco_dictionary_name = "DICT_4X4_50"
@@ -1051,7 +1055,8 @@ class Manipulator:
         odom.setCameraParams(camera_calibration_parameters_filename)
         odom.setArucoLength(aruco_marker_side_length)
         odom.setArucoDict(aruco_dictionary_name)
-        markers = [{"id": id_marker, "size": aruco_marker_side_length}] #, {"id": id2, "size": aruco_marker_side_length}]
+        markers = [
+            {"id": id_marker, "size": aruco_marker_side_length}]  # , {"id": id2, "size": aruco_marker_side_length}]
         odom.setMarkers(markers)
 
         startTime = time.time() * 1000
@@ -1072,15 +1077,15 @@ class Manipulator:
                 xyz = np.array([x, y, z, a_x, a_y, a_z])
                 array = np.vstack([array, xyz])
 
-                #logger.debug(xyz)
-                #logger.debug(f'------array = {array}')
+                # logger.debug(xyz)
+                # logger.debug(f'------array = {array}')
             if i > cycle:
                 break
             #     logger.debug(f'1 x = {x} y = {y} z = {z}')
             #     xyz = self.trans([x, y, z, a_x, a_y, a_z])
             #     logger.debug(f'2 ---- x = {xyz[0]} y = {xyz[1]} z = {xyz[2]}')
-                # xyz[0] = -xyz[0]
-                # xyz[1] = -xyz[1]
+            # xyz[0] = -xyz[0]
+            # xyz[1] = -xyz[1]
 
             # np.vstack([array, xyz])
         array = np.delete(array, 0, 0)
@@ -1096,7 +1101,7 @@ class Manipulator:
         # self.move_all_xyz([coord[0], coord[1], 0])
         return coord
 
-    def openCV2(self, id_camera, id_marker=0, id_marker2=1):
+    def openCV2(self, id_camera, id_marker0=11, id_marker1=12):
         # self.move_xyz([0.28683, 0.1, 0.05, 0, pi, 0])
         aruco_marker_side_length = 0.0344
         aruco_dictionary_name = "DICT_4X4_50"
@@ -1106,71 +1111,49 @@ class Manipulator:
         odom.setCameraParams(camera_calibration_parameters_filename)
         odom.setArucoLength(aruco_marker_side_length)
         odom.setArucoDict(aruco_dictionary_name)
-        markers = [{"id": id_marker, "size": aruco_marker_side_length, "id": id_marker, "size": aruco_marker_side_length}]
+        markers = [
+            {"id": id_marker0, "size": aruco_marker_side_length, "id": id_marker1, "size": aruco_marker_side_length}]
         odom.setMarkers(markers)
 
         startTime = time.time() * 1000
         cycle = 5
-        array = np.array([0, 0, 0, 0, 0, 0])
+        array0 = np.array([0, 0, 0, 0, 0, 0])
+        array1 = np.array([0, 0, 0, 0, 0, 0])
         i = 0
         logger.debug("begin cycle")
         while (True):
             ret, frame = cap.read()
-            frame, x, y, z, a_x, a_y, a_z = odom.updateCameraPoses(frame, time.time() * 1000 - startTime, id_marker)
+            massive = odom.updateCameraPoses2(frame,
+                                              time.time() * 1000 - startTime,
+                                              [id_marker0, id_marker1])
+            frame = massive[0]
+            xyzabc0 = np.array(massive[1][0])
+            xyzabc1 = np.array(massive[1][1])
             cv2.imshow("im", frame)
             cv2.waitKey(1)
-            #logger.debug("waitkey")
-            # y -= 0.1
-            # logger.debug(x)
-            if not x == 0 or not y == 0 or not z == 0:
-                i += 1
-                xyz = np.array([x, y, z, a_x, a_y, a_z])
-                array = np.vstack([array, xyz])
 
-                #logger.debug(xyz)
-                #logger.debug(f'------array = {array}')
+            if not xyzabc0[0][0] == 0 or not xyzabc0[0][1] == 0 or not xyzabc0[0][2] == 0:
+                i += 1
+                array0 = np.vstack([array0, xyzabc0])
+                array1 = np.vstack([array1, xyzabc1])
             if i > cycle:
                 break
-        array = np.delete(array, 0, 0)
-        mean_array = np.mean(array, axis=0)
+        array0 = np.delete(array0, 0, 0)
+        array1 = np.delete(array1, 0, 0)
+        mean_array0 = np.mean(array0, axis=0)
+        mean_array1 = np.mean(array1, axis=0)
         # смещение по оси y камеры
-        mean_array[1] -= 0.02
-        coord1 = self.trans(mean_array)
-        coord1 = np.hstack([coord1, [a_x, a_y, a_z]])
-        logger.debug(coord1)
+        #mean_array0[1] -= 0.02
+        coord0 = self.trans(mean_array0)
+        coord1 = self.trans(mean_array1)
 
-        #########################################################
-        # Второй marker
-        #########################################################
-        array2 = np.array([0, 0, 0, 0, 0, 0])
-        i = 0
-        logger.debug("begin cycle2")
-        while (True):
-            ret, frame = cap.read()
-            frame, x, y, z, a_x, a_y, a_z = odom.updateCameraPoses(frame, time.time() * 1000 - startTime, id_marker2)
-            cv2.imshow("im", frame)
-            cv2.waitKey(1)
-            #logger.debug("waitkey")
-            # y -= 0.1
-            # logger.debug(x)
-            if not x == 0 or not y == 0 or not z == 0:
-                i += 1
-                xyz = np.array([x, y, z, a_x, a_y, a_z])
-                array2 = np.vstack([array2, xyz])
+        coord0 = np.hstack([coord0, [mean_array0[3], mean_array0[4], mean_array0[5]]])
+        coord1 = np.hstack([coord1, [mean_array1[3], mean_array1[4], mean_array1[5]]])
+        logger.debug(f'coord0 = {coord0}')
+        logger.debug(f'coord1 = {coord1}')
 
-                # logger.debug(xyz)
-                # logger.debug(f'------array = {array}')
-            if i > cycle:
-                break
-        array2 = np.delete(array2, 0, 0)
-        mean_array2 = np.mean(array2, axis=0)
-        # смещение по оси y камеры
-        mean_array2[1] -= 0.02
-        coord2 = self.trans(mean_array2)
-        coord2 = np.hstack([coord2, [a_x, a_y, a_z]])
-        logger.debug(coord2)
+        return coord0, coord1
 
-        return coord1, coord2
     def camera_calibrate(self):
         d = 0.03
         xyz_0 = self.openCV(0, 11)
@@ -1215,6 +1198,7 @@ class Manipulator:
         logger.debug(xy_mean)
         xy_mean[0] -= 0.1
         self.move_xyz(xy_mean)
+
     def camera_calibrate2(self):
         d = 0.03
         xyz_0 = self.openCV(0, 11)
@@ -1263,7 +1247,6 @@ class Manipulator:
     def take_object(self):
         self.move_xyz([self.position.x + 0.038, self.position.y, self.position.z])
         self.move_xyz([self.position.x, self.position.y + 0.0042, self.position.z - 0.1])
-
 
     def camera_calibrate_rot(self):
         d = 0.03
