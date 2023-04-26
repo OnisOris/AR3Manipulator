@@ -1127,9 +1127,9 @@ class Manipulator:
                                               time.time() * 1000 - startTime,
                                               [11, 12])
             frame = massive[0]
-            logger.debug(massive[1])
+            #logger.debug(massive[1])
             xyzabc0 = np.array(massive[1][0])
-            logger.debug(xyzabc0)
+            #logger.debug(xyzabc0)
             xyzabc1 = np.array(massive[1][1])
             cv2.imshow("im", frame)
             cv2.waitKey(1)
@@ -1203,15 +1203,25 @@ class Manipulator:
 
     def camera_calibrate2(self):
         d = 0.03
-        xyz_0 = self.openCV2(0)
+        xyz_0, xyz_1 = self.openCV2(0)
         logger.debug(xyz_0)
         #print(1)
-        # current_coord = self.calculate_direct_kinematics_problem()
-        # # координаты предварительно вычесленного центра
-        # x0 = current_coord[0] + xyz_0[0]
-        # y0 = current_coord[1] + xyz_0[1]
-        # z0 = current_coord[2] - xyz_0[2] + 0.25
+        current_coord = self.calculate_direct_kinematics_problem()
+        # # координаты предварительно вычесленного центра для двух арукомаркеров
+        x0 = current_coord[0] + xyz_0[0]
+        x1 = current_coord[0] + xyz_1[0]
+
+        y0 = current_coord[1] + xyz_0[1]
+        y1 = current_coord[1] + xyz_1[1]
+
+        # вычислим центр между двумя арукомаркерами C (x_c, y_c)
+
+        x_c = (x0 + x1) / 2
+        y_c = (y0 + y1) / 2
+        z_0 = 0.25  # current_coord[2] - xyz_0[2] + 0.25
         #
+        point = [x_c, y_c, z_0]
+        self.move_xyz(point)
         # xy0 = np.array([x0, y0])
         # logger.debug(f'x0 = {x0}, y0 = {y0}')
         # D1 = [x0, y0 - d, z0]

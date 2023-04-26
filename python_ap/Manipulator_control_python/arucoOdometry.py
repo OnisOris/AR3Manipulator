@@ -210,25 +210,25 @@ class arucoOdometry:
             # Draw the axes on the marker
             cv2.putText(frame, f"ID: {markerTargetID[0]}", [10, 350], cv2.FONT_HERSHEY_SIMPLEX, 1, [50, 50, 255], 2)
             cv2.putText(frame, "x0: {:.3f}".format(float(x0)), [10, 450], cv2.FONT_HERSHEY_SIMPLEX, 1, [50, 50, 255], 2)
-            cv2.putText(frame, "y0: {:.3f}".format(float(y0)), [210, 450], cv2.FONT_HERSHEY_SIMPLEX, 1, [50, 255, 50], 2)
-            cv2.putText(frame, "z0: {:.3f}".format(float(z0)), [410, 450], cv2.FONT_HERSHEY_SIMPLEX, 1, [255, 50, 50], 2)
+            cv2.putText(frame, "y0: {:.3f}".format(float(y0)), [230, 450], cv2.FONT_HERSHEY_SIMPLEX, 1, [50, 255, 50], 2)
+            cv2.putText(frame, "z0: {:.3f}".format(float(z0)), [430, 450], cv2.FONT_HERSHEY_SIMPLEX, 1, [255, 50, 50], 2)
             cv2.putText(frame, "a_x0: {:.1f}".format(float(math.degrees(a_x0))), [10, 400], cv2.FONT_HERSHEY_SIMPLEX, 1,
                         [50, 50, 255], 2)
-            cv2.putText(frame, "a_y0: {:.1f}".format(float(math.degrees(a_y0))), [210, 400], cv2.FONT_HERSHEY_SIMPLEX, 1,
+            cv2.putText(frame, "a_y0: {:.1f}".format(float(math.degrees(a_y0))), [230, 400], cv2.FONT_HERSHEY_SIMPLEX, 1,
                         [50, 255, 50], 2)
-            cv2.putText(frame, "a_z0: {:.1f}".format(float(math.degrees(a_z0))), [410, 400], cv2.FONT_HERSHEY_SIMPLEX, 1,
+            cv2.putText(frame, "a_z0: {:.1f}".format(float(math.degrees(a_z0))), [430, 400], cv2.FONT_HERSHEY_SIMPLEX, 1,
                         [255, 50, 50], 2)
             cv2.drawFrameAxes(frame, self.mtx, self.dst, rvecs[0], tvecs[0], self.aruco_length)
 
             cv2.putText(frame, f"ID: {markerTargetID[1]}", [10, 50], cv2.FONT_HERSHEY_SIMPLEX, 1, [50, 50, 255], 2)
             cv2.putText(frame, "x1: {:.3f}".format(float(x1)), [10, 150], cv2.FONT_HERSHEY_SIMPLEX, 1, [50, 50, 255], 2)
-            cv2.putText(frame, "y1: {:.3f}".format(float(y1)), [210, 150], cv2.FONT_HERSHEY_SIMPLEX, 1, [50, 255, 50], 2)
-            cv2.putText(frame, "z1: {:.3f}".format(float(z1)), [410, 150], cv2.FONT_HERSHEY_SIMPLEX, 1, [255, 50, 50], 2)
+            cv2.putText(frame, "y1: {:.3f}".format(float(y1)), [230, 150], cv2.FONT_HERSHEY_SIMPLEX, 1, [50, 255, 50], 2)
+            cv2.putText(frame, "z1: {:.3f}".format(float(z1)), [430, 150], cv2.FONT_HERSHEY_SIMPLEX, 1, [255, 50, 50], 2)
             cv2.putText(frame, "a_x1: {:.1f}".format(float(math.degrees(a_x1))), [10, 100], cv2.FONT_HERSHEY_SIMPLEX, 1,
                         [50, 50, 255], 2)
-            cv2.putText(frame, "a_y1: {:.1f}".format(float(math.degrees(a_y1))), [210, 100], cv2.FONT_HERSHEY_SIMPLEX, 1,
+            cv2.putText(frame, "a_y1: {:.1f}".format(float(math.degrees(a_y1))), [230, 100], cv2.FONT_HERSHEY_SIMPLEX, 1,
                         [50, 255, 50], 2)
-            cv2.putText(frame, "a_z1: {:.1f}".format(float(math.degrees(a_z1))), [410, 100], cv2.FONT_HERSHEY_SIMPLEX, 1,
+            cv2.putText(frame, "a_z1: {:.1f}".format(float(math.degrees(a_z1))), [430, 100], cv2.FONT_HERSHEY_SIMPLEX, 1,
                         [255, 50, 50], 2)
             cv2.drawFrameAxes(frame, self.mtx, self.dst, rvecs[1], tvecs[1], self.aruco_length)
         return [frame, [[x0, y0, z0, a_x0, a_y0, a_z0], [x1, y1, z1, a_x1, a_y1, a_z1]]]
