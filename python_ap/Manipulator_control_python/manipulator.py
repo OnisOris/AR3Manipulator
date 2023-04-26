@@ -1112,7 +1112,7 @@ class Manipulator:
         odom.setArucoLength(aruco_marker_side_length)
         odom.setArucoDict(aruco_dictionary_name)
         markers = [
-            {"id": id_marker0, "size": aruco_marker_side_length, "id": id_marker1, "size": aruco_marker_side_length}]
+            {"id": id_marker0, "size": aruco_marker_side_length}, {"id": id_marker1, "size": aruco_marker_side_length}]
         odom.setMarkers(markers)
 
         startTime = time.time() * 1000
