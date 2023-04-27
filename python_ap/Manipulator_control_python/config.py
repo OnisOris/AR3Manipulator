@@ -30,8 +30,8 @@ DEFAULT_SETTINGS = {
 
     'J5_current_step': 2281,
     'J5_current_angle': 0.05,
-    'J5_positive_angle_limit': 1.15+7,  # -14.15+13, # 104.15+90,
-    'J5_negative_angle_limit': -207.15+7,  # 194.15+13, #-104.15+90,
+    'J5_positive_angle_limit': 1.15+7-1,  # -14.15+13, # 104.15+90,
+    'J5_negative_angle_limit': -207.15+7-1,  # 194.15+13, #-104.15+90,
     'J5_step_limit': 4560,
     'J5_dir': 1,
 

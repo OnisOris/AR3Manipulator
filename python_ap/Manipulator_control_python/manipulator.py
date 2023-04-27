@@ -1125,7 +1125,7 @@ class Manipulator:
             ret, frame = cap.read()
             massive = odom.updateCameraPoses2(frame,
                                               time.time() * 1000 - startTime,
-                                              [11, 12])
+                                              [id_marker0, id_marker1])
             frame = massive[0]
             #logger.debug(massive[1])
             xyzabc0 = np.array(massive[1][0])
@@ -1134,7 +1134,8 @@ class Manipulator:
             cv2.imshow("im", frame)
             cv2.waitKey(1)
 
-            if not xyzabc0[0] == 0 or not xyzabc0[1] == 0 or not xyzabc0[2] == 0:
+            if not xyzabc0[0] == 0 or not xyzabc0[1] == 0 or not xyzabc0[2] == 0 or not xyzabc1[0] == 0\
+                    or not xyzabc1[1] == 0 or not xyzabc1[2] == 0:
                 i += 1
                 array0 = np.vstack([array0, xyzabc0])
                 array1 = np.vstack([array1, xyzabc1])
@@ -1203,7 +1204,7 @@ class Manipulator:
 
     def camera_calibrate2(self):
         d = 0.03
-        xyz_0, xyz_1 = self.openCV2(0)
+        xyz_0, xyz_1 = self.openCV2(0, 24, 25)
         logger.debug(xyz_0)
         #print(1)
         current_coord = self.calculate_direct_kinematics_problem()

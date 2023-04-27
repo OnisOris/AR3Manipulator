@@ -191,13 +191,19 @@ class arucoOdometry:
         detector = cv2.aruco.ArucoDetector(self.aruco_dictionary, self.aruco_parameters)
         (corners, marker_ids, rejected) = detector.detectMarkers(
             frame)  # , cameraMatrix=self.mtx, distCoeff=self.dst)
+        logger.debug(f'matkers      {marker_ids}')
+
         # Check that at least one ArUco marker was detected
         x0, y0, z0, a_x0, a_y0, a_z0 = 0, 0, 0, 0, 0, 0
         x1, y1, z1, a_x1, a_y1, a_z1 = 0, 0, 0, 0, 0, 0
+
         if marker_ids is not None and markerTargetID[0] in marker_ids and markerTargetID[1] in marker_ids: # Выполняется, если два маркера в кадре
+            # v = np.intersect1d(marker_ids, markerTargetID)
+            # marker_ids = np.array([[v[0]], [v[1]]])
+            # logger.debug(f"v = {v} \n marker_ids = {marker_ids}")
             cv2.aruco.drawDetectedMarkers(frame, corners, marker_ids)
             marker_id = markerTargetID[0]  # Размер берем по одному из маркеров
-            logger.debug(f"marker_id = {marker_id}")
+            logger.debug(f"marker_id = {marker_id} \n sqeeze = {np.squeeze(marker_id)}")
             rvecs, tvecs, obj_points = cv2.aruco.estimatePoseSingleMarkers(
             corners,
             self.getMarker(marker_id)["size"],
