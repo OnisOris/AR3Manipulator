@@ -7,6 +7,7 @@ from math import (pi)
 from loguru import logger
 from pynput import keyboard
 #import keyboard
+import matplotlib.pyplot as plt
 
 ############## Настройки программы ##############
 baud = 115200
@@ -14,84 +15,26 @@ teensy_port = 3
 arduino_port = 6
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
-#robot.move_x()
-theta = robot.calculate_inverse_kinematic_problem([0.2, -0.4, 0.3, pi, 0, pi], True) #угол звена B превышен при theta2 = -16.6 Град
-logger.debug(f'theta (rad) = {theta}')
-logger.debug(f'theta (grad) = {np.round(np.degrees(theta), 3)}')
-theta = np.degrees(theta)
-robot.showMode = True
-robot.test_mode = True
-robot.jog_joints([theta[0], theta[1], theta[2], theta[3],
-                  theta[4], theta[5]])
-robot.move_x(-100)
-#robot.move_x(10)
 
-# logger.debug(np.degrees(theta))
+robot.auto_calibrate()
 
-# logger.debug(robot.limits)
-# robot.print()
-# robot.showMode = True
-# inv = robot.calculate_inverse_kinematic_problem([0.41183, 0.2, 0.3, 0, pi, 0])
-# inv = np.array([np.degrees(inv[0])])
+xpoints = np.array([0.2, 0.2, 0.3, 0.4, 0.45])
+ypoints = np.array([0.2, 0, -0.2, 0.3, 0.1])
+
+for i in range(len(xpoints)):
+    inv = robot.calculate_inverse_kinematic_problem([xpoints[i], ypoints[i], 0.3, 0, pi, 0])
+# inv = robot.calculate_inverse_kinematic_problem(
+#     [float(inp_c[1]) / 1000, float(inp_c[2]) / 1000, float(inp_c[3]) / 1000, np.radians(float(inp_c[4])),
+#      np.radians(float(inp_c[5])), np.radians(float(inp_c[6]))])
 # logger.debug(inv)
-# robot.jog_joints(inv[0])
-# var = np.degrees(robot.robot.ws_lim)
-# logger.debug(var)
-# robot.show_workspace()
-# robot.save_position()
-# robot.print()
-# robot.restore_position()
-# robot.print()
-# file = open("lastPos", "w")
-# file.truncate()
-# file.write("ffff")
-# file.close()
-# # # robot.print()
-#robot.calibrate('000010', '30')
-# # robot.auto_calibrate()
-# robot.print()
-# # # robot.teensy_push("MJA10B17198C10D10E10F10S30G15H10I20K5")
-# # robot.print()
-# # print(robot.joints[0].motor_dir)
-# # robot.joints[0].current_joint_angle = 170
-#
-# # R = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 2]])
-# # logger.debug(R[2, 2])
-# xyz = np.array([0.1, -0.5, 0.3, 0, pi, 0.])
-# ang = robot.calculate_inverse_kinematic_problem(xyz)
-# ang = np.degrees(ang)
-# logger.debug(ang)
-# massive = robot.calculate_direct_kinematics_problem()
-
-# robot.auto_calibrate()
-# # time.sleep(3)
-# # robot.time_sleep = 1
-# # # robot.print()
-# # # robot.jog_joints([90, -34, 87, 0, -60, 0])
-# # robot.read_points()
-# # massive = robot.calculate_direct_kinematics_problem()
-# logger.debug(massive)
-# # robot.print()
-# # robot.visual2()
-# #robot.visual2()
-# # logger.debug(robot.joints[1].current_joint_angle)
-
-#robot.jog_joints([theta[0], theta[1], theta[2], robot.joints[3].current_joint_angle, robot.joints[4].current_joint_angle, robot.joints[5].current_joint_angle])
-# # robot.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
-# robot.print()
-# # robot.jog_joints([170, 0, 143, 164, 104, 148])
-# robot.print()
-
-# Отрицательный лимит 1го звена: -170
-# Положительный лимит 1го звена: 170
-#
-#
-# Отрицательный лимит 2го звена: -129.6
-# Положительный лимит 2го звена: 0
-#
-#
-# Отрицательный лимит 3го звена: 1
-# Положительный лимит 3го звена: 143.7
+    ang = np.degrees(inv)
+    robot.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
+fig = plt.figure()
+ax = fig.add_subplot()
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+plt.plot(xpoints, ypoints)
+plt.show()
 #
 #
 # Отрицательный лимит 4го звена: -164.5
