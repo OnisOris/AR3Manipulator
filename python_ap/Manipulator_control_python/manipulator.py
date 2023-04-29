@@ -181,6 +181,16 @@ class Manipulator:
             # if (command[i] == "grab"):
             angles = command[i].split(",")
             mas = []
+            if (angles[0] == "inv"):
+                x = float(angles[1])
+                y = float(angles[2])
+                z = float(angles[3])
+                a = float(angles[4])
+                b = float(angles[5])
+                c = float(angles[6])
+                xyzabc = self.calculate_inverse_kinematic_problem([x, y, z, a, b, c])
+                ang = np.degrees(xyzabc)
+                self.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
             for g in range(len(angles)):
                 if (angles[g] == "grab"):
                     if (self.logging == True):
@@ -195,8 +205,15 @@ class Manipulator:
                         logger.debug("sleep------------------------------------->")
                     time.sleep(float(angles[g + 1]))
                     # self.absolve()
+                # elif (angles[g] == "inv"):
+                #     if (self.logging == True):
+                #         logger.debug("inverse------------------------------------->")
+                    #time.sleep(float(angles[g + 1]))
+
+                    # self.absolve()
                 else:
-                    mas.append(float(angles[g]))
+                    if(g < 6):
+                        mas.append(float(angles[g]))
             if (len(mas) > 2):
                 self.jog_joints(mas)
 
@@ -1146,7 +1163,10 @@ class Manipulator:
         mean_array0 = np.mean(array0, axis=0)
         mean_array1 = np.mean(array1, axis=0)
         # смещение по оси y камеры
-        #mean_array0[1] -= 0.02
+        logger.debug(f'until = {mean_array0[1]}')
+        #mean_array0[1] += 0.04
+        #mean_array1[1] += 0.04
+        logger.debug(f'after = {mean_array0[1]}')
         coord0 = self.trans(mean_array0)
         coord1 = self.trans(mean_array1)
 
@@ -1154,6 +1174,12 @@ class Manipulator:
         coord1 = np.hstack([coord1, [mean_array1[3], mean_array1[4], mean_array1[5]]])
         logger.debug(f'coord0 = {coord0}')
         logger.debug(f'coord1 = {coord1}')
+
+        coord0[0] += 0.05
+        coord1[0] += 0.05
+
+        coord0[1] -= 0.013
+        coord1[1] -= 0.013
 
         return coord0, coord1
 
@@ -1203,26 +1229,31 @@ class Manipulator:
         self.move_xyz(xy_mean)
 
     def camera_calibrate2(self):
-        d = 0.03
-        xyz_0, xyz_1 = self.openCV2(0, 24, 25)
-        logger.debug(xyz_0)
+        d = 0.003
+        #Val = True
+        for i in range(5):
+            xyz_0, xyz_1 = self.openCV2(0, 11, 12)
+            logger.debug(xyz_0)
         #print(1)
-        current_coord = self.calculate_direct_kinematics_problem()
+            current_coord = self.calculate_direct_kinematics_problem()
         # # координаты предварительно вычесленного центра для двух арукомаркеров
-        x0 = current_coord[0] + xyz_0[0]
-        x1 = current_coord[0] + xyz_1[0]
+            x0 = current_coord[0] + xyz_0[0]
+            x1 = current_coord[0] + xyz_1[0]
 
-        y0 = current_coord[1] + xyz_0[1]
-        y1 = current_coord[1] + xyz_1[1]
+            y0 = current_coord[1] + xyz_0[1]
+            y1 = current_coord[1] + xyz_1[1]
 
         # вычислим центр между двумя арукомаркерами C (x_c, y_c)
 
-        x_c = (x0 + x1) / 2
-        y_c = (y0 + y1) / 2
-        z_0 = 0.25  # current_coord[2] - xyz_0[2] + 0.25
+            x_c = (x0 + x1) / 2
+            y_c = (y0 + y1) / 2
+            z_0 = 0.15  # current_coord[2] - xyz_0[2] + 0.25
         #
-        point = [x_c, y_c, z_0]
-        self.move_xyz(point)
+            point = [x_c, y_c, z_0]
+            self.move_xyz(point)
+            time.sleep(0.1)
+            # if abs(x_c - current_coord[0]) < d and abs(y_c - current_coord[1]):
+            #     break
         # xy0 = np.array([x0, y0])
         # logger.debug(f'x0 = {x0}, y0 = {y0}')
         # D1 = [x0, y0 - d, z0]
@@ -1259,8 +1290,8 @@ class Manipulator:
         # self.move_xyz(xy_mean)
 
     def take_object(self):
-        self.move_xyz([self.position.x + 0.038, self.position.y, self.position.z])
-        self.move_xyz([self.position.x, self.position.y + 0.0042, self.position.z - 0.1])
+        self.move_xyz([self.position.x - 0.047, self.position.y + 0.007, self.position.z])
+        self.move_xyz([self.position.x, self.position.y, self.position.z - 0.12])
 
     def camera_calibrate_rot(self):
         d = 0.03
