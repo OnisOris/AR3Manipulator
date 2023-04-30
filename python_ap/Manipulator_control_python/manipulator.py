@@ -194,6 +194,11 @@ class Manipulator:
                 ang = np.degrees(xyzabc)
                 logger.debug(ang)
                 self.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
+            if (angles[0] == "dir"):
+                theta = [float(angles[1]), float(angles[2]), float(angles[3]), float(angles[4]),
+                        float(angles[5]), float(angles[6])]
+                theta = np.degrees(theta)
+                self.jog_joints(theta)
             if (angles[0] == "grab"):
                 self.grab()
             if (angles[0] == "abs"):

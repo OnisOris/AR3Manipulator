@@ -56,11 +56,13 @@ while (True):
         elif (inp_c[0] == "move_all"):
                 robot.jog_joints([inp_c[1], inp_c[2], inp_c[3], inp_c[4], inp_c[5], inp_c[6]])
         elif (inp_c[0] == "add"):
-                robot.points += f"inv,{robot.last_inverse_pos[0]},{robot.last_inverse_pos[1]},{robot.last_inverse_pos[2]},{robot.last_inverse_pos[3]},{robot.last_inverse_pos[4]},{robot.last_inverse_pos[5]}\n"
-                logger.debug(robot.points)
-                #robot.points += f"{robot.joints[0].current_joint_angle},{robot.joints[1].current_joint_angle},{robot.joints[2].current_joint_angle},{robot.joints[3].current_joint_angle},{robot.joints[4].current_joint_angle},{robot.joints[5].current_joint_angle}\n"
-        elif (inp_c[0] == "save"):
+                points = f"inv,{robot.last_inverse_pos[0]},{robot.last_inverse_pos[1]},{robot.last_inverse_pos[2]},{robot.last_inverse_pos[3]},{robot.last_inverse_pos[4]},{robot.last_inverse_pos[5]}\n"
+                #logger.debug(robot.points)
                 robot.write_point(robot.points)
+                #robot.points += f"{robot.joints[0].current_joint_angle},{robot.joints[1].current_joint_angle},{robot.joints[2].current_joint_angle},{robot.joints[3].current_joint_angle},{robot.joints[4].current_joint_angle},{robot.joints[5].current_joint_angle}\n"
+        elif (inp_c[0] == "add2"):
+                points2 = f"dir,{robot.joints[0].current_joint_angle},{robot.joints[1].current_joint_angle},{robot.joints[2].current_joint_angle},{robot.joints[3].current_joint_angle},{robot.joints[4].current_joint_angle},{robot.joints[5].current_joint_angle}\n"
+                robot.write_point(points2)
         elif (inp_c[0] == "txmove"):
             inv = robot.calculate_inverse_kinematic_problem(
                 [float(inp_c[1])/1000, float(inp_c[2])/1000, float(inp_c[3])/1000,  np.radians(float(inp_c[4])),
