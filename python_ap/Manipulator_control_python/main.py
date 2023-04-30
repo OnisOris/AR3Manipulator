@@ -14,6 +14,7 @@ arduino_port = 6
 ################# Конец настроек #################
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
+robot.logging = True
 while (True):
     inp = input("Введите команду \n")
     inp_c = inp.split()
@@ -22,17 +23,17 @@ while (True):
             break
         elif(inp ==  "calib"):
             robot.auto_calibrate()
-        elif (inp_c[0] == "jog"):
-            if (int(inp_c[1]) >= 1 and int(inp_c[1]) <= 6):
-                robot.jog_joint(robot.joints[int(inp_c[1])-1], 20,  int(inp_c[2]))
-            else:
-                print("Звеньев все 6, введите число от 1 до 6")
+        # elif (inp_c[0] == "jog"):
+        #     if (int(inp_c[1]) >= 1 and int(inp_c[1]) <= 6):
+        #         robot.jog_joints(robot.joints[int(inp_c[1])-1], 20,  int(inp_c[2]))
+        #     else:
+        #         print("Звеньев все 6, введите число от 1 до 6")
         elif(inp ==  "help"):
             print("move_x [расстояние в мм] - передвижение по оси x в [мм]\n ")
             print("move_y [расстояние в мм] - передвижение по оси y в [мм]\n ")
             print("move_z [расстояние в мм] - передвижение по оси z в [мм]\n ")
             print("calib - автокалибровка\n ")
-            print("jog [номер джойнта 1-6]\n ")
+            #print("jog [номер джойнта 1-6]\n ")
             robot.info()
         elif (inp_c[0] == "move_x"):
                 robot.move_x(int(inp_c[1]))
@@ -48,14 +49,16 @@ while (True):
                 robot.grab()
         elif (inp_c[0] == "a"):
                 robot.absolve()
-        elif (inp_c[0] == "move"):
-                robot.jog_joint_c(robot.joints[int(inp_c[1])-1], int(inp_c[2]))
+        elif (inp_c[0] == "rot"):
+                robot.jog_joint_c(int(inp_c[1]), int(inp_c[2]))
         elif (inp_c[0] == "print"):
                 robot.print()
         elif (inp_c[0] == "move_all"):
                 robot.jog_joints([inp_c[1], inp_c[2], inp_c[3], inp_c[4], inp_c[5], inp_c[6]])
         elif (inp_c[0] == "add"):
-                robot.points += f"{robot.joints[0].current_joint_angle},{robot.joints[1].current_joint_angle},{robot.joints[2].current_joint_angle},{robot.joints[3].current_joint_angle},{robot.joints[4].current_joint_angle},{robot.joints[5].current_joint_angle}\n"
+                robot.points += f"inv,{robot.last_inverse_pos[0]},{robot.last_inverse_pos[1]},{robot.last_inverse_pos[2]},{robot.last_inverse_pos[3]},{robot.last_inverse_pos[4]},{robot.last_inverse_pos[5]}\n"
+                logger.debug(robot.points)
+                #robot.points += f"{robot.joints[0].current_joint_angle},{robot.joints[1].current_joint_angle},{robot.joints[2].current_joint_angle},{robot.joints[3].current_joint_angle},{robot.joints[4].current_joint_angle},{robot.joints[5].current_joint_angle}\n"
         elif (inp_c[0] == "save"):
                 robot.write_point(robot.points)
         elif (inp_c[0] == "txmove"):

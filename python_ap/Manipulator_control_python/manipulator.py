@@ -187,35 +187,69 @@ class Manipulator:
                 z = float(angles[3])
                 a = float(angles[4])
                 b = float(angles[5])
-                c = float(angles[6])
-                xyzabc = self.calculate_inverse_kinematic_problem([x, y, z, a, b, c])
+                g = float(angles[6])
+                logger.debug([x, y, z, a, b, g])
+                xyzabc = self.calculate_inverse_kinematic_problem([x, y, z, a, b, g])
+                logger.debug(xyzabc)
                 ang = np.degrees(xyzabc)
+                logger.debug(ang)
                 self.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
-            for g in range(len(angles)):
-                if (angles[g] == "grab"):
-                    if (self.logging == True):
-                        logger.debug("grab------------------------------------->")
-                    self.grab()
-                elif (angles[g] == "abs"):
-                    if (self.logging == True):
-                        logger.debug("absolve------------------------------------->")
-                    self.absolve()
-                elif (angles[g] == "sleep"):
-                    if (self.logging == True):
-                        logger.debug("sleep------------------------------------->")
-                    time.sleep(float(angles[g + 1]))
-                    # self.absolve()
-                # elif (angles[g] == "inv"):
-                #     if (self.logging == True):
-                #         logger.debug("inverse------------------------------------->")
-                    #time.sleep(float(angles[g + 1]))
-
-                    # self.absolve()
-                else:
-                    if(g < 6):
-                        mas.append(float(angles[g]))
-            if (len(mas) > 2):
-                self.jog_joints(mas)
+            if (angles[0] == "grab"):
+                self.grab()
+            if (angles[0] == "abs"):
+                self.absolve()
+            if(angles[0] == "sleep"):
+                logger.debug("sleep------------------------------------->")
+                time.sleep(float(angles[1]))
+            #     #                 if (self.logging == True):
+            #     #                     logger.debug("grab------------------------------------->")
+            #     #                 self.grab()
+            #             elif (angles[g] == "abs"):
+            #                 if (self.logging == True):
+            #                     logger.debug("absolve------------------------------------->")
+    # def read_points(self):
+    #     file = open("points.txt", "r")
+    #     commands = file.read()
+    #     command = commands.split("\n")
+    #     for i in range(len(command)):
+    #         # if (command[i] == "grab"):
+    #         angles = command[i].split(",")
+    #         mas = []
+    #         if (angles[0] == "inv"):
+    #             x = float(angles[1])
+    #             y = float(angles[2])
+    #             z = float(angles[3])
+    #             a = float(angles[4])
+    #             b = float(angles[5])
+    #             c = float(angles[6])
+    #             xyzabc = self.calculate_inverse_kinematic_problem([x, y, z, a, b, c])
+    #             ang = np.degrees(xyzabc)
+    #             self.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
+    #         for g in range(len(angles)):
+    #             if (angles[g] == "grab"):
+    #     #                 if (self.logging == True):
+    #     #                     logger.debug("grab------------------------------------->")
+    #     #                 self.grab()
+    #             elif (angles[g] == "abs"):
+    #                 if (self.logging == True):
+    #                     logger.debug("absolve------------------------------------->")
+    #                 self.absolve()
+    #             elif (angles[g] == "sleep"):
+    #                 if (self.logging == True):
+    #                     logger.debug("sleep------------------------------------->")
+    #                 time.sleep(float(angles[g + 1]))
+    #                 # self.absolve()
+    #             # elif (angles[g] == "inv"):
+    #             #     if (self.logging == True):
+    #             #         logger.debug("inverse------------------------------------->")
+    #                 #time.sleep(float(angles[g + 1]))
+    #
+    #                 # self.absolve()
+    #             else:
+    #                 if(g < 6):
+    #                     mas.append(float(angles[g]))
+    #         if (len(mas) > 2):
+    #             self.jog_joints(mas)
 
     def get_joints_angles(self) -> list:
         return [joint.current_joint_angle for joint in self.joints]
@@ -263,13 +297,12 @@ class Manipulator:
         error = False
         return [arc, drive_direction, error]
 
-    def jog_joint_c(self, joint: Joint, degrees):
-        d = self.calc_angle(degrees, joint)
-        logger.debug(f"angle, d = {d}")
-        if (d[1] == 1):
-            self.jog_joint(joint, self.position.speed, d[0])
-        if (d[1] == 0):
-            self.jog_joint(joint, self.position.speed, -d[0])
+    def jog_joint_c(self, number_of_joint, degrees):
+        angles = [self.joints[0].current_joint_angle, self.joints[1].current_joint_angle,
+                  self.joints[2].current_joint_angle, self.joints[3].current_joint_angle,
+                  self.joints[4].current_joint_angle, self.joints[5].current_joint_angle]
+        angles[number_of_joint] = degrees
+        self.jog_joints(angles)
 
     def jog_joints(self, degrees):
         degrees = [float(x) for x in degrees]

@@ -13,6 +13,9 @@ baud = 115200
 teensy_port = 3
 arduino_port = 5
 ################# Конец настроек #################
-cap = cv2.VideoCapture(0)
+r = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
+ang = r.calculate_inverse_kinematic_problem([0.2, 0.0, 0.2, 0.0, pi, 0.0])
+logger.debug(ang)
+# cap = cv2.VideoCapture(0)
 # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
 # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
