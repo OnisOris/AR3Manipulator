@@ -21,7 +21,7 @@ while (True):
     if (True):
         if(inp ==  "exit"):
             break
-        elif(inp ==  "calib"):
+        elif(inp ==  "c"):
             robot.auto_calibrate()
         # elif (inp_c[0] == "jog"):
         #     if (int(inp_c[1]) >= 1 and int(inp_c[1]) <= 6):
@@ -58,7 +58,7 @@ while (True):
         elif (inp_c[0] == "add"):
                 points = f"inv,{robot.last_inverse_pos[0]},{robot.last_inverse_pos[1]},{robot.last_inverse_pos[2]},{robot.last_inverse_pos[3]},{robot.last_inverse_pos[4]},{robot.last_inverse_pos[5]}\n"
                 #logger.debug(robot.points)
-                robot.write_point(robot.points)
+                robot.write_point(points)
                 #robot.points += f"{robot.joints[0].current_joint_angle},{robot.joints[1].current_joint_angle},{robot.joints[2].current_joint_angle},{robot.joints[3].current_joint_angle},{robot.joints[4].current_joint_angle},{robot.joints[5].current_joint_angle}\n"
         elif (inp_c[0] == "add2"):
                 points2 = f"dir,{robot.joints[0].current_joint_angle},{robot.joints[1].current_joint_angle},{robot.joints[2].current_joint_angle},{robot.joints[3].current_joint_angle},{robot.joints[4].current_joint_angle},{robot.joints[5].current_joint_angle}\n"
@@ -85,9 +85,9 @@ while (True):
                 logger.debug(f'coord in main = {coord}')
                 #robot.move_all_xyz([coord[0], coord[1], 0])
         elif (inp_c[0] == "cam"):
-                robot.camera_calibrate()
+                robot.camera_calibrate(11)
         elif (inp_c[0] == "camm"):
-                robot.camera_calibrate_rot()
+                robot.camera_calibrate_s(12)
         elif (inp_c[0] == "cam2"):
                 robot.camera_calibrate2()
         elif (inp_c[0] == "take"):

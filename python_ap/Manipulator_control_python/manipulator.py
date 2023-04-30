@@ -194,6 +194,12 @@ class Manipulator:
                 ang = np.degrees(xyzabc)
                 logger.debug(ang)
                 self.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
+            if (angles[0] == "rest"):
+                self.null_position()
+            if (angles[0] == "cam"):
+                self.camera_calibrate(int(angles[1]))
+            if (angles[0] == "take"):
+                self.take_object()
             if (angles[0] == "dir"):
                 theta = [float(angles[1]), float(angles[2]), float(angles[3]), float(angles[4]),
                         float(angles[5]), float(angles[6])]
@@ -1148,12 +1154,14 @@ class Manipulator:
         mean_array = np.mean(array, axis=0)
         logger.debug(mean_array)
         # смещение по оси y камеры
-        mean_array[1] -= 0.02
+        #mean_array[1] -= 0.02
         coord = self.trans(mean_array)
         logger.debug(coord)
         coord = np.hstack([coord, [a_x, a_y, a_z]])
         logger.debug(coord)
         # self.move_all_xyz([coord[0], coord[1], 0])
+        coord[0] += 0.05
+        coord[1] -= 0.013
         return coord
 
     def openCV2(self, id_camera, id_marker0=11, id_marker1=12):
@@ -1221,50 +1229,105 @@ class Manipulator:
 
         return coord0, coord1
 
-    def camera_calibrate(self):
+    def camera_calibrate(self, number):
         d = 0.03
-        xyz_0 = self.openCV(0, 11)
-        print(1)
+        xyz_0 = self.openCV(0, number)
         current_coord = self.calculate_direct_kinematics_problem()
         # координаты предварительно вычесленного центра
         x0 = current_coord[0] + xyz_0[0]
         y0 = current_coord[1] + xyz_0[1]
-        z0 = current_coord[2] - xyz_0[2] + 0.25
-
-        xy0 = np.array([x0, y0])
+        z0 = 0.25
         logger.debug(f'x0 = {x0}, y0 = {y0}')
-        D1 = [x0, y0 - d, z0]
-        D3 = [x0, y0 + d]
-        D2 = [x0 - d, y0]
-        # D3 = [x0, y0 + d]
-        D4 = [x0 + d, y0]
-        xy_massive = []
-        # Калибровка оси x
+        D1 = [x0, y0, z0]
         self.move_xyz(D1)
-        time.sleep(5)
-        d1 = self.openCV(0, 11)
-        xy_massive.append([self.position.x + d1[0], self.position.y + d1[1]])
-
-        self.move_xyz(D3)
         time.sleep(2)
-        d3 = self.openCV(0, 11)
-        xy_massive.append([self.position.x + d3[0], self.position.y + d3[1]])
+        #######################
 
-        # Калибровка оси y
-        self.move_xyz(D2)
+        xyz_0 = self.openCV(0, number)
+        current_coord = self.calculate_direct_kinematics_problem()
+        # координаты предварительно вычесленного центра
+        x0 = current_coord[0] + xyz_0[0]
+        y0 = current_coord[1] + xyz_0[1]
+        z0 = 0.15
+        logger.debug(f'x0 = {x0}, y0 = {y0}')
+        D1 = [x0, y0, z0]
+        self.move_xyz(D1)
         time.sleep(2)
-        d2 = self.openCV(0, 11)
-        xy_massive.append([self.position.x + d2[0], self.position.y + d2[1]])
+        #######################
 
-        self.move_xyz(D4)
+        xyz_0 = self.openCV(0, number)
+        current_coord = self.calculate_direct_kinematics_problem()
+        # координаты предварительно вычесленного центра
+        x0 = current_coord[0] + xyz_0[0]
+        y0 = current_coord[1] + xyz_0[1]
+        z0 = 0.05
+        logger.debug(f'x0 = {x0}, y0 = {y0}')
+        D1 = [x0, y0, z0]
+        self.move_xyz(D1)
         time.sleep(2)
-        d4 = self.openCV(0, 11)
-        xy_massive.append([self.position.x + d4[0], self.position.y + d4[1]])
 
-        xy_mean = np.mean(xy_massive, axis=0)
-        logger.debug(xy_mean)
-        xy_mean[0] -= 0.1
-        self.move_xyz(xy_mean)
+        for i in range(4):
+            xyz_0 = self.openCV(0, number)
+            current_coord = self.calculate_direct_kinematics_problem()
+        # координаты предварительно вычесленного центра
+            x0 = current_coord[0] + xyz_0[0]
+            y0 = current_coord[1] + xyz_0[1]
+            z0 = 0.05
+            logger.debug(f'x0 = {x0}, y0 = {y0}')
+            D1 = [x0, y0, z0]
+            self.move_xyz(D1)
+            time.sleep(0.1)
+    def camera_calibrate_s(self, number):
+        d = 0.03
+        xyz_0 = self.openCV(0, number)
+        current_coord = self.calculate_direct_kinematics_problem()
+        # координаты предварительно вычесленного центра
+        x0 = current_coord[0] + xyz_0[0]
+        y0 = current_coord[1] + xyz_0[1]
+        z0 = 0.280
+        a = pi/2
+        b = pi
+        c = 0
+        logger.debug(f'x0 = {x0}, y0 = {y0}')
+        D1 = [x0, y0, z0, a, b, c]
+        self.move_xyz(D1)
+        time.sleep(2)
+        #######################
+
+        # xyz_0 = self.openCV(0, number)
+        # current_coord = self.calculate_direct_kinematics_problem()
+        # # координаты предварительно вычесленного центра
+        # x0 = current_coord[0] + xyz_0[0]
+        # y0 = current_coord[1] + xyz_0[1]
+        # z0 = 0.15
+        # logger.debug(f'x0 = {x0}, y0 = {y0}')
+        # D1 = [x0, y0, z0]
+        # self.move_xyz(D1)
+        # time.sleep(2)
+        # #######################
+        #
+        # xyz_0 = self.openCV(0, number)
+        # current_coord = self.calculate_direct_kinematics_problem()
+        # # координаты предварительно вычесленного центра
+        # x0 = current_coord[0] + xyz_0[0]
+        # y0 = current_coord[1] + xyz_0[1]
+        # z0 = 0.05
+        # logger.debug(f'x0 = {x0}, y0 = {y0}')
+        # D1 = [x0, y0, z0]
+        # self.move_xyz(D1)
+        # time.sleep(2)
+        #
+        # for i in range(4):
+        #     xyz_0 = self.openCV(0, number)
+        #     current_coord = self.calculate_direct_kinematics_problem()
+        # # координаты предварительно вычесленного центра
+        #     x0 = current_coord[0] + xyz_0[0]
+        #     y0 = current_coord[1] + xyz_0[1]
+        #     z0 = 0.05
+        #     logger.debug(f'x0 = {x0}, y0 = {y0}')
+        #     D1 = [x0, y0, z0]
+        #     self.move_xyz(D1)
+        #     time.sleep(0.1)
 
     def camera_calibrate2(self):
         d = 0.003
@@ -1328,9 +1391,10 @@ class Manipulator:
         # self.move_xyz(xy_mean)
 
     def take_object(self):
-        self.move_xyz([self.position.x - 0.047, self.position.y + 0.007, self.position.z])
-        self.move_xyz([self.position.x, self.position.y, self.position.z - 0.12])
-
+        self.move_xyz([self.position.x - 0.04895, self.position.y - 0.001, self.position.z - 0.025])
+        # self.move_xyz([self.position.x, self.position.y, self.position.z - 0.12])
+        #self.move_xyz([0.24134, -0.12835, 0.03, 0, pi, 0])
+#x = 0.24134393860523998 y = -0.12435046709099302 z = 0.030000000000000082
     def camera_calibrate_rot(self):
         d = 0.03
         xyz_0 = self.openCV(0, 11)
