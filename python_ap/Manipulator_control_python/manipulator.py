@@ -169,7 +169,7 @@ class Manipulator:
         self.serial_arduino.close()
 
     def write_point(self, string):
-        file = open("points.txt", "w")
+        file = open("points.txt", "a")
         file.write(string)
         file.close()
 
