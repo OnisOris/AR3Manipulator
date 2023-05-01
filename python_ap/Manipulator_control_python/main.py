@@ -98,6 +98,12 @@ while (True):
                 robot.null_position()
         elif (inp_c[0] == "enc"):
                 robot.enc()
+        elif (inp_c[0] == "rot_t"):
+                robot.move_theta(float(inp_c[1]))
+        elif (inp_c[0] == "crot"):
+                robot.camera_calibrate_rot()
+        elif (inp_c[0] == '\n'):
+                logger.debug("enter")
         else:
             print("Неправильная команда")
 #   x = 0.23378473431949537 y = -0.28243977277327487 z = 0.12367249310609349

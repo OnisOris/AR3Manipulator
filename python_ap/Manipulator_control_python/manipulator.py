@@ -180,7 +180,7 @@ class Manipulator:
         for i in range(len(command)):
             # if (command[i] == "grab"):
             angles = command[i].split(",")
-            mas = []
+            # mas = []
             if (angles[0] == "inv"):
                 x = float(angles[1])
                 y = float(angles[2])
@@ -194,10 +194,21 @@ class Manipulator:
                 ang = np.degrees(xyzabc)
                 logger.debug(ang)
                 self.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
+            if (angles[0] == "move_z"):
+                self.move_z(float(angles[1])*1000)
+            if (angles[0] == "move_x"):
+                self.move_x(float(angles[1])*1000)
+            if (angles[0] == "move_y"):
+                self.move_y(float(angles[1])*1000)
+            if (angles[0] == "move_xyz"):
+                self.move_xyz([self.position.x + float(angles[1]), self.position.y + float(angles[2]),
+                              self.position.z + float(angles[3])])
             if (angles[0] == "rest"):
                 self.null_position()
             if (angles[0] == "cam"):
                 self.camera_calibrate(int(angles[1]))
+            if (angles[0] == "camr"):
+                self.camera_calibrate_rot(int(angles[1]))
             if (angles[0] == "take"):
                 self.take_object()
             if (angles[0] == "dir"):
@@ -209,9 +220,14 @@ class Manipulator:
                 self.grab()
             if (angles[0] == "abs"):
                 self.absolve()
+            if (angles[0] == "calib"):
+                self.auto_calibrate()
             if(angles[0] == "sleep"):
                 logger.debug("sleep------------------------------------->")
                 time.sleep(float(angles[1]))
+            if (angles[0] == "speed"):
+                logger.debug(f"speed = {angles[1]}------------------------------------->")
+                self.position.speed = int(angles[1])
             #     #                 if (self.logging == True):
             #     #                     logger.debug("grab------------------------------------->")
             #     #                 self.grab()
@@ -1125,12 +1141,17 @@ class Manipulator:
         array = np.array([0, 0, 0, 0, 0, 0])
         i = 0
         logger.debug("begin cycle")
+        waitnumber = 0
         while (True):
             ret, frame = cap.read()
             frame, x, y, z, a_x, a_y, a_z = odom.updateCameraPoses(frame, time.time() * 1000 - startTime, id_marker)
             cv2.imshow("im", frame)
             cv2.waitKey(1)
-            logger.debug("waitkey")
+            waitnumber +=1
+            logger.debug(f"waitkey = {waitnumber}")
+            if waitnumber > 100:
+                logger.debug("Маркер не обнаружен")
+                break
             # y -= 0.1
             # logger.debug(x)
             if not x == 0 or not y == 0 or not z == 0:
@@ -1142,6 +1163,7 @@ class Manipulator:
                 # logger.debug(f'------array = {array}')
             if i > cycle:
                 break
+
             #     logger.debug(f'1 x = {x} y = {y} z = {z}')
             #     xyz = self.trans([x, y, z, a_x, a_y, a_z])
             #     logger.debug(f'2 ---- x = {xyz[0]} y = {xyz[1]} z = {xyz[2]}')
@@ -1149,6 +1171,9 @@ class Manipulator:
             # xyz[1] = -xyz[1]
 
             # np.vstack([array, xyz])
+        if(waitnumber > 100):
+            return None
+
         array = np.delete(array, 0, 0)
         logger.debug(array)
         mean_array = np.mean(array, axis=0)
@@ -1160,8 +1185,8 @@ class Manipulator:
         coord = np.hstack([coord, [a_x, a_y, a_z]])
         logger.debug(coord)
         # self.move_all_xyz([coord[0], coord[1], 0])
-        coord[0] += 0.05
-        coord[1] -= 0.013
+        # coord[0] += 0.05
+        # coord[1] -= 0.013
         return coord
 
     def openCV2(self, id_camera, id_marker0=11, id_marker1=12):
@@ -1232,6 +1257,10 @@ class Manipulator:
     def camera_calibrate(self, number):
         d = 0.03
         xyz_0 = self.openCV(0, number)
+        if xyz_0.all() == None:
+            return None
+        xyz_0[0] += 0.05
+        xyz_0[1] -= 0.013
         current_coord = self.calculate_direct_kinematics_problem()
         # координаты предварительно вычесленного центра
         x0 = current_coord[0] + xyz_0[0]
@@ -1244,6 +1273,8 @@ class Manipulator:
         #######################
 
         xyz_0 = self.openCV(0, number)
+        xyz_0[0] += 0.05
+        xyz_0[1] -= 0.013
         current_coord = self.calculate_direct_kinematics_problem()
         # координаты предварительно вычесленного центра
         x0 = current_coord[0] + xyz_0[0]
@@ -1256,6 +1287,8 @@ class Manipulator:
         #######################
 
         xyz_0 = self.openCV(0, number)
+        xyz_0[0] += 0.05
+        xyz_0[1] -= 0.013
         current_coord = self.calculate_direct_kinematics_problem()
         # координаты предварительно вычесленного центра
         x0 = current_coord[0] + xyz_0[0]
@@ -1268,11 +1301,13 @@ class Manipulator:
 
         for i in range(4):
             xyz_0 = self.openCV(0, number)
+            xyz_0[0] += 0.05
+            xyz_0[1] -= 0.013
             current_coord = self.calculate_direct_kinematics_problem()
         # координаты предварительно вычесленного центра
             x0 = current_coord[0] + xyz_0[0]
             y0 = current_coord[1] + xyz_0[1]
-            z0 = 0.05
+            z0 = 0.04
             logger.debug(f'x0 = {x0}, y0 = {y0}')
             D1 = [x0, y0, z0]
             self.move_xyz(D1)
@@ -1391,29 +1426,36 @@ class Manipulator:
         # self.move_xyz(xy_mean)
 
     def take_object(self):
-        self.move_xyz([self.position.x - 0.04895, self.position.y - 0.001, self.position.z - 0.025])
+        self.move_xyz([self.position.x - 0.04895, self.position.y - 0.001, self.position.z - 0.008])
         # self.move_xyz([self.position.x, self.position.y, self.position.z - 0.12])
         #self.move_xyz([0.24134, -0.12835, 0.03, 0, pi, 0])
 #x = 0.24134393860523998 y = -0.12435046709099302 z = 0.030000000000000082
-    def camera_calibrate_rot(self):
-        d = 0.03
-        xyz_0 = self.openCV(0, 11)
-        current_coord = self.calculate_direct_kinematics_problem()
-        # координаты предварительно вычесленного центра
-        x0 = current_coord[0] + xyz_0[0]
-        y0 = current_coord[1] + xyz_0[1]
-        z0 = current_coord[2] - xyz_0[2] + 0.25
-        a_z = xyz_0[5]
-        xy0 = np.array([x0, y0])
-        logger.debug(f'x0 = {x0}, y0 = {y0}')
-        D1 = [x0, y0 - d, z0, -a_z, pi, 0]
-        D3 = [x0, y0 + d]
-        D2 = [x0 - d, y0]
-        # D3 = [x0, y0 + d]
-        D4 = [x0 + d, y0]
-        xy_massive = []
-        # Калибровка оси x
-        self.move_xyz(D1, True)
+    def camera_calibrate_rot(self, number):
+        for i in range(7):
+            xyz_0 = self.openCV(0, number)
+            xyz_0[0] -= 0.007
+            xyz_0[1] -= 0.018
+            current_coord = self.calculate_direct_kinematics_problem()
+            # координаты предварительно вычесленного центра
+            x0 = current_coord[0]
+            y0 = current_coord[1]
+            z0 = 0.25
+            a_z = self.last_inverse_pos[3]
+
+            vect = np.array([[xyz_0[0]],
+                         [xyz_0[1]],
+                         [z0]])
+            rot_m = self.rotate_from_angle(a_z, 'z')
+
+            new_coord = np.dot(rot_m, vect)
+            logger.debug(f"xyz_0 = {xyz_0}")
+            logger.debug(f"new_coord = {new_coord}")
+            x0 = current_coord[0] + new_coord[0][0]
+            y0 = current_coord[1] + new_coord[1][0]
+
+            D1 = [x0, y0, self.position.z, pi/2, pi, 0]
+            self.move_xyz(D1, True)
+            time.sleep(1)
 
     # def getRobotPosition():
     #     commandCalc = "GP" + "U" + str(J1StepCur) + "V" + str(J2StepCur) + "W" + str(J3StepCur) + "X" + str(
