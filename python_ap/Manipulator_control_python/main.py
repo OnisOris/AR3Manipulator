@@ -6,6 +6,7 @@ import numpy as np
 from math import (pi)
 from loguru import logger
 from pynput import keyboard
+import threading
 
 ############## Настройки программы ##############
 baud = 115200
@@ -15,6 +16,8 @@ arduino_port = 6
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 robot.logging = True
+monitor = threading.Thread(target=robot.monitorEnc())
+monitor.start()
 while (True):
     inp = input("Введите команду \n")
     inp_c = inp.split()

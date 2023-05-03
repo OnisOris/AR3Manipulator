@@ -92,7 +92,7 @@ const int TRstepPin = 12;
 const int TRdirPin = 13;
 
 //set encoder pins
-Encoder J1encPos(14, 15);
+Encoder v   (14, 15);
 Encoder J2encPos(16, 17);
 Encoder J3encPos(18, 19);
 Encoder J4encPos(20, 21);

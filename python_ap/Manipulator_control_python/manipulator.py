@@ -125,7 +125,20 @@ class Manipulator:
             self.is_connected = True
         except serial.SerialException:
             logger.error("Serial port not defined")
+    def monitorEnc(self):
+        self.getRobotPosition()
+        time.sleep(2)
 
+    def getRobotPosition(self):
+        commandCalc = "GP" + "U" + str(self.joints[0].current_joint_step) + "V" + str(self.joints[1].current_joint_step) + "W" + str(self.joints[2].current_joint_step) + "X" + str(
+            self.joints[3].current_joint_step) + "Y" + str(self.joints[4].current_joint_step) + "Z" + str(self.joints[5].current_joint_step) + "\n"
+        #ser.write(commandCalc.encode())
+        self.teensy_push(commandCalc.encode())
+        RobotCode = str(self.serial_teensy.readline())
+        Pcode = RobotCode[2:4]
+        logger.debug(RobotCode)
+        # if (Pcode == "01"):
+        #     applyRobotCal(RobotCode)
     def show_workspace(self):
         self.robot.ws_division = 6
         self.robot.show(ws=True)
