@@ -175,6 +175,8 @@ class Manipulator:
                         self.absolve()
                     elif (inp_c[0] == "rot"):
                         self.jog_joint_c(int(inp_c[1]), int(inp_c[2]))
+                    elif (inp_c[0] == "rots"):
+                        self.jog_joint_s(int(inp_c[1]), int(inp_c[2]))
                     elif (inp_c[0] == "print"):
                         self.print()
                     elif (inp_c[0] == "move_all"):
@@ -229,6 +231,10 @@ class Manipulator:
                         self.camera_calibrate_rot()
                     elif (inp_c[0] == '\n'):
                         logger.debug("enter")
+                    elif (inp_c[0] == 'calc_angle'):
+                        self.calc_angle(float(inp_c[1]), self.joints[int(inp_c[2])])
+                    elif (inp_c[0] == 'calc_step'):
+                        self.calc_steps(float(inp_c[1]), self.joints[int(inp_c[2])])
                     else:
                         print("Неправильная команда")
             except:
@@ -517,8 +523,45 @@ class Manipulator:
                 logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
                 return [0, 0, True]
         # Расчет направления двигателей
-        x = joint.current_joint_angle
+        x = joint.current_joint_angle  # joint.current_joint_step*joint.degrees_per_step + joint.negative_angle_limit
+        logger.debug(x)
         arc = abs(angle - x)
+        logger.debug(arc)
+        if (joint.motor_dir == 1):
+            if (angle > x):
+                drive_direction = 0
+            if (angle < x):
+                drive_direction = 1
+            if (angle == x):
+                logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
+                drive_direction = 1
+                arc = 0
+        if (joint.motor_dir == -1):
+            if (angle > x):
+                drive_direction = 1
+            if (angle < x):
+                drive_direction = 0
+            if (angle == x):
+                logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
+                drive_direction = 1
+                arc = 0
+        error = False
+        return [arc, drive_direction, error]
+    def calc_steps(self, angle,joint: Joint):
+        angle = float(angle)
+        if (joint.positive_angle_limit > 0):
+            if (angle > joint.positive_angle_limit or angle < joint.negative_angle_limit):
+                logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
+                return [0, 0, True]
+        if (joint.positive_angle_limit < 0):
+            if (angle < joint.positive_angle_limit or angle > joint.negative_angle_limit):
+                logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
+                return [0, 0, True]
+        # Расчет направления двигателей
+        x = joint.current_joint_step * joint.degrees_per_step + joint.negative_angle_limit
+        logger.debug(x)
+        arc = abs(angle - x)
+        logger.debug(arc)
         if (joint.motor_dir == 1):
             if (angle > x):
                 drive_direction = 0
@@ -540,13 +583,21 @@ class Manipulator:
         error = False
         return [arc, drive_direction, error]
 
+
+
+
     def jog_joint_c(self, number_of_joint, degrees):
         angles = [self.joints[0].current_joint_angle, self.joints[1].current_joint_angle,
                   self.joints[2].current_joint_angle, self.joints[3].current_joint_angle,
                   self.joints[4].current_joint_angle, self.joints[5].current_joint_angle]
         angles[number_of_joint] = degrees
         self.jog_joints(angles)
-
+    def jog_joint_s(self, number_of_joint, degrees):
+        angles = [self.joints[0].current_joint_angle, self.joints[1].current_joint_angle,
+                  self.joints[2].current_joint_angle, self.joints[3].current_joint_angle,
+                  self.joints[4].current_joint_angle, self.joints[5].current_joint_angle]
+        angles[number_of_joint] = degrees
+        self.jog_joints_steps(angles)
     def jog_joints(self, degrees):
         degrees = [float(x) for x in degrees]
         joint_commands = []
@@ -575,7 +626,34 @@ class Manipulator:
                 logger.debug(f"Запись углов в джойнты: {angles}")
         else:
             logger.error("Команда не отправилась, превышен лимит одного из джойнтов")
-
+    def jog_joints_steps(self, degrees):
+        degrees = [float(x) for x in degrees]
+        joint_commands = []
+        errors = []
+        angles = []
+        for i in range(6):
+            d = self.calc_steps(degrees[i], self.joints[i])
+            arc = d[0]
+            # logger.debug(self.joints[i].motor_dir)
+            direction = d[1]
+            j_jog_steps = abs(int(arc / self.joints[i].degrees_per_step))
+            joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
+            errors.append(d[2])
+            # if (d[2] != True):
+            #     logger.debug(f"Запись в джойнт {i+1}")
+            angles.append(degrees[i])
+            # self.joints[i].current_joint_angle = degrees[i]
+        if (not errors[0] and not errors[1] and not errors[2] and not errors[3] and not errors[4] and not errors[5]):
+            for i in range(6):
+                self.joints[i].current_joint_angle = angles[i]
+            command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
+            self.teensy_push(command)
+            self.save_position()
+            self.calculate_direct_kinematics_problem()
+            if (self.logging == True):
+                logger.debug(f"Запись углов в джойнты: {angles}")
+        else:
+            logger.error("Команда не отправилась, превышен лимит одного из джойнтов")
     def apply_robot_calibration(self, robot_code: str):
         faults = [
             robot_code[4],
