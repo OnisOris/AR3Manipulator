@@ -16,6 +16,7 @@ from visual_kinematics.RobotSerial import *
 from visual_kinematics.RobotTrajectory import *
 import cv2
 import arucoOdometry
+import threading
 
 
 # from parse import parse
@@ -83,6 +84,9 @@ class Manipulator:
                           ])
 
     def __init__(self, teensy_port, arduino_port, baud):
+        self.program_console = threading.Thread(target=self.startConsole, daemon=True)
+        self.monitor = threading.Thread(target=self.monitorEnc, daemon=True)
+        self.console = True
         self.monitoringENC = True
         self.cap = cv2.VideoCapture(0)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
@@ -127,9 +131,114 @@ class Manipulator:
         except serial.SerialException:
             logger.error("Serial port not defined")
 
+    def start_program(self):
+        self.program_console.start()
+        self.monitor.start()
+        self.program_console.join()
+        self.monitor.join()
+    def check_threads(self):
+        if not self.program_console.isAlive():
+            self.program_console.start()
+        if not self.program_console.isAlive():
+            self.program_console.start()
+    def startConsole(self):
+        while self.console:
+            try:
+                inp = input("Введите команду \n")
+                inp_c = inp.split()
+                if (True):
+                    if (inp == "exit"):
+                        break
+                    elif (inp == "c"):
+                        self.auto_calibrate()
+                    elif (inp == "help"):
+                        print("move_x [расстояние в мм] - передвижение по оси x в [мм]\n ")
+                        print("move_y [расстояние в мм] - передвижение по оси y в [мм]\n ")
+                        print("move_z [расстояние в мм] - передвижение по оси z в [мм]\n ")
+                        print("calib - автокалибровка\n ")
+                        self.info()
+                    elif (inp_c[0] == "move_x"):
+                        self.move_x(int(inp_c[1]))
+                    elif (inp_c[0] == "check_th"):
+                        self.check_threads()
+                    elif (inp_c[0] == "move_y"):
+                        self.move_y(int(inp_c[1]))
+                    elif (inp_c[0] == "move_z"):
+                        self.move_z(int(inp_c[1]))
+                    elif (inp_c[0] == "servo"):
+                        command = f"SV{0}P{inp_c[1]}\n"
+                        print(command)
+                        self.arduino_push(command)
+                    elif (inp_c[0] == "g"):
+                        self.grab()
+                    elif (inp_c[0] == "a"):
+                        self.absolve()
+                    elif (inp_c[0] == "rot"):
+                        self.jog_joint_c(int(inp_c[1]), int(inp_c[2]))
+                    elif (inp_c[0] == "print"):
+                        self.print()
+                    elif (inp_c[0] == "move_all"):
+                        self.jog_joints([inp_c[1], inp_c[2], inp_c[3], inp_c[4], inp_c[5], inp_c[6]])
+                    elif (inp_c[0] == "add"):
+                        points = f"inv,{self.last_inverse_pos[0]},{self.last_inverse_pos[1]},{self.last_inverse_pos[2]},{self.last_inverse_pos[3]},{self.last_inverse_pos[4]},{self.last_inverse_pos[5]}\n"
+                        # logger.debug(self.points)
+                        self.write_point(points)
+                        # self.points += f"{self.joints[0].current_joint_angle},{self.joints[1].current_joint_angle},{self.joints[2].current_joint_angle},{self.joints[3].current_joint_angle},{self.joints[4].current_joint_angle},{self.joints[5].current_joint_angle}\n"
+                    elif (inp_c[0] == "add2"):
+                        points2 = f"dir,{self.joints[0].current_joint_angle},{self.joints[1].current_joint_angle},{self.joints[2].current_joint_angle},{self.joints[3].current_joint_angle},{self.joints[4].current_joint_angle},{self.joints[5].current_joint_angle}\n"
+                        self.write_point(points2)
+                    elif (inp_c[0] == "txmove"):
+                        inv = self.calculate_inverse_kinematic_problem(
+                            [float(inp_c[1]) / 1000, float(inp_c[2]) / 1000, float(inp_c[3]) / 1000,
+                             np.radians(float(inp_c[4])),
+                             np.radians(float(inp_c[5])), np.radians(float(inp_c[6]))])
+                        logger.debug(inv)
+                        ang = np.degrees(inv)
+                        self.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
+                    elif (inp_c[0] == "vis"):
+                        self.show()
+                    elif (inp_c[0] == "vis_on"):
+                        self.showMode = True
+                    elif (inp_c[0] == "vis_off"):
+                        self.showMode = False
+                    elif (inp_c[0] == "read"):
+                        self.read_points()
+                    elif (inp_c[0] == "calib_axe"):
+                        self.calibrate(str(inp_c[1]), '30')
+                    elif (inp_c[0] == "opencv"):
+                        coord = self.openCV(0, 5)
+                        logger.debug(f'coord in main = {coord}')
+                        # self.move_all_xyz([coord[0], coord[1], 0])
+                    elif (inp_c[0] == "cam"):
+                        self.camera_calibrate(11)
+                    elif (inp_c[0] == "camm"):
+                        self.camera_calibrate_s(12)
+                    elif (inp_c[0] == "cam2"):
+                        self.camera_calibrate2()
+                    elif (inp_c[0] == "take"):
+                        self.take_object()
+                    elif (inp_c[0] == "speed"):
+                        self.position.speed = int(inp_c[1])
+                    elif (inp_c[0] == "n"):
+                        self.null_position()
+                    elif (inp_c[0] == "enc"):
+                        self.enc()
+                    elif (inp_c[0] == "rot_t"):
+                        self.move_theta(float(inp_c[1]))
+                    elif (inp_c[0] == "crot"):
+                        self.camera_calibrate_rot()
+                    elif (inp_c[0] == '\n'):
+                        logger.debug("enter")
+                    else:
+                        print("Неправильная команда")
+            except:
+                logger.error("произошла ошибка")
+            # self.getRobotPosition()
+            # time.sleep(2)
     def monitorEnc(self):
-        while self.monitoringENC:
-            self.getRobotPosition()
+        while True:
+            if self.monitoringENC:
+                self.getRobotPosition()
             time.sleep(2)
 
     def getRobotPosition(self):
@@ -138,10 +247,97 @@ class Manipulator:
             self.joints[3].current_joint_step) + "Y" + str(self.joints[4].current_joint_step) + "Z" + str(
             self.joints[5].current_joint_step) + "\n"
         # ser.write(commandCalc.encode())
-        self.teensy_push(commandCalc.encode())
+        self.serial_teensy.write(commandCalc.encode())
         RobotCode = str(self.serial_teensy.readline())
-        Pcode = RobotCode[2:4]
-        logger.debug(RobotCode)
+        #if not RobotCode.find('Done') == -1:
+        RobotCode = RobotCode.replace('Done', '')
+        #Pcode = RobotCode[2:4]
+        A = RobotCode.find('A')
+        B = RobotCode.find('B')
+        C = RobotCode.find('C')
+        D = RobotCode.find('D')
+        E = RobotCode.find('E')
+        F = RobotCode.find('F')
+        end = RobotCode.find('r')
+        # logger.debug(A)
+        # logger.debug(B)
+        # logger.debug(C)
+        # logger.debug(D)
+        # logger.debug(E)
+        # logger.debug(F)
+        # logger.debug(RobotCode)
+        if A != -1 and not RobotCode[A + 1: B] == '':
+            Asteps = int(RobotCode[A + 1: B])
+        else:
+            Asteps = self.joints[0].current_joint_step
+
+        if B != -1 and not RobotCode[B + 1: C] == '':
+            Bsteps = int(RobotCode[B + 1: C])
+        else:
+            Bsteps = self.joints[1].current_joint_step
+        #Csteps = int(RobotCode[C + 1: D])
+        if C != -1 and not RobotCode[C + 1: D] == '':
+            Csteps = int(RobotCode[C + 1: D])
+        else:
+            Csteps = self.joints[2].current_joint_step
+        #Dsteps = int(RobotCode[D + 1: E])
+        if D != -1 and not RobotCode[D + 1: E] == '':
+            Dsteps = int(RobotCode[D + 1: E])
+        else:
+            Dsteps = self.joints[3].current_joint_step
+
+        #Esteps = int(RobotCode[E + 1: F])
+        if E != -1 and not RobotCode[E + 1: F] == '':
+            Esteps = int(RobotCode[E + 1: F])
+        else:
+            Esteps = self.joints[4].current_joint_step
+
+        if F != -1 and not RobotCode[F + 1: end-1] == '':
+            Fsteps = int(RobotCode[F + 1: end-1])
+        else:
+            Fsteps = self.joints[5].current_joint_step
+
+
+        # logger.debug(RobotCode)
+        # string = "A = " + RobotCode[A+1:B] + " B = " + \
+        #          RobotCode[B+1:C] + " C = "\
+        #          + RobotCode[C+1:D] + " D = " + RobotCode[D+1:E] + " E = " + \
+        #         RobotCode[E + 1:F] + " F = " + RobotCode[F+1:end-1]
+        # Asteps = int(RobotCode[A + 1: B])
+        # if not RobotCode[A + 1: B] == '' :
+        #     Asteps = int(RobotCode[A + 1: B])
+        # else:
+        #     Asteps = self.joints[0].current_joint_step
+        #
+        # if not RobotCode[B + 1: C] == '':
+        #     Bsteps = int(RobotCode[B + 1: C])
+        # else:
+        #     Bsteps = self.joints[1].current_joint_step
+        # #Csteps = int(RobotCode[C + 1: D])
+        # if not RobotCode[C + 1: D] == '':
+        #     Csteps = int(RobotCode[C + 1: D])
+        # else:
+        #     Csteps = self.joints[2].current_joint_step
+        # #Dsteps = int(RobotCode[D + 1: E])
+        # if not RobotCode[D + 1: E] == '':
+        #     Dsteps = int(RobotCode[D + 1: E])
+        # else:
+        #     Dsteps = self.joints[3].current_joint_step
+        #
+        # #Esteps = int(RobotCode[E + 1: F])
+        # if not RobotCode[E + 1: F] == '':
+        #     Esteps = int(RobotCode[E + 1: F])
+        # else:
+        #     Esteps = self.joints[4].current_joint_step
+        #
+        # if not RobotCode[F + 1: end-1] == '':
+        #     Fsteps = int(RobotCode[F + 1: end-1])
+        # else:
+        #     Fsteps = self.joints[5].current_joint_step
+        #logger.debug(string)
+        steps = np.array([Asteps, Bsteps, Csteps, Dsteps, Esteps, Fsteps])
+        for i in range(6):
+            self.joints[i].current_joint_step = steps[i]
         # if (Pcode == "01"):
         #     applyRobotCal(RobotCode)
 
@@ -582,6 +778,7 @@ class Manipulator:
         self.serial_teensy.flushInput()
 
     def auto_calibrate(self):
+        self.monitoringENC = False
         self.calibrate('111111', '40')
         cd = self.get_calibration_drive_auto()  # направление калибровки
         command = f"MJA{cd[0]}500B{cd[1]}500C{cd[2]}500D{cd[3]}500E{cd[4]}500F{cd[5]}0" \
@@ -598,6 +795,7 @@ class Manipulator:
         angles = [0, 90, -90, 0, -90, 0]
         self.jog_joints(angles)
         self.calculate_direct_kinematics_problem()
+        self.monitoringENC = True
 
     def null_position(self):
         # self.move_z(100)
@@ -874,6 +1072,9 @@ class Manipulator:
             f" psi = {np.degrees(self.position.psi)}")
         for i in range(6):
             logger.debug(f"joint number {i + 1} have angle = {self.joints[i].current_joint_angle}")
+
+        for i in range(6):
+            logger.debug(f"joint number {i + 1} have current step = {self.joints[i].current_joint_step}")
 
     def show(self):
         self.calculate_direct_kinematics_problem()
