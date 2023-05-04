@@ -83,6 +83,7 @@ class Manipulator:
                           ])
 
     def __init__(self, teensy_port, arduino_port, baud):
+        self.monitoringENC = True
         self.cap = cv2.VideoCapture(0)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
@@ -125,20 +126,25 @@ class Manipulator:
             self.is_connected = True
         except serial.SerialException:
             logger.error("Serial port not defined")
+
     def monitorEnc(self):
-        self.getRobotPosition()
-        time.sleep(2)
+        while self.monitoringENC:
+            self.getRobotPosition()
+            time.sleep(2)
 
     def getRobotPosition(self):
-        commandCalc = "GP" + "U" + str(self.joints[0].current_joint_step) + "V" + str(self.joints[1].current_joint_step) + "W" + str(self.joints[2].current_joint_step) + "X" + str(
-            self.joints[3].current_joint_step) + "Y" + str(self.joints[4].current_joint_step) + "Z" + str(self.joints[5].current_joint_step) + "\n"
-        #ser.write(commandCalc.encode())
+        commandCalc = "GP" + "U" + str(self.joints[0].current_joint_step) + "V" + str(
+            self.joints[1].current_joint_step) + "W" + str(self.joints[2].current_joint_step) + "X" + str(
+            self.joints[3].current_joint_step) + "Y" + str(self.joints[4].current_joint_step) + "Z" + str(
+            self.joints[5].current_joint_step) + "\n"
+        # ser.write(commandCalc.encode())
         self.teensy_push(commandCalc.encode())
         RobotCode = str(self.serial_teensy.readline())
         Pcode = RobotCode[2:4]
         logger.debug(RobotCode)
         # if (Pcode == "01"):
         #     applyRobotCal(RobotCode)
+
     def show_workspace(self):
         self.robot.ws_division = 6
         self.robot.show(ws=True)
@@ -208,14 +214,14 @@ class Manipulator:
                 logger.debug(ang)
                 self.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
             if (angles[0] == "move_z"):
-                self.move_z(float(angles[1])*1000)
+                self.move_z(float(angles[1]) * 1000)
             if (angles[0] == "move_x"):
-                self.move_x(float(angles[1])*1000)
+                self.move_x(float(angles[1]) * 1000)
             if (angles[0] == "move_y"):
-                self.move_y(float(angles[1])*1000)
+                self.move_y(float(angles[1]) * 1000)
             if (angles[0] == "move_xyz"):
                 self.move_xyz([self.position.x + float(angles[1]), self.position.y + float(angles[2]),
-                              self.position.z + float(angles[3])])
+                               self.position.z + float(angles[3])])
             if (angles[0] == "rest"):
                 self.null_position()
             if (angles[0] == "cam"):
@@ -226,7 +232,7 @@ class Manipulator:
                 self.take_object()
             if (angles[0] == "dir"):
                 theta = [float(angles[1]), float(angles[2]), float(angles[3]), float(angles[4]),
-                        float(angles[5]), float(angles[6])]
+                         float(angles[5]), float(angles[6])]
                 theta = np.degrees(theta)
                 self.jog_joints(theta)
             if (angles[0] == "grab"):
@@ -235,7 +241,7 @@ class Manipulator:
                 self.absolve()
             if (angles[0] == "calib"):
                 self.auto_calibrate()
-            if(angles[0] == "sleep"):
+            if (angles[0] == "sleep"):
                 logger.debug("sleep------------------------------------->")
                 time.sleep(float(angles[1]))
             if (angles[0] == "speed"):
@@ -247,6 +253,7 @@ class Manipulator:
             #             elif (angles[g] == "abs"):
             #                 if (self.logging == True):
             #                     logger.debug("absolve------------------------------------->")
+
     # def read_points(self):
     #     file = open("points.txt", "r")
     #     commands = file.read()
@@ -1077,8 +1084,8 @@ class Manipulator:
         angle_z = pi / 2
         angle_x = pi
         # смещение относительно системы координат камеры
-        xc = 0#-0.03
-        yc = 0#-0.03 + 0.1
+        xc = 0  # -0.03
+        yc = 0  # -0.03 + 0.1
         zc = 0.
         # logger.debug(f'xyzabc[1] = {xyzabc[1]}')
         xyzabc[0] = xyzabc[0] + xc
@@ -1160,7 +1167,7 @@ class Manipulator:
             frame, x, y, z, a_x, a_y, a_z = odom.updateCameraPoses(frame, time.time() * 1000 - startTime, id_marker)
             cv2.imshow("im", frame)
             cv2.waitKey(1)
-            waitnumber +=1
+            waitnumber += 1
             logger.debug(f"waitkey = {waitnumber}")
             if waitnumber > 100:
                 logger.debug("Маркер не обнаружен")
@@ -1184,7 +1191,7 @@ class Manipulator:
             # xyz[1] = -xyz[1]
 
             # np.vstack([array, xyz])
-        if(waitnumber > 100):
+        if (waitnumber > 100):
             return None
 
         array = np.delete(array, 0, 0)
@@ -1192,7 +1199,7 @@ class Manipulator:
         mean_array = np.mean(array, axis=0)
         logger.debug(mean_array)
         # смещение по оси y камеры
-        #mean_array[1] -= 0.02
+        # mean_array[1] -= 0.02
         coord = self.trans(mean_array)
         logger.debug(coord)
         coord = np.hstack([coord, [a_x, a_y, a_z]])
@@ -1228,14 +1235,14 @@ class Manipulator:
                                               time.time() * 1000 - startTime,
                                               [id_marker0, id_marker1])
             frame = massive[0]
-            #logger.debug(massive[1])
+            # logger.debug(massive[1])
             xyzabc0 = np.array(massive[1][0])
-            #logger.debug(xyzabc0)
+            # logger.debug(xyzabc0)
             xyzabc1 = np.array(massive[1][1])
             cv2.imshow("im", frame)
             cv2.waitKey(1)
 
-            if not xyzabc0[0] == 0 or not xyzabc0[1] == 0 or not xyzabc0[2] == 0 or not xyzabc1[0] == 0\
+            if not xyzabc0[0] == 0 or not xyzabc0[1] == 0 or not xyzabc0[2] == 0 or not xyzabc1[0] == 0 \
                     or not xyzabc1[1] == 0 or not xyzabc1[2] == 0:
                 i += 1
                 array0 = np.vstack([array0, xyzabc0])
@@ -1248,8 +1255,8 @@ class Manipulator:
         mean_array1 = np.mean(array1, axis=0)
         # смещение по оси y камеры
         logger.debug(f'until = {mean_array0[1]}')
-        #mean_array0[1] += 0.04
-        #mean_array1[1] += 0.04
+        # mean_array0[1] += 0.04
+        # mean_array1[1] += 0.04
         logger.debug(f'after = {mean_array0[1]}')
         coord0 = self.trans(mean_array0)
         coord1 = self.trans(mean_array1)
@@ -1317,7 +1324,7 @@ class Manipulator:
             xyz_0[0] += 0.05
             xyz_0[1] -= 0.013
             current_coord = self.calculate_direct_kinematics_problem()
-        # координаты предварительно вычесленного центра
+            # координаты предварительно вычесленного центра
             x0 = current_coord[0] + xyz_0[0]
             y0 = current_coord[1] + xyz_0[1]
             z0 = 0.04
@@ -1325,6 +1332,7 @@ class Manipulator:
             D1 = [x0, y0, z0]
             self.move_xyz(D1)
             time.sleep(0.1)
+
     def camera_calibrate_s(self, number):
         d = 0.03
         xyz_0 = self.openCV(0, number)
@@ -1333,7 +1341,7 @@ class Manipulator:
         x0 = current_coord[0] + xyz_0[0]
         y0 = current_coord[1] + xyz_0[1]
         z0 = 0.280
-        a = pi/2
+        a = pi / 2
         b = pi
         c = 0
         logger.debug(f'x0 = {x0}, y0 = {y0}')
@@ -1379,25 +1387,25 @@ class Manipulator:
 
     def camera_calibrate2(self):
         d = 0.003
-        #Val = True
+        # Val = True
         for i in range(5):
             xyz_0, xyz_1 = self.openCV2(0, 11, 12)
             logger.debug(xyz_0)
-        #print(1)
+            # print(1)
             current_coord = self.calculate_direct_kinematics_problem()
-        # # координаты предварительно вычесленного центра для двух арукомаркеров
+            # # координаты предварительно вычесленного центра для двух арукомаркеров
             x0 = current_coord[0] + xyz_0[0]
             x1 = current_coord[0] + xyz_1[0]
 
             y0 = current_coord[1] + xyz_0[1]
             y1 = current_coord[1] + xyz_1[1]
 
-        # вычислим центр между двумя арукомаркерами C (x_c, y_c)
+            # вычислим центр между двумя арукомаркерами C (x_c, y_c)
 
             x_c = (x0 + x1) / 2
             y_c = (y0 + y1) / 2
             z_0 = 0.15  # current_coord[2] - xyz_0[2] + 0.25
-        #
+            #
             point = [x_c, y_c, z_0]
             self.move_xyz(point)
             time.sleep(0.1)
@@ -1441,8 +1449,9 @@ class Manipulator:
     def take_object(self):
         self.move_xyz([self.position.x - 0.04895, self.position.y - 0.001, self.position.z - 0.008])
         # self.move_xyz([self.position.x, self.position.y, self.position.z - 0.12])
-        #self.move_xyz([0.24134, -0.12835, 0.03, 0, pi, 0])
-#x = 0.24134393860523998 y = -0.12435046709099302 z = 0.030000000000000082
+        # self.move_xyz([0.24134, -0.12835, 0.03, 0, pi, 0])
+
+    # x = 0.24134393860523998 y = -0.12435046709099302 z = 0.030000000000000082
     def camera_calibrate_rot(self, number):
         for i in range(7):
             xyz_0 = self.openCV(0, number)
@@ -1456,8 +1465,8 @@ class Manipulator:
             a_z = self.last_inverse_pos[3]
 
             vect = np.array([[xyz_0[0]],
-                         [xyz_0[1]],
-                         [z0]])
+                             [xyz_0[1]],
+                             [z0]])
             rot_m = self.rotate_from_angle(a_z, 'z')
 
             new_coord = np.dot(rot_m, vect)
@@ -1466,7 +1475,7 @@ class Manipulator:
             x0 = current_coord[0] + new_coord[0][0]
             y0 = current_coord[1] + new_coord[1][0]
 
-            D1 = [x0, y0, self.position.z, pi/2, pi, 0]
+            D1 = [x0, y0, self.position.z, pi / 2, pi, 0]
             self.move_xyz(D1, True)
             time.sleep(1)
 
