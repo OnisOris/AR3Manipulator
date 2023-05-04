@@ -151,7 +151,7 @@ class Manipulator:
                         break
                     elif (inp == "c"):
                         self.auto_calibrate()
-                    elif (inp == "help"):
+                    elif (inp == "hel"):
                         print("move_x [расстояние в мм] - передвижение по оси x в [мм]\n ")
                         print("move_y [расстояние в мм] - передвижение по оси y в [мм]\n ")
                         print("move_z [расстояние в мм] - передвижение по оси z в [мм]\n ")
