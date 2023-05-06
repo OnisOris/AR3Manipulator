@@ -245,7 +245,7 @@ class Manipulator:
         while True:
             if self.monitoringENC:
                 self.getRobotPosition()
-            time.sleep(2)
+            time.sleep(0.1)
 
     def getRobotPosition(self):
         commandCalc = "GP" + "U" + str(self.joints[0].current_joint_step) + "V" + str(
@@ -257,6 +257,7 @@ class Manipulator:
         RobotCode = str(self.serial_teensy.readline())
         #if not RobotCode.find('Done') == -1:
         RobotCode = RobotCode.replace('Done', '')
+        #logger.debug(RobotCode)
         #Pcode = RobotCode[2:4]
         A = RobotCode.find('A')
         B = RobotCode.find('B')
@@ -286,13 +287,11 @@ class Manipulator:
             Csteps = int(RobotCode[C + 1: D])
         else:
             Csteps = self.joints[2].current_joint_step
-        #Dsteps = int(RobotCode[D + 1: E])
         if D != -1 and not RobotCode[D + 1: E] == '':
             Dsteps = int(RobotCode[D + 1: E])
         else:
             Dsteps = self.joints[3].current_joint_step
 
-        #Esteps = int(RobotCode[E + 1: F])
         if E != -1 and not RobotCode[E + 1: F] == '':
             Esteps = int(RobotCode[E + 1: F])
         else:
@@ -302,50 +301,9 @@ class Manipulator:
             Fsteps = int(RobotCode[F + 1: end-1])
         else:
             Fsteps = self.joints[5].current_joint_step
-
-
-        # logger.debug(RobotCode)
-        # string = "A = " + RobotCode[A+1:B] + " B = " + \
-        #          RobotCode[B+1:C] + " C = "\
-        #          + RobotCode[C+1:D] + " D = " + RobotCode[D+1:E] + " E = " + \
-        #         RobotCode[E + 1:F] + " F = " + RobotCode[F+1:end-1]
-        # Asteps = int(RobotCode[A + 1: B])
-        # if not RobotCode[A + 1: B] == '' :
-        #     Asteps = int(RobotCode[A + 1: B])
-        # else:
-        #     Asteps = self.joints[0].current_joint_step
-        #
-        # if not RobotCode[B + 1: C] == '':
-        #     Bsteps = int(RobotCode[B + 1: C])
-        # else:
-        #     Bsteps = self.joints[1].current_joint_step
-        # #Csteps = int(RobotCode[C + 1: D])
-        # if not RobotCode[C + 1: D] == '':
-        #     Csteps = int(RobotCode[C + 1: D])
-        # else:
-        #     Csteps = self.joints[2].current_joint_step
-        # #Dsteps = int(RobotCode[D + 1: E])
-        # if not RobotCode[D + 1: E] == '':
-        #     Dsteps = int(RobotCode[D + 1: E])
-        # else:
-        #     Dsteps = self.joints[3].current_joint_step
-        #
-        # #Esteps = int(RobotCode[E + 1: F])
-        # if not RobotCode[E + 1: F] == '':
-        #     Esteps = int(RobotCode[E + 1: F])
-        # else:
-        #     Esteps = self.joints[4].current_joint_step
-        #
-        # if not RobotCode[F + 1: end-1] == '':
-        #     Fsteps = int(RobotCode[F + 1: end-1])
-        # else:
-        #     Fsteps = self.joints[5].current_joint_step
-        #logger.debug(string)
         steps = np.array([Asteps, Bsteps, Csteps, Dsteps, Esteps, Fsteps])
         for i in range(6):
             self.joints[i].current_joint_step = steps[i]
-        # if (Pcode == "01"):
-        #     applyRobotCal(RobotCode)
 
     def show_workspace(self):
         self.robot.ws_division = 6
@@ -449,56 +407,6 @@ class Manipulator:
             if (angles[0] == "speed"):
                 logger.debug(f"speed = {angles[1]}------------------------------------->")
                 self.position.speed = int(angles[1])
-            #     #                 if (self.logging == True):
-            #     #                     logger.debug("grab------------------------------------->")
-            #     #                 self.grab()
-            #             elif (angles[g] == "abs"):
-            #                 if (self.logging == True):
-            #                     logger.debug("absolve------------------------------------->")
-
-    # def read_points(self):
-    #     file = open("points.txt", "r")
-    #     commands = file.read()
-    #     command = commands.split("\n")
-    #     for i in range(len(command)):
-    #         # if (command[i] == "grab"):
-    #         angles = command[i].split(",")
-    #         mas = []
-    #         if (angles[0] == "inv"):
-    #             x = float(angles[1])
-    #             y = float(angles[2])
-    #             z = float(angles[3])
-    #             a = float(angles[4])
-    #             b = float(angles[5])
-    #             c = float(angles[6])
-    #             xyzabc = self.calculate_inverse_kinematic_problem([x, y, z, a, b, c])
-    #             ang = np.degrees(xyzabc)
-    #             self.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
-    #         for g in range(len(angles)):
-    #             if (angles[g] == "grab"):
-    #     #                 if (self.logging == True):
-    #     #                     logger.debug("grab------------------------------------->")
-    #     #                 self.grab()
-    #             elif (angles[g] == "abs"):
-    #                 if (self.logging == True):
-    #                     logger.debug("absolve------------------------------------->")
-    #                 self.absolve()
-    #             elif (angles[g] == "sleep"):
-    #                 if (self.logging == True):
-    #                     logger.debug("sleep------------------------------------->")
-    #                 time.sleep(float(angles[g + 1]))
-    #                 # self.absolve()
-    #             # elif (angles[g] == "inv"):
-    #             #     if (self.logging == True):
-    #             #         logger.debug("inverse------------------------------------->")
-    #                 #time.sleep(float(angles[g + 1]))
-    #
-    #                 # self.absolve()
-    #             else:
-    #                 if(g < 6):
-    #                     mas.append(float(angles[g]))
-    #         if (len(mas) > 2):
-    #             self.jog_joints(mas)
 
     def get_joints_angles(self) -> list:
         return [joint.current_joint_angle for joint in self.joints]
@@ -632,12 +540,13 @@ class Manipulator:
         joint_commands = []
         errors = []
         steps_massive = []
+
         for i in range(6):
             d = self.calc_steps(steps[i], self.joints[i])
             arc = d[0]
             # logger.debug(self.joints[i].motor_dir)
             direction = d[1]
-            j_jog_steps = abs(int(arc))  #abs(int(arc / self.joints[i].degrees_per_step))
+            j_jog_steps = abs(int(arc))  #  abs(int(arc / self.joints[i].degrees_per_step))
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
             errors.append(d[2])
             # if (d[2] != True):
@@ -815,6 +724,8 @@ class Manipulator:
 
         joint_calibration_drive_and_step = [f"{joint.get_name_joint()}{cd}{step}"
                                             for joint, cd, step in zip(self.joints, calibration_drive, steps)]
+        for i in range(6):
+            logger.debug(self.joints[i].step_limit)
         command = f"LL{''.join(joint_calibration_drive_and_step)}S{speed}\n"
         self.teensy_push(command)
         if (self.logging == True):
@@ -825,19 +736,21 @@ class Manipulator:
             # calibration_status = 1
             for joint, cd, axis in zip(self.joints, self.calibration_direction, axes):
                 if axis == '1':
+                    #print
+                    joint.current_joint_step = 0
                     if cd == '0':
                         if (joint.motor_dir == 1 or joint.motor_dir == 2):
-                            joint.current_joint_step = 0
+                            #joint.current_joint_step = 0
                             joint.current_joint_angle = joint.positive_angle_limit
                         else:
-                            joint.current_joint_step = joint.step_limit
+                            #joint.current_joint_step = joint.step_limit
                             joint.current_joint_angle = joint.negative_angle_limit
                     else:
                         if (joint.motor_dir == -1):
-                            joint.current_joint_step = joint.step_limit
+                            #joint.current_joint_step = joint.step_limit
                             joint.current_joint_angle = joint.negative_angle_limit
                         else:
-                            joint.current_joint_step = 0
+                            #joint.current_joint_step = 0
                             joint.current_joint_angle = joint.positive_angle_limit
 
             logger.success('CALIBRATION SUCCESSFUL')
