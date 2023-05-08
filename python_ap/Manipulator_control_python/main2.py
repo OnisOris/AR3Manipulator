@@ -10,7 +10,7 @@ from pynput import keyboard
 
 ############## Настройки программы ##############
 baud = 115200
-teensy_port = 3
+teensy_port = 5
 arduino_port = 6
 ################# Конец настроек #################
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
@@ -31,30 +31,30 @@ def on_release(key):
     if key == keyboard.Key.shift:
         robot.delta +=3
         print(f'Значение перемещения {robot.delta}')
-    if key == keyboard.Key.left:
-        robot.jog_joint(robot.joints[0], 20, -robot.delta)
-    if key == keyboard.Key.right:
-        robot.jog_joint(robot.joints[0], 20, robot.delta)
-    if key == keyboard.Key.page_up:
-        robot.jog_joint(robot.joints[1], 20, -robot.delta)
-    if key == keyboard.Key.page_down:
-        robot.jog_joint(robot.joints[1], 20, robot.delta)
-    if key == keyboard.Key.up:
-        robot.jog_joint(robot.joints[2], 20, -robot.delta)
-    if key == keyboard.Key.down:
-        robot.jog_joint(robot.joints[2], 20, robot.delta)
-    if key2 == '<100>':
-        robot.jog_joint(robot.joints[3], 20, robot.delta)
-    if key2 == '<102>':
-        robot.jog_joint(robot.joints[3], 20, -robot.delta)
-    if key2 == '<98>':
-        robot.jog_joint(robot.joints[4], 20, robot.delta)
-    if key2 == '<104>':
-        robot.jog_joint(robot.joints[4], 20, -robot.delta)
-    if key2 == '<103>':
-        robot.jog_joint(robot.joints[5], 20, robot.delta)
-    if key2 == '<97>':
-        robot.jog_joint(robot.joints[5], 20, -robot.delta)
+    # if key == keyboard.Key.left:
+    #     robot.jog_joint(robot.joints[0], 20, -robot.delta)
+    # if key == keyboard.Key.right:
+    #     robot.jog_joint(robot.joints[0], 20, robot.delta)
+    # if key == keyboard.Key.page_up:
+    #     robot.jog_joint(robot.joints[1], 20, -robot.delta)
+    # if key == keyboard.Key.page_down:
+    #     robot.jog_joint(robot.joints[1], 20, robot.delta)
+    # if key == keyboard.Key.up:
+    #     robot.jog_joint(robot.joints[2], 20, -robot.delta)
+    # if key == keyboard.Key.down:
+    #     robot.jog_joint(robot.joints[2], 20, robot.delta)
+    # if key2 == '<100>':
+    #     robot.jog_joint(robot.joints[3], 20, robot.delta)
+    # if key2 == '<102>':
+    #     robot.jog_joint(robot.joints[3], 20, -robot.delta)
+    # if key2 == '<98>':
+    #     robot.jog_joint(robot.joints[4], 20, robot.delta)
+    # if key2 == '<104>':
+    #     robot.jog_joint(robot.joints[4], 20, -robot.delta)
+    # if key2 == '<103>':
+    #     robot.jog_joint(robot.joints[5], 20, robot.delta)
+    # if key2 == '<97>':
+    #     robot.jog_joint(robot.joints[5], 20, -robot.delta)
     if key == keyboard.Key.f1:
         robot.auto_calibrate()
     if key == keyboard.Key.space:

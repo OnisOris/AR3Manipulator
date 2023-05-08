@@ -1,8 +1,6 @@
 from __future__ import print_function
-
-
+from loguru import logger
 import inputs
-
 
 EVENT_ABB = (
     # D-PAD, aka HAT
@@ -18,8 +16,8 @@ EVENT_ABB = (
     # Other buttons
     ('Key-BTN_THUMBL', 'THL'),
     ('Key-BTN_THUMBR', 'THR'),
-    ('Key-BTN_TL', 'TL'),
-    ('Key-BTN_TR', 'TR'),
+    ('Key-BTN_TL', 'L1'),
+    ('Key-BTN_TR', 'R1'),
     ('Key-BTN_TL2', 'TL2'),
     ('Key-BTN_TR2', 'TR3'),
     ('Key-BTN_MODE', 'M'),
@@ -32,8 +30,8 @@ EVENT_ABB = (
     ('Key-BTN_TOP', 'W'),
     ('Key-BTN_BASE3', 'SL'),
     ('Key-BTN_BASE4', 'ST'),
-    ('Key-BTN_TOP2', 'TL'),
-    ('Key-BTN_PINKIE', 'TR')
+    ('Key-BTN_TOP2', 'HZ1'),
+    ('Key-BTN_PINKIE', 'HZ2')
 )
 
 
@@ -41,8 +39,7 @@ EVENT_ABB = (
 # For the Xbox controller, you can set this to 0
 MIN_ABS_DIFFERENCE = 5
 
-
-class JSTest(object):
+class Controller(object):
     """Simple joystick test class."""
     def __init__(self, gamepad=None, abbrevs=EVENT_ABB):
         self.btn_state = {}
@@ -106,6 +103,8 @@ class JSTest(object):
         if event.ev_type == 'Absolute':
             self.old_abs_state[abbv] = self.abs_state[abbv]
             self.abs_state[abbv] = event.state
+        #if abbv != 'A0':
+            #logger.debug(abbv)
         self.output_state(event.ev_type, abbv)
 
     def format_state(self):
@@ -113,26 +112,30 @@ class JSTest(object):
         output_string = ""
         for key, value in self.abs_state.items():
             output_string += key + ':' + '{:>4}'.format(str(value) + ' ')
+            #if str(key) == 'HX':
+                #logger.debug(f'{key} = {value}')
 
         for key, value in self.btn_state.items():
             output_string += key + ':' + str(value) + ' '
+            #if str(key) == 'L1':
+                #logger.debug(f'{key} = {value}')
 
-        return output_string
+        #return output_string
 
     def output_state(self, ev_type, abbv):
         """Print out the output state."""
         if ev_type == 'Key':
             if self.btn_state[abbv] != self.old_btn_state[abbv]:
-                print(self.format_state())
+                self.format_state()
                 return
 
         if abbv[0] == 'H':
-            print(self.format_state())
+            self.format_state()
             return
 
         difference = self.abs_state[abbv] - self.old_abs_state[abbv]
         if (abs(difference)) > MIN_ABS_DIFFERENCE:
-            print(self.format_state())
+            self.format_state()
 
     def process_events(self):
         """Process available events."""
@@ -142,15 +145,3 @@ class JSTest(object):
             events = []
         for event in events:
             self.process_event(event)
-
-
-def main():
-    """Process all events forever."""
-    jstest = JSTest()
-    while 1:
-        jstest.process_events()
-
-
-if __name__ == "__main__":
-    main()
-#HX:  0 HY:  0 A0:128 A1:  0 A2:  0 A3:-129 A4:128 N:0 E:0 S:0 W:0 THL:0 THR:0 L1:0 R1:0 TL2:0 TR3:0 M:0 ST:0 SL:0 HZ1:0 HZ2:0
