@@ -17,7 +17,7 @@ from visual_kinematics.RobotTrajectory import *
 import cv2
 import arucoOdometry
 import threading
-
+from controller import Controller
 
 # from parse import parse
 
@@ -83,14 +83,19 @@ class Manipulator:
                           [DH['d_6'], DH['a_6'], DH['alpha_6'], DH['displacement_theta_6']]
                           ])
 
-    def __init__(self, teensy_port, arduino_port, baud):
+    def __init__(self, teensy_port, arduino_port, baud, camera=False, controller_dualshock=False):
+        self.dualshock = Controller()
         self.program_console = threading.Thread(target=self.startConsole, daemon=True)
         self.monitor = threading.Thread(target=self.monitorEnc, daemon=True)
+        self.dualshock_thread = threading.Thread(target=self.start_controller)
         self.console = True
         self.monitoringENC = True
-        self.cap = cv2.VideoCapture(0)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        if camera:
+            self.cap = cv2.VideoCapture(0)
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        if controller_dualshock:
+            self.start_thread_controller()
         self.test_mode = False  # данное поле можно включить, если нет подключения по сериал порту
         self.last_inverse_pos = []  # хранит последние заданные координаты в обратную задачу кинематики
         self.logging = False  # включает вывод в консоль информацию
@@ -141,6 +146,15 @@ class Manipulator:
             self.program_console.start()
         if not self.program_console.isAlive():
             self.program_console.start()
+        if not self.dualshock_thread.isAlive():
+            self.dualshock_thread.start()
+    def start_controller(self):
+        while True:
+            self.dualshock.process_events()
+            logger.debug(self.dualshock.abs_state)
+    def start_thread_controller(self):
+        self.dualshock_thread.start()
+        self.dualshock_thread.join()
     def startConsole(self):
         while self.console:
             try:
