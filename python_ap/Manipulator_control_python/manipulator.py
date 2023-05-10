@@ -149,9 +149,63 @@ class Manipulator:
         if not self.dualshock_thread.isAlive():
             self.dualshock_thread.start()
     def start_controller(self):
+        button_rigth = np.array([0, 0]) # 0 - new, 1 - old
+        button_left = np.array([0, 0])
+
+        button_upper = np.array([0, 0])
+        button_lower = np.array([0, 0])
+
+        button_up = np.array([0, 0])
+        button_down = np.array([0, 0])
+
+        grab = np.array([0, 0])
+        absolve = np.array([0, 0])
+
         while True:
             self.dualshock.process_events()
-            logger.debug(self.dualshock.abs_state)
+            button_rigth[0] = self.dualshock.abs_state['HX']
+            if button_rigth[0] == 1 and button_rigth[1] == 0:
+                logger.debug("right")
+
+            button_left[0] = self.dualshock.abs_state['HX']
+            if button_left[0] == -1 and button_left[1] == 0:
+                logger.debug("left")
+
+            button_upper[0] = self.dualshock.abs_state['HY']
+            if button_upper[0] == -1 and button_upper[1] == 0:
+                logger.debug("upper")
+            button_lower[0] = self.dualshock.abs_state['HY']
+            if button_lower[0] == 1 and button_lower[1] == 0:
+                logger.debug("lower")
+
+            button_up[0] = self.dualshock.btn_state['L1']
+            if button_up[0] == 1 and button_up[1] == 0:
+                logger.debug("up")
+            button_down[0] = self.dualshock.btn_state['R1']
+            if button_down[0] == 1 and button_down[1] == 0:
+                logger.debug("down")
+
+            grab[0] = self.dualshock.btn_state['S']
+            if grab[0] == 1 and grab[1] == 0:
+                logger.debug("grab")
+            absolve[0] = self.dualshock.btn_state['N']
+            if absolve[0] == 1 and absolve[1] == 0:
+                logger.debug("absolve")
+
+            button_rigth[1] = button_rigth[0]
+            button_left[1] = button_left[0]
+
+            button_upper[1] = button_upper[0]
+            button_lower[1] = button_lower[0]
+
+            button_up[1] = button_up[0]
+            button_down[1] = button_down[0]
+
+            grab[1] = grab[0]
+            absolve[1] = absolve[0]
+
+            #logger.debug(self.dualshock.btn_state)
+
     def start_thread_controller(self):
         self.dualshock_thread.start()
         self.dualshock_thread.join()
