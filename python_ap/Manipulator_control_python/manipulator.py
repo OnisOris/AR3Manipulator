@@ -84,10 +84,10 @@ class Manipulator:
                           ])
 
     def __init__(self, teensy_port, arduino_port, baud, camera=False, controller_dualshock=False):
-        self.dualshock = Controller()
+
         self.program_console = threading.Thread(target=self.startConsole, daemon=True)
         self.monitor = threading.Thread(target=self.monitorEnc, daemon=True)
-        self.dualshock_thread = threading.Thread(target=self.start_controller)
+
         self.console = True
         self.monitoringENC = True
         if camera:
@@ -95,7 +95,10 @@ class Manipulator:
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         if controller_dualshock:
+            self.dualshock = Controller()
+            self.dualshock_thread = threading.Thread(target=self.start_controller)
             self.start_thread_controller()
+
         self.test_mode = False  # данное поле можно включить, если нет подключения по сериал порту
         self.last_inverse_pos = []  # хранит последние заданные координаты в обратную задачу кинематики
         self.logging = False  # включает вывод в консоль информацию
@@ -188,9 +191,11 @@ class Manipulator:
             grab[0] = self.dualshock.btn_state['S']
             if grab[0] == 1 and grab[1] == 0:
                 logger.debug("grab")
+                self.grab()
             absolve[0] = self.dualshock.btn_state['N']
             if absolve[0] == 1 and absolve[1] == 0:
                 logger.debug("absolve")
+                self.absolve()
 
             button_rigth[1] = button_rigth[0]
             button_left[1] = button_left[0]
@@ -313,8 +318,17 @@ class Manipulator:
         while True:
             if self.monitoringENC:
                 self.getRobotPosition()
+                self.conversion_steps_angles()
             time.sleep(0.1)
 
+    def conversion_steps_angles(self):
+        for i in range(6):
+            if self.joints[i].positive_angle_limit > self.joints[i].negative_angle_limit:
+                delta = self.joints[i].positive_angle_limit
+            else:
+                delta = self.joints[i].negative_angle_limit
+
+            self.joints[i].current_joint_angle = -abs(self.joints[i].current_joint_step) * self.joints[i].degrees_per_step + delta
     def getRobotPosition(self):
         commandCalc = "GP" + "U" + str(self.joints[0].current_joint_step) + "V" + str(
             self.joints[1].current_joint_step) + "W" + str(self.joints[2].current_joint_step) + "X" + str(
@@ -534,6 +548,7 @@ class Manipulator:
         #         logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
         #         return [0, 0, True]
         # Расчет направления двигателей
+        #delta = joint.negative_angle_limit / joint.degrees_per_step
         x = joint.current_joint_step  # x - текущая точка
         logger.debug(x)
         arc = abs(steps - x)
@@ -557,6 +572,7 @@ class Manipulator:
                 drive_direction = 1
                 arc = 0
         error = False
+        logger.debug(f"arc, drive, error - {[arc, drive_direction, error]}")
         return [arc, drive_direction, error]  # дуга [шаг], направление (1 или 0), ошибка True or False
 
 
@@ -569,7 +585,7 @@ class Manipulator:
         angles[number_of_joint] = degrees
         self.jog_joints(angles)
     def jog_joint_s(self, number_of_joint, degrees):
-        degrees_at_steps = degrees/self.joints[number_of_joint].degrees_per_step  # град/(град/шаг)
+        degrees_at_steps = degrees#degrees/self.joints[number_of_joint].degrees_per_step  # град/(град/шаг)
         steps = [self.joints[0].current_joint_step, self.joints[1].current_joint_step,
                  self.joints[2].current_joint_step, self.joints[3].current_joint_step,
                  self.joints[4].current_joint_step, self.joints[5].current_joint_step]
@@ -603,13 +619,23 @@ class Manipulator:
                 logger.debug(f"Запись углов в джойнты: {angles}")
         else:
             logger.error("Команда не отправилась, превышен лимит одного из джойнтов")
-    def jog_joints_steps(self, steps):
-        steps = [int(x) for x in steps]
+    def jog_joints_steps(self, steps, degrees=False):
+
+        if not degrees:
+            steps = [int(x) for x in steps]
+        if degrees:
+            steps = [float(x) for x in steps]
         joint_commands = []
         errors = []
         steps_massive = []
 
         for i in range(6):
+            if degrees:
+                if self.joints[i].positive_angle_limit > self.joints[i].negative_angle_limit:
+                    delta = self.joints[i].positive_angle_limit / self.joints[i].degrees_per_step
+                else:
+                    delta = self.joints[i].negative_angle_limit / self.joints[i].degrees_per_step
+                steps[i] = steps[i]/self.joints[i].degrees_per_step + delta
             d = self.calc_steps(steps[i], self.joints[i])
             arc = d[0]
             # logger.debug(self.joints[i].motor_dir)
@@ -673,8 +699,8 @@ class Manipulator:
 
     def arduino_push(self, command):
         logger.debug(f'Arduino push: {command}')
-        if not self.test_mode:
-            self.serial_arduino.write(command.encode())
+       # if not self.test_mode:
+        self.serial_arduino.write(command.encode())
 
     def save_data(self):
         for index, joint in enumerate(self.joints):
@@ -1226,14 +1252,14 @@ class Manipulator:
 
     def grab(self):
         command = f"SV{0}P{20}\n"
-        if (self.logging == True):
-            logger.debug(command)
+       # if (self.logging == True):
+            #logger.debug(command)
         self.arduino_push(command)
 
     def absolve(self):
         command = f"SV{0}P{170}\n"
-        if (self.logging == True):
-            logger.debug(command)
+        #if (self.logging == True):
+           # logger.debug(command)
         self.arduino_push(command)
 
     def rotate_3(self, vectors, axis, angle):  # [[1, 0, 0], [0, 1, 0], [0, 0, -1]]
