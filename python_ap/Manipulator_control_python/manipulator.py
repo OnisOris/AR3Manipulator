@@ -83,11 +83,11 @@ class Manipulator:
                           [DH['d_6'], DH['a_6'], DH['alpha_6'], DH['displacement_theta_6']]
                           ])
 
-    def __init__(self, teensy_port, arduino_port, baud, camera=False, controller_dualshock=False):
+    def __init__(self, teensy_port, arduino_port, baud, camera=False, controller_dualshock=False, checking_chanhing_of_angles=True):
 
         self.program_console = threading.Thread(target=self.startConsole, daemon=True)
         self.monitor = threading.Thread(target=self.monitorEnc, daemon=True)
-
+        self.checking_chanhing_of_angles = checking_chanhing_of_angles
         self.console = True
         self.monitoringENC = True
         if camera:
@@ -315,20 +315,41 @@ class Manipulator:
             # self.getRobotPosition()
             # time.sleep(2)
     def monitorEnc(self):
+        angles = np.round(np.array([self.joints[0].current_joint_step, self.joints[1].current_joint_step,
+                            self.joints[2].current_joint_step, self.joints[3].current_joint_step,
+                            self.joints[4].current_joint_step, self.joints[5].current_joint_step]))
         while True:
             if self.monitoringENC:
                 self.getRobotPosition()
                 self.conversion_steps_angles()
+            if self.checking_chanhing_of_angles:
+                str_angles = f"{self.joints[0].current_joint_angle}, {self.joints[1].current_joint_angle}, " + \
+                f"{self.joints[2].current_joint_angle}, {self.joints[3].current_joint_angle}, " + \
+                f"{self.joints[4].current_joint_angle}, {self.joints[5].current_joint_angle}"
+                new_angles = np.round(np.array([self.joints[0].current_joint_step, self.joints[1].current_joint_step,
+                            self.joints[2].current_joint_step, self.joints[3].current_joint_step,
+                            self.joints[4].current_joint_step, self.joints[5].current_joint_step]))
+                for i in range(6):
+                    if abs(new_angles[i] - angles[i]) > 3/self.joints[i].degrees_per_step:
+                        logger.debug(f"The angles are changing: \n {str_angles}")
+                        #logger.debug(new_angles.all())
+
+            angles = new_angles
             time.sleep(0.1)
 
     def conversion_steps_angles(self):
         for i in range(6):
             if self.joints[i].positive_angle_limit > self.joints[i].negative_angle_limit:
                 delta = self.joints[i].positive_angle_limit
+                # if i == 5:
+                #     delta = delta*-1
             else:
                 delta = self.joints[i].negative_angle_limit
-
-            self.joints[i].current_joint_angle = -abs(self.joints[i].current_joint_step) * self.joints[i].degrees_per_step + delta
+            inv = 1
+            # if i == 5: # Это костыль, в будущем необходимо это поправить!
+            #     inv = -1
+            self.joints[i].current_joint_angle = (-abs(self.joints[i].current_joint_step)
+                                                  * self.joints[i].degrees_per_step + delta)*self.joints[i].motor_dir*inv
     def getRobotPosition(self):
         commandCalc = "GP" + "U" + str(self.joints[0].current_joint_step) + "V" + str(
             self.joints[1].current_joint_step) + "W" + str(self.joints[2].current_joint_step) + "X" + str(
@@ -354,7 +375,7 @@ class Manipulator:
         # logger.debug(D)
         # logger.debug(E)
         # logger.debug(F)
-        # logger.debug(RobotCode)
+        logger.debug(RobotCode)
         if A != -1 and not RobotCode[A + 1: B] == '':
             Asteps = int(RobotCode[A + 1: B])
         else:
@@ -385,6 +406,7 @@ class Manipulator:
             Fsteps = self.joints[5].current_joint_step
         steps = np.array([Asteps, Bsteps, Csteps, Dsteps, Esteps, Fsteps])
         for i in range(6):
+            # if not i == 1:
             self.joints[i].current_joint_step = steps[i]
 
     def show_workspace(self):
@@ -607,10 +629,11 @@ class Manipulator:
             # if (d[2] != True):
             #     logger.debug(f"Запись в джойнт {i+1}")
             angles.append(degrees[i])
-            # self.joints[i].current_joint_angle = degrees[i]
+            # if i == 1:
+            #     self.joints[i].current_joint_angle = degrees[i]
         if (not errors[0] and not errors[1] and not errors[2] and not errors[3] and not errors[4] and not errors[5]):
-            for i in range(6):
-                self.joints[i].current_joint_angle = angles[i]
+            # for i in range(6):
+            #     self.joints[i].current_joint_angle = angles[i]
             command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
             self.teensy_push(command)
             self.save_position()
@@ -832,6 +855,9 @@ class Manipulator:
                 if axis == '1':
                     #print
                     joint.current_joint_step = 0
+                    if joint.name_joint == 'C' or joint.name_joint == 'F':
+                        joint.current_joint_step = joint.step_limit
+                        #logger.debug("polka-------------------------")
                     if cd == '0':
                         if (joint.motor_dir == 1 or joint.motor_dir == 2):
                             #joint.current_joint_step = 0
