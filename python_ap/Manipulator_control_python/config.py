@@ -14,9 +14,9 @@ DEFAULT_SETTINGS = {
     'J2_dir': 1,
 
     'J3_current_step': 3,
-    'J3_current_angle': 1.05-4, #!!! 58
-    'J3_positive_angle_limit': -143.7-10.5,
-    'J3_negative_angle_limit': 1-10.5,
+    'J3_current_angle': 1.05-4,  #!!! 58
+    'J3_positive_angle_limit': -143.7-7,  #-143.7-10.5,
+    'J3_negative_angle_limit': 1-7,  # 1-10.5,
     'J3_step_limit': 7984,
     # 'J3_step_limit': 7984,
     'J3_dir': 1,
@@ -30,15 +30,15 @@ DEFAULT_SETTINGS = {
 
     'J5_current_step': 2281,
     'J5_current_angle': 0.05,
-    'J5_positive_angle_limit': 1.15+8,  # -14.15+13, # 104.15+90,
-    'J5_negative_angle_limit': -207.15+8,  # 194.15+13, #-104.15+90,
+    'J5_positive_angle_limit': 1.15+15,  # -14.15+13, # 104.15+90,
+    'J5_negative_angle_limit': -207.15+15,  # 194.15+13, #-104.15+90,
     'J5_step_limit': 4560,
     'J5_dir': 1,
 
     'J6_current_step': 3313,
     'J6_current_angle': 7.17,
-    'J6_positive_angle_limit': -148.1+14,
-    'J6_negative_angle_limit': 148.1+14,
+    'J6_positive_angle_limit': -148-15,#-148.1+14,
+    'J6_negative_angle_limit': 148-15,#148.1+14,
     'J6_step_limit': 6320,
     'J6_dir': -1,
 

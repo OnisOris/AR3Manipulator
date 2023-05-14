@@ -338,18 +338,30 @@ class Manipulator:
             time.sleep(0.1)
 
     def conversion_steps_angles(self):
+        config_converse = [1, 0, 0, 1]
         for i in range(6):
             if self.joints[i].positive_angle_limit > self.joints[i].negative_angle_limit:
                 delta = self.joints[i].positive_angle_limit
+                if i == 2:
+                    inv = -1
+                else:
+                    inv = 1
+                self.joints[i].current_joint_angle = (-abs(self.joints[i].current_joint_step)
+                                                      * self.joints[i].degrees_per_step + delta) * self.joints[
+                                                         i].motor_dir*inv
                 # if i == 5:
                 #     delta = delta*-1
             else:
+                if i == 2:
+                    inv = -1
+                else:
+                    inv = 1
                 delta = self.joints[i].negative_angle_limit
-            inv = 1
+                self.joints[i].current_joint_angle = -(-abs(self.joints[i].current_joint_step)
+                                                      * self.joints[i].degrees_per_step + delta)*inv
             # if i == 5: # Это костыль, в будущем необходимо это поправить!
             #     inv = -1
-            self.joints[i].current_joint_angle = (-abs(self.joints[i].current_joint_step)
-                                                  * self.joints[i].degrees_per_step + delta)*self.joints[i].motor_dir*inv
+
     def getRobotPosition(self):
         commandCalc = "GP" + "U" + str(self.joints[0].current_joint_step) + "V" + str(
             self.joints[1].current_joint_step) + "W" + str(self.joints[2].current_joint_step) + "X" + str(
@@ -375,7 +387,7 @@ class Manipulator:
         # logger.debug(D)
         # logger.debug(E)
         # logger.debug(F)
-        logger.debug(RobotCode)
+        # logger.debug(RobotCode)
         if A != -1 and not RobotCode[A + 1: B] == '':
             Asteps = int(RobotCode[A + 1: B])
         else:
@@ -385,7 +397,7 @@ class Manipulator:
             Bsteps = int(RobotCode[B + 1: C])
         else:
             Bsteps = self.joints[1].current_joint_step
-        #Csteps = int(RobotCode[C + 1: D])
+        # Csteps = int(RobotCode[C + 1: D])
         if C != -1 and not RobotCode[C + 1: D] == '':
             Csteps = int(RobotCode[C + 1: D])
         else:
@@ -891,7 +903,8 @@ class Manipulator:
 
     def auto_calibrate(self):
         self.monitoringENC = False
-        self.calibrate('111111', '40')
+        self.calibrate('100010', '40')
+        self.calibrate('011101', '40')
         cd = self.get_calibration_drive_auto()  # направление калибровки
         command = f"MJA{cd[0]}500B{cd[1]}500C{cd[2]}500D{cd[3]}500E{cd[4]}500F{cd[5]}0" \
                   f"S15G10H10I10K10\n"
