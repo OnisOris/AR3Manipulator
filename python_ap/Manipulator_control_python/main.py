@@ -14,15 +14,15 @@ teensy_port = 3
 arduino_port = 5
 ################# Конец настроек #################
 
-robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud, controller_dualshock=False)
+robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud, camera=True, controller_dualshock=False)
 robot.start_program()
 #monitor = threading.Thread(target=robot.monitorEnc, daemon=True)
 #console = threading.Thread(target=robot.startConsole, daemon=True)
-#robot.startConsole()
+#robot.startConsole() 6.33544303797467
 # monitor = threading.Thread(target=robot.monitorEnc(), daemon=True)
 #console.start()
 #
-#console.join()
+#console.join()print
 # while (True):
 #     inp = input("Введите команду \n")
 #     inp_c = inp.split()

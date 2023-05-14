@@ -84,7 +84,7 @@ class Manipulator:
                           ])
 
     def __init__(self, teensy_port, arduino_port, baud, camera=False, controller_dualshock=False, checking_chanhing_of_angles=True):
-
+        self.controller_dualshock = controller_dualshock
         self.program_console = threading.Thread(target=self.startConsole, daemon=True)
         self.monitor = threading.Thread(target=self.monitorEnc, daemon=True)
         self.checking_chanhing_of_angles = checking_chanhing_of_angles
@@ -145,12 +145,13 @@ class Manipulator:
         self.program_console.join()
         self.monitor.join()
     def check_threads(self):
-        if not self.program_console.isAlive():
+        if not self.program_console.is_alive():
             self.program_console.start()
-        if not self.program_console.isAlive():
+        if not self.program_console.is_alive():
             self.program_console.start()
-        if not self.dualshock_thread.isAlive():
-            self.dualshock_thread.start()
+        if self.controller_dualshock:
+            if not self.dualshock_thread.is_alive():
+                self.dualshock_thread.start()
     def start_controller(self):
         button_rigth = np.array([0, 0]) # 0 - new, 1 - old
         button_left = np.array([0, 0])
@@ -320,7 +321,11 @@ class Manipulator:
                             self.joints[4].current_joint_step, self.joints[5].current_joint_step]))
         while True:
             if self.monitoringENC:
-                self.getRobotPosition()
+                try:
+                    self.getRobotPosition()
+                except:
+                    logger.debug("Упал поток")
+                    self.check_threads()
                 self.conversion_steps_angles()
             if self.checking_chanhing_of_angles:
                 str_angles = f"{self.joints[0].current_joint_angle}, {self.joints[1].current_joint_angle}, " + \
@@ -840,6 +845,10 @@ class Manipulator:
         return calibration_drive
 
     def calibrate(self, calibration_axes: str, speed: str):
+        val = False
+        if self.monitoringENC:
+            self.monitoringENC = False
+            val = True
         axes = [axis for axis in calibration_axes]
 
         steps = []
@@ -900,6 +909,8 @@ class Manipulator:
         if (self.logging == True):
             logger.debug(f"Write to teensy: {command.strip()}")
         self.serial_teensy.flushInput()
+        if val:
+            self.monitoringENC = True
 
     def auto_calibrate(self):
         self.monitoringENC = False
@@ -918,9 +929,14 @@ class Manipulator:
         position = [68.944, 0.0, 733.607, -90.0, 1.05, -90.0]
         # logger.debug(DEFAULT_SETTINGS['DH_r_1'])
         angles = [0, 90, -90, 0, -90, 0]
+        #logger.debug("getposition----------------------")
+        #time.sleep(10)
+        #self.getRobotPosition()
+        self.monitoringENC = True
+        time.sleep(10)
         self.jog_joints(angles)
         self.calculate_direct_kinematics_problem()
-        self.monitoringENC = True
+
 
     def null_position(self):
         # self.move_z(100)
@@ -1639,7 +1655,7 @@ class Manipulator:
         # координаты предварительно вычесленного центра
         x0 = current_coord[0] + xyz_0[0]
         y0 = current_coord[1] + xyz_0[1]
-        z0 = 0.05
+        z0 = 0.07
         logger.debug(f'x0 = {x0}, y0 = {y0}')
         D1 = [x0, y0, z0]
         self.move_xyz(D1)
