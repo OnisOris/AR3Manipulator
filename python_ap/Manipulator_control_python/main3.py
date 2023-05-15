@@ -14,26 +14,31 @@ baud = 115200
 teensy_port = 3
 arduino_port = 6
 ################# Конец настроек #################
-robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
+#robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
 
-robot.auto_calibrate()
+#robot.auto_calibrate()
 
 xpoints = np.array([0.2, 0.2, 0.3, 0.4, 0.45])
 ypoints = np.array([0.2, 0, -0.2, 0.3, 0.1])
+zpoints = np.array([0.3, 0.4, 0.25, 0.3, 0.1])
+massive = np.vstack([xpoints, ypoints])
+massive = np.vstack([massive, zpoints])
+logger.debug(massive)
 
-for i in range(len(xpoints)):
-    inv = robot.calculate_inverse_kinematic_problem([xpoints[i], ypoints[i], 0.3, 0, pi, 0])
-# inv = robot.calculate_inverse_kinematic_problem(
-#     [float(inp_c[1]) / 1000, float(inp_c[2]) / 1000, float(inp_c[3]) / 1000, np.radians(float(inp_c[4])),
-#      np.radians(float(inp_c[5])), np.radians(float(inp_c[6]))])
-# logger.debug(inv)
-    ang = np.degrees(inv)
-    robot.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
+# for i in range(len(xpoints)):
+#     inv = robot.calculate_inverse_kinematic_problem([xpoints[i], ypoints[i], 0.3, 0, pi, 0])
+# # inv = robot.calculate_inverse_kinematic_problem(
+# #     [float(inp_c[1]) / 1000, float(inp_c[2]) / 1000, float(inp_c[3]) / 1000, np.radians(float(inp_c[4])),
+# #      np.radians(float(inp_c[5])), np.radians(float(inp_c[6]))])
+# # logger.debug(inv)
+#     ang = np.degrees(inv)
+#     robot.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
 fig = plt.figure()
-ax = fig.add_subplot()
+ax = fig.add_subplot(111, projection='3d')
 ax.set_xlabel('x')
 ax.set_ylabel('y')
-plt.plot(xpoints, ypoints)
+ax.set_ylabel('z')
+plt.plot(massive)
 plt.show()
 #
 #

@@ -1,0 +1,29 @@
+J1_endstop_angle = 185
+J1_angle_limit = -155
+J1_step_limit = 15110
+J1_rot_dir = 1
+
+J2_endstop_angle = 127.1
+J2_angle_limit = -2.5
+J2_step_limit = 7198
+J2_rot_dir = 1
+
+J3_endstop_angle = -148.7
+J3_angle_limit = -4
+J3_step_limit = 7984
+J3_rot_dir = 1
+
+J4_endstop_angle = -164.5
+J4_angle_limit = 164.5
+J4_step_limit = 14056
+J4_rot_dir = -1
+
+J5_endstop_angle = 10.15
+J5_angle_limit = -198.15
+J5_step_limit = 4560
+J5_rot_dir = 1
+
+J6_endstop_angle = 127.1
+J6_angle_limit = -2.5
+J6_step_limit = 6320
+J6_rot_dir = -1

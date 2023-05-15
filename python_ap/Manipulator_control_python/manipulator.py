@@ -7,6 +7,7 @@ import serial
 from loguru import logger
 
 from config import DEFAULT_SETTINGS
+from config2 import DEFAULT_SETTINGS2
 from joint import Joint
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
@@ -83,7 +84,8 @@ class Manipulator:
                           [DH['d_6'], DH['a_6'], DH['alpha_6'], DH['displacement_theta_6']]
                           ])
 
-    def __init__(self, teensy_port, arduino_port, baud, camera=False, controller_dualshock=False, checking_chanhing_of_angles=True):
+    def __init__(self, teensy_port, arduino_port, baud, camera=False, controller_dualshock=False, checking_chanhing_of_angles=True, test_mode=False):
+        self.test_mode = test_mode
         self.controller_dualshock = controller_dualshock
         self.program_console = threading.Thread(target=self.startConsole, daemon=True)
         self.monitor = threading.Thread(target=self.monitorEnc, daemon=True)
@@ -99,7 +101,7 @@ class Manipulator:
             self.dualshock_thread = threading.Thread(target=self.start_controller)
             self.start_thread_controller()
 
-        self.test_mode = False  # данное поле можно включить, если нет подключения по сериал порту
+        #self.test_mode = False  # данное поле можно включить, если нет подключения по сериал порту
         self.last_inverse_pos = []  # хранит последние заданные координаты в обратную задачу кинематики
         self.logging = False  # включает вывод в консоль информацию
         self.showMode = False  # включает мод отображения в отдельном окне положения манипулятора
@@ -225,6 +227,8 @@ class Manipulator:
                         break
                     elif (inp == "c"):
                         self.auto_calibrate()
+                    elif (inp == "conf"):
+                        self.read_config()
                     elif (inp == "hel"):
                         print("move_x [расстояние в мм] - передвижение по оси x в [мм]\n ")
                         print("move_y [расстояние в мм] - передвижение по оси y в [мм]\n ")
@@ -375,10 +379,10 @@ class Manipulator:
         # ser.write(commandCalc.encode())
         self.serial_teensy.write(commandCalc.encode())
         RobotCode = str(self.serial_teensy.readline())
-        #if not RobotCode.find('Done') == -1:
+        # if not RobotCode.find('Done') == -1:
         RobotCode = RobotCode.replace('Done', '')
-        #logger.debug(RobotCode)
-        #Pcode = RobotCode[2:4]
+        # logger.debug(RobotCode)
+        # Pcode = RobotCode[2:4]
         A = RobotCode.find('A')
         B = RobotCode.find('B')
         C = RobotCode.find('C')
@@ -429,6 +433,37 @@ class Manipulator:
     def show_workspace(self):
         self.robot.ws_division = 6
         self.robot.show(ws=True)
+
+    def read_config(self):
+        file = open("config", "r")
+        config_text = file.read()
+        # config_text.replace('\n', '')
+        # config_text.replace(' ', '')
+        #config_text.replace(' ', '')
+        config_joints = config_text.split("\n")
+        #config_joints.remove('')
+        while '' in config_joints: config_joints.remove('')
+
+        # while ' ' in config_joints: config_joints.remove(' ')
+        #logger.debug(config_joints)
+        massive_val = []
+        for el in config_joints:
+            name_val = el.split(' = ')
+            massive_val.append(name_val)
+           # logger.debug(name_val)
+        #logger.debug(massive_val)
+        for com in massive_val:
+            DEFAULT_SETTINGS2[com[0]] = com[1]
+        logger.debug(DEFAULT_SETTINGS2)
+
+        # config = {}
+        # for index, joint in enumerate(self.joints):
+        #     DEFAULT_SETTINGS[f'J{index + 1}_current_step'] = joint.current_joint_step
+        #     DEFAULT_SETTINGS[f'J{index + 1}_current_angle'] = joint.current_joint_angle
+        #     DEFAULT_SETTINGS[f'J{index + 1}_negative_angle_limit'] = joint.negative_angle_limit
+        #     DEFAULT_SETTINGS[f'J{index + 1}_positive_angle_limit'] = joint.positive_angle_limit
+        #     DEFAULT_SETTINGS[f'J{index + 1}_step_limit'] = joint.step_limit
+        #     DEFAULT_SETTINGS[f'J{index + 1}_open_loop_val'] = joint.open_loop_stat
 
     def save_position(self):
         if (self.logging == True):
