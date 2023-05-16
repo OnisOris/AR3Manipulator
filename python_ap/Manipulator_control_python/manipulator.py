@@ -201,6 +201,7 @@ class Manipulator:
                 logger.debug("absolve")
                 self.absolve()
 
+
             button_rigth[1] = button_rigth[0]
             button_left[1] = button_left[0]
 
@@ -310,10 +311,14 @@ class Manipulator:
                         self.camera_calibrate_rot()
                     elif (inp_c[0] == '\n'):
                         logger.debug("enter")
+                    elif (inp_c[0] == 'jog'):
+                        self.jog_joints_test([inp_c[1], inp_c[2], inp_c[3], inp_c[4], inp_c[5], inp_c[6]])
                     elif (inp_c[0] == 'calc_angle'):
                         self.calc_angle(float(inp_c[1]), self.joints[int(inp_c[2])])
                     elif (inp_c[0] == 'calc_step'):
                         self.calc_steps(float(inp_c[1]), self.joints[int(inp_c[2])])
+                    elif (inp_c[0] == 'check'):
+                        self.getRobotPosition()
                     else:
                         print("Неправильная команда")
             except:
@@ -400,7 +405,7 @@ class Manipulator:
         # logger.debug(D)
         # logger.debug(E)
         # logger.debug(F)
-        # logger.debug(RobotCode)
+        logger.debug(RobotCode)
         if A != -1 and not RobotCode[A + 1: B] == '':
             Asteps = int(RobotCode[A + 1: B])
         else:
@@ -704,25 +709,31 @@ class Manipulator:
         joint_commands = []
         errors = []
         angles = []
+        for joint in self.joints:
+            logger.debug(f'current_steps 1 = {joint.current_joint_step}')
         self.getRobotPosition()
         time.sleep(0.5)
         degrees_in_steps = []
         current_steps = []
-        for joint in self.joints:  # Перевод входного угла в шаги
+        for index, joint in enumerate(self.joints):  # Перевод входного угла в шаги
             current_steps.append(joint.current_joint_step)
             if joint.positive_angle_limit > joint.negative_angle_limit:
                 delta_angle = joint.negative_angle_limit
             else:
                 delta_angle = joint.positive_angle_limit
             # delta = abs(joint.negative_angle_limit) + abs(joint.positive_angle_limit)
-            degrees_in_steps.append((degrees + abs(delta_angle))/joint.degrees_per_step)
-
+            degrees_in_steps.append((degrees[index] + abs(delta_angle))/joint.degrees_per_step)
+        arc_m = []
+        direction_m = []
         for i in range(6):
             d = self.calc_angle(degrees[i], self.joints[i])
             arc = d[0]
             # logger.debug(self.joints[i].motor_dir)
             direction = d[1]
+
+            direction_m.append(direction)
             j_jog_steps = abs(int(arc / self.joints[i].degrees_per_step))
+            arc_m.append(j_jog_steps)
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
             errors.append(d[2])
             # if (d[2] != True):
@@ -731,15 +742,17 @@ class Manipulator:
             # if i == 1:
             #     self.joints[i].current_joint_angle = degrees[i]
         if (not errors[0] and not errors[1] and not errors[2] and not errors[3] and not errors[4] and not errors[5]):
-            # for i in range(6):
-            #     self.joints[i].current_joint_angle = angles[i]
+            for i in range(6):
+                self.joints[i].current_joint_angle = angles[i]
             command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
             self.teensy_push(command)
             time.sleep(5)
             self.getRobotPosition()
-
-            delta = self.check_angle(degrees_in_steps)
+            time.sleep(5)
+            delta = self.check_angle(current_steps, arc_m)
             logger.debug(f"delta = {delta}")
+            for joint in self.joints:
+                logger.debug(f'current_steps 2 = {joint.current_joint_step}')
             self.save_position()
             self.calculate_direct_kinematics_problem()
             if (self.logging == True):
@@ -747,11 +760,15 @@ class Manipulator:
         else:
             logger.error("Команда не отправилась, превышен лимит одного из джойнтов")
 
-    def check_angle(self, steps):
+    def check_angle(self, steps, arc_in_steps):
         current_steps = []
         for joint in self.joints:
             current_steps.append(joint.current_joint_step)
-        delta = np.array([steps])-np.array([current_steps])
+        logger.debug("---------------------------------")
+        logger.debug(current_steps)
+        logger.debug(steps)
+        logger.debug("---------------------------------")
+        delta = abs(np.array(current_steps)-arc_in_steps)-np.array(steps)
         return delta
     def jog_joints_steps(self, steps, degrees=False):
 
@@ -1027,9 +1044,9 @@ class Manipulator:
         #logger.debug("getposition----------------------")
         #time.sleep(10)
         #self.getRobotPosition()
-        self.monitoringENC = True
+        #self.monitoringENC = True
         time.sleep(4)
-        self.jog_joints(angles)
+        #self.jog_joints_test(angles)
         self.calculate_direct_kinematics_problem()
 
 

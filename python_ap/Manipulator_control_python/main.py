@@ -11,10 +11,10 @@ import threading
 ############## Настройки программы ##############
 baud = 115200
 teensy_port = 3
-arduino_port = 5
+arduino_port = 6
 ################# Конец настроек #################
 
-robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud, camera=True, controller_dualshock=False, continuouse_mesurement=False)
+robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud, camera=False, controller_dualshock=False, continuouse_mesurement=False)
 robot.start_program()
 #monitor = threading.Thread(target=robot.monitorEnc, daemon=True)
 #console = threading.Thread(target=robot.startConsole, daemon=True)
