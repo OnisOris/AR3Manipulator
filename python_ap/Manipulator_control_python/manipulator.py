@@ -246,12 +246,9 @@ class Manipulator:
             self.joints[1].current_joint_step) + "W" + str(self.joints[2].current_joint_step) + "X" + str(
             self.joints[3].current_joint_step) + "Y" + str(self.joints[4].current_joint_step) + "Z" + str(
             self.joints[5].current_joint_step) + "\n"
-        # ser.write(commandCalc.encode())
         self.serial_teensy.write(commandCalc.encode())
         RobotCode = str(self.serial_teensy.readline())
-        #if not RobotCode.find('Done') == -1:
         RobotCode = RobotCode.replace('Done', '')
-        #Pcode = RobotCode[2:4]
         A = RobotCode.find('A')
         B = RobotCode.find('B')
         C = RobotCode.find('C')
@@ -259,13 +256,6 @@ class Manipulator:
         E = RobotCode.find('E')
         F = RobotCode.find('F')
         end = RobotCode.find('r')
-        # logger.debug(A)
-        # logger.debug(B)
-        # logger.debug(C)
-        # logger.debug(D)
-        # logger.debug(E)
-        # logger.debug(F)
-        # logger.debug(RobotCode)
         if A != -1 and not RobotCode[A + 1: B] == '':
             Asteps = int(RobotCode[A + 1: B])
         else:
@@ -275,71 +265,25 @@ class Manipulator:
             Bsteps = int(RobotCode[B + 1: C])
         else:
             Bsteps = self.joints[1].current_joint_step
-        #Csteps = int(RobotCode[C + 1: D])
         if C != -1 and not RobotCode[C + 1: D] == '':
             Csteps = int(RobotCode[C + 1: D])
         else:
             Csteps = self.joints[2].current_joint_step
-        #Dsteps = int(RobotCode[D + 1: E])
         if D != -1 and not RobotCode[D + 1: E] == '':
             Dsteps = int(RobotCode[D + 1: E])
         else:
             Dsteps = self.joints[3].current_joint_step
-
-        #Esteps = int(RobotCode[E + 1: F])
         if E != -1 and not RobotCode[E + 1: F] == '':
             Esteps = int(RobotCode[E + 1: F])
         else:
             Esteps = self.joints[4].current_joint_step
-
         if F != -1 and not RobotCode[F + 1: end-1] == '':
             Fsteps = int(RobotCode[F + 1: end-1])
         else:
             Fsteps = self.joints[5].current_joint_step
-
-
-        # logger.debug(RobotCode)
-        # string = "A = " + RobotCode[A+1:B] + " B = " + \
-        #          RobotCode[B+1:C] + " C = "\
-        #          + RobotCode[C+1:D] + " D = " + RobotCode[D+1:E] + " E = " + \
-        #         RobotCode[E + 1:F] + " F = " + RobotCode[F+1:end-1]
-        # Asteps = int(RobotCode[A + 1: B])
-        # if not RobotCode[A + 1: B] == '' :
-        #     Asteps = int(RobotCode[A + 1: B])
-        # else:
-        #     Asteps = self.joints[0].current_joint_step
-        #
-        # if not RobotCode[B + 1: C] == '':
-        #     Bsteps = int(RobotCode[B + 1: C])
-        # else:
-        #     Bsteps = self.joints[1].current_joint_step
-        # #Csteps = int(RobotCode[C + 1: D])
-        # if not RobotCode[C + 1: D] == '':
-        #     Csteps = int(RobotCode[C + 1: D])
-        # else:
-        #     Csteps = self.joints[2].current_joint_step
-        # #Dsteps = int(RobotCode[D + 1: E])
-        # if not RobotCode[D + 1: E] == '':
-        #     Dsteps = int(RobotCode[D + 1: E])
-        # else:
-        #     Dsteps = self.joints[3].current_joint_step
-        #
-        # #Esteps = int(RobotCode[E + 1: F])
-        # if not RobotCode[E + 1: F] == '':
-        #     Esteps = int(RobotCode[E + 1: F])
-        # else:
-        #     Esteps = self.joints[4].current_joint_step
-        #
-        # if not RobotCode[F + 1: end-1] == '':
-        #     Fsteps = int(RobotCode[F + 1: end-1])
-        # else:
-        #     Fsteps = self.joints[5].current_joint_step
-        #logger.debug(string)
         steps = np.array([Asteps, Bsteps, Csteps, Dsteps, Esteps, Fsteps])
         for i in range(6):
             self.joints[i].current_joint_step = steps[i]
-        # if (Pcode == "01"):
-        #     applyRobotCal(RobotCode)
 
     def show_workspace(self):
         self.robot.ws_division = 6
