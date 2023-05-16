@@ -290,7 +290,7 @@ class Manipulator:
                         logger.debug(f'coord in main = {coord}')
                         # self.move_all_xyz([coord[0], coord[1], 0])
                     elif (inp_c[0] == "cam"):
-                        self.camera_calibrate(11)
+                        self.camera_calibrate(17)
                     elif (inp_c[0] == "camm"):
                         self.camera_calibrate_s(12)
                     elif (inp_c[0] == "cam2"):
@@ -588,9 +588,9 @@ class Manipulator:
                 return [0, 0, True]
         # Расчет направления двигателей
         x = joint.current_joint_angle  # joint.current_joint_step*joint.degrees_per_step + joint.negative_angle_limit
-        logger.debug(x)
+        #logger.debug(x)
         arc = abs(angle - x)
-        logger.debug(arc)
+        #logger.debug(arc)
         if (joint.motor_dir == 1):
             if (angle > x):
                 drive_direction = 0
@@ -949,8 +949,9 @@ class Manipulator:
 
     def auto_calibrate(self):
         self.monitoringENC = False
-        self.calibrate('100010', '40')
-        self.calibrate('011101', '40')
+        # self.calibrate('100010', '40')
+        # self.calibrate('011101', '40')
+        self.calibrate('111111', '40')
         cd = self.get_calibration_drive_auto()  # направление калибровки
         command = f"MJA{cd[0]}500B{cd[1]}500C{cd[2]}500D{cd[3]}500E{cd[4]}500F{cd[5]}0" \
                   f"S15G10H10I10K10\n"
@@ -968,7 +969,7 @@ class Manipulator:
         #time.sleep(10)
         #self.getRobotPosition()
         self.monitoringENC = True
-        time.sleep(10)
+        time.sleep(4)
         self.jog_joints(angles)
         self.calculate_direct_kinematics_problem()
 
@@ -1665,6 +1666,7 @@ class Manipulator:
         z0 = 0.25
         logger.debug(f'x0 = {x0}, y0 = {y0}')
         D1 = [x0, y0, z0]
+        time.sleep(1)
         self.move_xyz(D1)
         time.sleep(2)
         #######################
@@ -1679,6 +1681,7 @@ class Manipulator:
         z0 = 0.15
         logger.debug(f'x0 = {x0}, y0 = {y0}')
         D1 = [x0, y0, z0]
+        time.sleep(1)
         self.move_xyz(D1)
         time.sleep(2)
         #######################
@@ -1693,6 +1696,7 @@ class Manipulator:
         z0 = 0.07
         logger.debug(f'x0 = {x0}, y0 = {y0}')
         D1 = [x0, y0, z0]
+        time.sleep(1)
         self.move_xyz(D1)
         time.sleep(2)
 
@@ -1707,6 +1711,7 @@ class Manipulator:
             z0 = 0.04
             logger.debug(f'x0 = {x0}, y0 = {y0}')
             D1 = [x0, y0, z0]
+            time.sleep(1)
             self.move_xyz(D1)
             time.sleep(0.1)
 
