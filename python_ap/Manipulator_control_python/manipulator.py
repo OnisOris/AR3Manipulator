@@ -210,7 +210,7 @@ class Manipulator:
                         logger.debug(f'coord in main = {coord}')
                         # self.move_all_xyz([coord[0], coord[1], 0])
                     elif (inp_c[0] == "cam"):
-                        self.camera_calibrate(11)
+                        self.camera_calibrate(17)
                     elif (inp_c[0] == "camm"):
                         self.camera_calibrate_s(12)
                     elif (inp_c[0] == "cam2"):
