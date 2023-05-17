@@ -15,7 +15,8 @@ arduino_port = 6
 ################# Конец настроек #################
 r = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud, camera=False, controller_dualshock=False, continuouse_mesurement=False)
 # cap = cv2.VideoCapture(0)
-r.auto_calibrate()
+#r.auto_calibrate()
+r.rotate_relative([100, 100, 100, 100, 100, 100])
 
 # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
 # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)

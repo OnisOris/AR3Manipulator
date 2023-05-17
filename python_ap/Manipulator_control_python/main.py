@@ -14,11 +14,12 @@ teensy_port = 3
 arduino_port = 6
 ################# Конец настроек #################
 
-robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud, camera=False, controller_dualshock=False, continuouse_mesurement=False)
+robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud, camera=True, controller_dualshock=False,
+                    continuouse_mesurement=True)
 robot.start_program()
 #monitor = threading.Thread(target=robot.monitorEnc, daemon=True)
 #console = threading.Thread(target=robot.startConsole, daemon=True)
-#robot.startConsole() 6.33544303797467
+#robot.startConsole() 6.33544303797467         MJA18221B12060C03069D17028E12192F02797
 # monitor = threading.Thread(target=robot.monitorEnc(), daemon=True)
 #console.start()
 #

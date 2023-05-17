@@ -319,6 +319,8 @@ class Manipulator:
                         self.calc_steps(float(inp_c[1]), self.joints[int(inp_c[2])])
                     elif (inp_c[0] == 'check'):
                         self.getRobotPosition()
+                    elif (inp_c[0] == 'rotate_relative'):
+                        self.rotate_relative([inp_c[1], inp_c[2], inp_c[3], inp_c[4], inp_c[5], inp_c[6]])
                     else:
                         print("Неправильная команда")
             except:
@@ -405,7 +407,7 @@ class Manipulator:
         # logger.debug(D)
         # logger.debug(E)
         # logger.debug(F)
-        logger.debug(RobotCode)
+        #logger.debug(RobotCode)
         if A != -1 and not RobotCode[A + 1: B] == '':
             Asteps = int(RobotCode[A + 1: B])
         else:
@@ -436,7 +438,8 @@ class Manipulator:
             Fsteps = self.joints[5].current_joint_step
         steps = np.array([Asteps, Bsteps, Csteps, Dsteps, Esteps, Fsteps])
         for i in range(6):
-            # if not i == 1:
+            if not i == 4:
+                continue
             self.joints[i].current_joint_step = steps[i]
 
     def show_workspace(self):
@@ -695,6 +698,8 @@ class Manipulator:
         if (not errors[0] and not errors[1] and not errors[2] and not errors[3] and not errors[4] and not errors[5]):
             # for i in range(6):
             #     self.joints[i].current_joint_angle = angles[i]
+            # for i in range(6):
+            self.joints[4].current_joint_angle = angles[4]
             command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
             self.teensy_push(command)
             self.save_position()
@@ -704,7 +709,7 @@ class Manipulator:
         else:
             logger.error("Команда не отправилась, превышен лимит одного из джойнтов")
 
-    def jog_joints_test(self, degrees):
+    def jog_joints_test(self, degrees, steps=False):
         degrees = [float(x) for x in degrees]
         joint_commands = []
         errors = []
@@ -750,6 +755,7 @@ class Manipulator:
             self.getRobotPosition()
             time.sleep(5)
             delta = self.check_angle(current_steps, arc_m)
+            self.rotate_relative(delta) #=---------------------
             logger.debug(f"delta = {delta}")
             for joint in self.joints:
                 logger.debug(f'current_steps 2 = {joint.current_joint_step}')
@@ -764,14 +770,18 @@ class Manipulator:
         current_steps = []
         for joint in self.joints:
             current_steps.append(joint.current_joint_step)
-        logger.debug("---------------------------------")
-        logger.debug(current_steps)
+        # logger.debug("---------------------------------")
+        # logger.debug(current_steps)
         logger.debug(steps)
-        logger.debug("---------------------------------")
-        delta = abs(np.array(current_steps)-arc_in_steps)-np.array(steps)
-        return delta
+        steps[2] -= self.joints[2].step_limit
+        steps[5] -= self.joints[5].step_limit
+        # logger.debug("---------------------------------")
+        # delta = abs(np.array(current_steps)-arc_in_steps)-np.array(steps)
+        steps_ = np.array(current_steps) - np.array(steps)
+        steps_tilda = arc_in_steps
+        error = steps_ - steps_tilda
+        return error
     def jog_joints_steps(self, steps, degrees=False):
-
         if not degrees:
             steps = [int(x) for x in steps]
         if degrees:
@@ -809,6 +819,26 @@ class Manipulator:
                 logger.debug(f"Запись шагов в джойнты: {steps}")
         else:
             logger.error("Команда не отправилась, превышен лимит одного из джойнтов")
+
+    def rotate_relative(self, steps):
+        inverse_massive = np.array([-1, -1, -1, 1, -1, 1])
+        inverse_massive = np.array([-1, -1, 0, 1, -1, 0])
+        steps = [int(x) for x in steps]
+        steps = np.array(steps)*inverse_massive
+
+        directions = []
+        for step in steps:
+            if step > 0:
+                directions.append(1)
+            if step < 0:
+                directions.append(0)
+            else:
+                directions.append(0)
+        joint_commands = []
+        for i, joint in enumerate(self.joints):
+            joint_commands.append(f"{self.joints[i].get_name_joint()}{directions[i]}{abs(steps[i])}")
+        command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
+        self.teensy_push(command)
     def apply_robot_calibration(self, robot_code: str):
         faults = [
             robot_code[4],
@@ -1048,7 +1078,7 @@ class Manipulator:
         time.sleep(4)
         #self.jog_joints_test(angles)
         self.calculate_direct_kinematics_problem()
-
+        self.monitoringENC = True
 
     def null_position(self):
         # self.move_z(100)
