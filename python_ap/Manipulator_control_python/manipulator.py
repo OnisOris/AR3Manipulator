@@ -212,7 +212,7 @@ class Manipulator:
                     elif (inp_c[0] == "cam"):
                         self.camera_calibrate(17)
                     elif (inp_c[0] == "camm"):
-                        self.camera_calibrate_s(12)
+                        self.camera_calibrate_s(int(inp_c[1]), int(inp_c[2]), int(inp_c[3]), state=int(inp_c[4])) # txmove -175 350 200 90 180 0
                     elif (inp_c[0] == "cam2"):
                         self.camera_calibrate2()
                     elif (inp_c[0] == "take"):
@@ -226,7 +226,7 @@ class Manipulator:
                     elif (inp_c[0] == "rot_t"):
                         self.move_theta(float(inp_c[1]))
                     elif (inp_c[0] == "crot"):
-                        self.camera_calibrate_rot()
+                        self.camera_calibrate_rot(17)
                     elif (inp_c[0] == '\n'):
                         logger.debug("enter")
                     else:
@@ -367,7 +367,8 @@ class Manipulator:
             if (angles[0] == "cam"):
                 self.camera_calibrate(int(angles[1]))
             if (angles[0] == "camr"):
-                self.camera_calibrate_rot(int(angles[1]))
+                self.camera_calibrate_s(int(angles[1]), int(angles[2]), count=int(angles[3]), state=int(angles[4]),
+                                        delta=[0, angles[5], 0])
             if (angles[0] == "take"):
                 self.take_object()
             if (angles[0] == "dir"):
@@ -382,7 +383,7 @@ class Manipulator:
             if (angles[0] == "calib"):
                 self.auto_calibrate()
             if (angles[0] == "sleep"):
-                logger.debug("sleep------------------------------------->")
+                logger.debug(f"sleep {angles[1]}------------------------------------->")
                 time.sleep(float(angles[1]))
             if (angles[0] == "speed"):
                 logger.debug(f"speed = {angles[1]}------------------------------------->")
@@ -452,14 +453,14 @@ class Manipulator:
 
     def calc_angle(self, angle, joint: Joint):
         angle = float(angle)
-        if (joint.positive_angle_limit > 0):
-            if (angle > joint.positive_angle_limit or angle < joint.negative_angle_limit):
-                logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
-                return [0, 0, True]
-        if (joint.positive_angle_limit < 0):
-            if (angle < joint.positive_angle_limit or angle > joint.negative_angle_limit):
-                logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
-                return [0, 0, True]
+        # if (joint.positive_angle_limit > 0)
+        #     if (angle > joint.positive_angle_limit or angle < joint.negative_angle_limit):
+        #         logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
+        #         return [0, 0, True]
+        # if (joint.positive_angle_limit < 0):
+        #     if (angle < joint.positive_angle_limit or angle > joint.negative_angle_limit):
+        #         logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
+        #         return [0, 0, True]
         # Расчет направления двигателей
         x = joint.current_joint_angle
         arc = abs(angle - x)
@@ -508,7 +509,8 @@ class Manipulator:
             #     logger.debug(f"Запись в джойнт {i+1}")
             angles.append(degrees[i])
             # self.joints[i].current_joint_angle = degrees[i]
-        if (not errors[0] and not errors[1] and not errors[2] and not errors[3] and not errors[4] and not errors[5]):
+       # if (not errors[0] and not errors[1] and not errors[2] and not errors[3] and not errors[4] and not errors[5]):
+        if True:
             for i in range(6):
                 self.joints[i].current_joint_angle = angles[i]
             command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
@@ -1038,7 +1040,11 @@ class Manipulator:
         if (self.logging == True):
             logger.debug(pos)
         logger.debug(pos)
-        need_angles = self.calculate_inverse_kinematic_problem(pos)
+        try:
+            need_angles = self.calculate_inverse_kinematic_problem(pos)
+        except ValueError:
+            logger.error("ValueError")
+            return None
         need_angles = np.degrees(need_angles)
         self.jog_joints(need_angles)
         self.calculate_direct_kinematics_problem()
@@ -1314,7 +1320,7 @@ class Manipulator:
             cv2.waitKey(1)
             waitnumber += 1
             logger.debug(f"waitkey = {waitnumber}")
-            if waitnumber > 100:
+            if waitnumber > 50:
                 logger.debug("Маркер не обнаружен")
                 break
             # y -= 0.1
@@ -1478,21 +1484,44 @@ class Manipulator:
             self.move_xyz(D1)
             time.sleep(0.1)
 
-    def camera_calibrate_s(self, number):
-        d = 0.03
-        xyz_0 = self.openCV(0, number)
-        current_coord = self.calculate_direct_kinematics_problem()
-        # координаты предварительно вычесленного центра
-        x0 = current_coord[0] + xyz_0[0]
-        y0 = current_coord[1] + xyz_0[1]
-        z0 = 0.280
-        a = pi / 2
-        b = pi
-        c = 0
-        logger.debug(f'x0 = {x0}, y0 = {y0}')
-        D1 = [x0, y0, z0, a, b, c]
-        self.move_xyz(D1)
-        time.sleep(2)
+    def camera_calibrate_s(self, number, hight, count=1, state=0, delta=None): # state = 0 or 1
+        if delta is None:
+            delta = [0, 0, 0]
+        for i in range(count):
+            xyz_0 = self.openCV(0, number)
+            current_coord = self.calculate_direct_kinematics_problem()
+            # Смещение для выравнивания по центру
+            delta_x = float(delta[0])
+            delta_y = float(delta[1])
+            delta_z = float(delta[2])
+            # координаты предварительно вычесленного центра
+
+            if state == 0:
+                a = pi
+                b = pi
+                c = 0
+                x0 = current_coord[0] + xyz_0[0] + delta_x
+                y0 = current_coord[1] + xyz_0[1] + delta_y
+                z0 = hight / 1000
+            elif state == 1:
+                a = 0
+                b = pi
+                c = 0
+                x0 = current_coord[0] - xyz_0[0] - delta_x
+                y0 = current_coord[1] - xyz_0[1] - delta_y
+                z0 = hight / 1000
+            else:
+                a = pi
+                b = pi
+                c = 0
+                x0 = current_coord[0] + xyz_0[0] + delta_x
+                y0 = current_coord[1] + xyz_0[1] + delta_y
+                z0 = hight / 1000
+            logger.debug(f'x0 = {x0}, y0 = {y0}')
+            D1 = [x0, y0, z0, a, b, c]
+            self.move_xyz(D1)
+
+        #time.sleep(2)
         #######################
 
         # xyz_0 = self.openCV(0, number)
