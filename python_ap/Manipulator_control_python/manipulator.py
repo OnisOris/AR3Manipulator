@@ -85,6 +85,7 @@ class Manipulator:
                           ])
 
     def __init__(self, teensy_port, arduino_port, baud, camera=False, controller_dualshock=False, checking_chanhing_of_angles=True, test_mode=False, continuouse_mesurement=False):
+        self.read_config()
         self.test_mode = test_mode
         self.continuouse_mesurement = continuouse_mesurement
         self.controller_dualshock = controller_dualshock
@@ -231,6 +232,8 @@ class Manipulator:
                         self.auto_calibrate()
                     elif (inp == "conf"):
                         self.read_config()
+                        self.create_joints()
+                        logger.debug(self.joints[0].positive_angle_limit)
                     elif (inp == "hel"):
                         print("move_x [расстояние в мм] - передвижение по оси x в [мм]\n ")
                         print("move_y [расстояние в мм] - передвижение по оси y в [мм]\n ")
@@ -466,7 +469,7 @@ class Manipulator:
         #logger.debug(massive_val)
         for com in massive_val:
             DEFAULT_SETTINGS2[com[0]] = com[1]
-        logger.debug(DEFAULT_SETTINGS2)
+
 
         # config = {}
         # for index, joint in enumerate(self.joints):
@@ -952,9 +955,9 @@ class Manipulator:
     def create_joints():
         joints_name = ['A', 'B', 'C', 'D', 'E', 'F']
         joints = [Joint(i + 1,
-                        DEFAULT_SETTINGS[f'J{i + 1}_positive_angle_limit'],
-                        DEFAULT_SETTINGS[f'J{i + 1}_negative_angle_limit'],
-                        DEFAULT_SETTINGS[f'J{i + 1}_step_limit'])
+                        DEFAULT_SETTINGS2[f'J{i + 1}_angle_limit'],
+                        DEFAULT_SETTINGS2[f'J{i + 1}_endstop_angle'],
+                        DEFAULT_SETTINGS2[f'J{i + 1}_step_limit'])
                   for i in range(6)]
 
         for joint, joint_name in zip(joints, joints_name):

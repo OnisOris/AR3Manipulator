@@ -1,5 +1,5 @@
 J1_endstop_angle = 185
-J1_angle_limit = -155
+J1_angle_limit = -156
 J1_step_limit = 15110
 J1_rot_dir = 1
 
