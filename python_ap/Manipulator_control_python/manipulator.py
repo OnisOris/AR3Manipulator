@@ -720,7 +720,7 @@ class Manipulator:
             direction = d[1]
             j_jog_steps = abs(int(arc / self.joints[i].degrees_per_step))
             logger.debug(direction)
-            if (DEFAULT_SETTINGS2['motor_direction'][i] == '1'):
+            if (DEFAULT_SETTINGS2['motor_inv'][i] == '1'):
                 direction = self.inverse_one_zero(direction)
             logger.debug(direction)
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
@@ -1016,7 +1016,7 @@ class Manipulator:
 
     def get_calibration_drive(self):
         calibration_drive = []
-        for cd, md in zip(self.calibration_direction, self.calibration_direction):
+        for cd, md in zip(self.calibration_direction, self.motor_direction):
             if cd == md:
                 calibration_drive.append('0')
             else:
@@ -1114,7 +1114,7 @@ class Manipulator:
                 steps.append(0)
 
         calibration_drive = self.get_calibration_drive()
-
+        logger.debug(calibration_drive)
         joint_calibration_drive_and_step = [f"{joint.get_name_joint()}{cd}{step}"
                                             for joint, cd, step in zip(self.joints, calibration_drive, steps)]
         for i in range(6):
