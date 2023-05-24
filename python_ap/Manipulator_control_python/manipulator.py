@@ -122,19 +122,19 @@ class Manipulator:
         self.JogStepsStat = False
         self.joint_jog_degrees = 10
         self.joints = self.create_joints()
-        self.calibration_direction = DEFAULT_SETTINGS['calibration_direction']
-        self.motor_direction = DEFAULT_SETTINGS['motor_direction']
+        self.calibration_direction = DEFAULT_SETTINGS2['calibration_direction']
+        self.motor_direction = DEFAULT_SETTINGS2['motor_direction']
         self.position = Position()
         self.restore_position()
-        self.limits = np.radians(
-            np.array([[self.joints[0].negative_angle_limit, self.joints[0].positive_angle_limit],
-                      [self.joints[1].negative_angle_limit, self.joints[1].positive_angle_limit],
-                      [self.joints[2].positive_angle_limit, self.joints[2].negative_angle_limit],
-                      [self.joints[3].negative_angle_limit, self.joints[3].positive_angle_limit],
-                      [self.joints[4].negative_angle_limit, self.joints[4].positive_angle_limit],
-                      [self.joints[5].positive_angle_limit, self.joints[5].negative_angle_limit],
-                      ]))
-        self.robot.ws_lim = self.limits
+        # self.limits = np.radians(
+        #     np.array([[self.joints[0].negative_angle_limit, self.joints[0].positive_angle_limit],
+        #               [self.joints[1].negative_angle_limit, self.joints[1].positive_angle_limit],
+        #               [self.joints[2].positive_angle_limit, self.joints[2].negative_angle_limit],
+        #               [self.joints[3].negative_angle_limit, self.joints[3].positive_angle_limit],
+        #               [self.joints[4].negative_angle_limit, self.joints[4].positive_angle_limit],
+        #               [self.joints[5].positive_angle_limit, self.joints[5].negative_angle_limit],
+        #               ]))
+        # self.robot.ws_lim = self.limits
         self.calculate_direct_kinematics_problem()
         try:
             self.serial_teensy: serial.Serial = serial.Serial(teensy_port, baud)
@@ -358,7 +358,7 @@ class Manipulator:
                 angles = new_angles
                 time.sleep(0.1)
         else:
-            logger.debug("ff")
+            logger.debug(f"continuouse_mesurement = {self.continuouse_mesurement}")
 
     def conversion_steps_angles(self):
         config_converse = [1, 0, 0, 1]
@@ -470,7 +470,7 @@ class Manipulator:
         for com in massive_val:
             DEFAULT_SETTINGS2[com[0]] = com[1]
 
-
+        #logger.debug(DEFAULT_SETTINGS2)
         # config = {}
         # for index, joint in enumerate(self.joints):
         #     DEFAULT_SETTINGS[f'J{index + 1}_current_step'] = joint.current_joint_step
@@ -558,7 +558,8 @@ class Manipulator:
             if (angles[0] == "cam"):
                 self.camera_calibrate(int(angles[1]))
             if (angles[0] == "camr"):
-                self.camera_calibrate_rot(int(angles[1]))
+                self.camera_calibrate_s(int(angles[1]), int(angles[2]), count=int(angles[3]), state=int(angles[4]),
+                                        delta=[0, angles[5], 0])
             if (angles[0] == "take"):
                 self.take_object()
             if (angles[0] == "dir"):
@@ -573,7 +574,7 @@ class Manipulator:
             if (angles[0] == "calib"):
                 self.auto_calibrate()
             if (angles[0] == "sleep"):
-                logger.debug("sleep------------------------------------->")
+                logger.debug(f"sleep {angles[1]}------------------------------------->")
                 time.sleep(float(angles[1]))
             if (angles[0] == "speed"):
                 logger.debug(f"speed = {angles[1]}------------------------------------->")
@@ -587,43 +588,58 @@ class Manipulator:
 
     def info(self):
         for i in range(6):
-            print(f"Отрицательный лимит {i + 1}го звена: {DEFAULT_SETTINGS[f'J{i + 1}_negative_angle_limit']} \n"
-                  f"Положительный лимит {i + 1}го звена: {DEFAULT_SETTINGS[f'J{i + 1}_positive_angle_limit']} \n"
+            print(f"Угол концевого переключателя {i + 1}го звена: {DEFAULT_SETTINGS2[f'J{i + 1}_endstop_angle']} \n"
+                  f"Предельный угол {i + 1}го звена: {DEFAULT_SETTINGS2[f'J{i + 1}_angle_limit']} \n"
                   f"\n")
 
     def calc_angle(self, angle, joint: Joint):
         angle = float(angle)
-        if (joint.positive_angle_limit > 0):
-            if (angle > joint.positive_angle_limit or angle < joint.negative_angle_limit):
-                logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
-                return [0, 0, True]
-        if (joint.positive_angle_limit < 0):
-            if (angle < joint.positive_angle_limit or angle > joint.negative_angle_limit):
-                logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
-                return [0, 0, True]
+        # if (joint.positive_angle_limit > 0):
+        #     if (angle > joint.positive_angle_limit or angle < joint.negative_angle_limit):
+        #         logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
+        #         return [0, 0, True]
+        # if (joint.positive_angle_limit < 0):
+        #     if (angle < joint.positive_angle_limit or angle > joint.negative_angle_limit):
+        #         logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
+        #         return [0, 0, True]
         # Расчет направления двигателей
         x = joint.current_joint_angle  # joint.current_joint_step*joint.degrees_per_step + joint.negative_angle_limit
-        #logger.debug(x)
+        #  logger.debug(x)
         arc = abs(angle - x)
-        #logger.debug(arc)
-        if (joint.motor_dir == 1):
-            if (angle > x):
+        drive_direction = None
+        if joint.endstop_angle > joint.angle_limit:
+            if angle < x:
+                drive_direction = 1
+            elif angle > x:
                 drive_direction = 0
-            if (angle < x):
+        elif joint.endstop_angle < joint.angle_limit:
+            if angle > x:
                 drive_direction = 1
-            if (angle == x):
-                logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
-                drive_direction = 1
-                arc = 0
-        if (joint.motor_dir == -1):
-            if (angle > x):
-                drive_direction = 1
-            if (angle < x):
+            elif angle < x:
                 drive_direction = 0
-            if (angle == x):
-                logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
-                drive_direction = 1
-                arc = 0
+
+        # logger.debug(arc)
+        # if (joint.motor_dir == 1):
+        #     if (angle > x):
+        #         drive_direction = 0
+        #     if (angle < x):
+        #         drive_direction = 1
+        #     if (angle == x):
+        #         logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
+        #         drive_direction = 1
+        #         arc = 0
+        # elif (joint.motor_dir == -1):
+        #     if (angle > x):
+        #         drive_direction = 1
+        #     if (angle < x):
+        #         drive_direction = 0
+        #     if (angle == x):
+        #         logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
+        #         drive_direction = 1
+        #         arc = 0
+        else:
+            drive_direction = 0
+            return None
         error = False
         return [arc, drive_direction, error]
     def calc_steps(self, steps, joint: Joint):
@@ -693,16 +709,11 @@ class Manipulator:
             j_jog_steps = abs(int(arc / self.joints[i].degrees_per_step))
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
             errors.append(d[2])
-            # if (d[2] != True):
-            #     logger.debug(f"Запись в джойнт {i+1}")
             angles.append(degrees[i])
-            # if i == 1:
-            #     self.joints[i].current_joint_angle = degrees[i]
         if (not errors[0] and not errors[1] and not errors[2] and not errors[3] and not errors[4] and not errors[5]):
-            # for i in range(6):
-            #     self.joints[i].current_joint_angle = angles[i]
-            # for i in range(6):
-            self.joints[4].current_joint_angle = angles[4]
+            if self.monitoringENC:
+                for i in range(6):
+                    self.joints[i].current_joint_angle = angles[i]
             command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
             self.teensy_push(command)
             self.save_position()
@@ -874,7 +885,7 @@ class Manipulator:
                                                                                 joint.degrees_per_step), 2)
                 # self.stop_program()
         self.calculate_direct_kinematics_problem()
-        self.save_data()
+        # self.save_data()
 
     def teensy_push(self, command):
         logger.debug(f'Teensy push {command}')
@@ -886,77 +897,77 @@ class Manipulator:
        # if not self.test_mode:
         self.serial_arduino.write(command.encode())
 
-    def save_data(self):
-        for index, joint in enumerate(self.joints):
-            DEFAULT_SETTINGS[f'J{index + 1}_current_step'] = joint.current_joint_step
-            DEFAULT_SETTINGS[f'J{index + 1}_current_angle'] = joint.current_joint_angle
-            DEFAULT_SETTINGS[f'J{index + 1}_negative_angle_limit'] = joint.negative_angle_limit
-            DEFAULT_SETTINGS[f'J{index + 1}_positive_angle_limit'] = joint.positive_angle_limit
-            DEFAULT_SETTINGS[f'J{index + 1}_step_limit'] = joint.step_limit
-            DEFAULT_SETTINGS[f'J{index + 1}_open_loop_val'] = joint.open_loop_stat
-
-        DEFAULT_SETTINGS['servo_0_on'] = None
-        DEFAULT_SETTINGS['servo_0_off'] = None
-        DEFAULT_SETTINGS['servo_1_on'] = None
-        DEFAULT_SETTINGS['servo_1_off'] = None
-
-        DEFAULT_SETTINGS['program_name'] = None
-
-        DEFAULT_SETTINGS['DO_1_on'] = None
-        DEFAULT_SETTINGS['DO_1_off'] = None
-        DEFAULT_SETTINGS['DO_2_on'] = None
-        DEFAULT_SETTINGS['DO_2_off'] = None
-
-        DEFAULT_SETTINGS['UF_x'] = None
-        DEFAULT_SETTINGS['UF_y'] = None
-        DEFAULT_SETTINGS['UF_z'] = None
-        DEFAULT_SETTINGS['UF_rx'] = None
-        DEFAULT_SETTINGS['UF_ry'] = None
-        DEFAULT_SETTINGS['UF_rz'] = None
-
-        DEFAULT_SETTINGS['TF_x'] = None
-        DEFAULT_SETTINGS['TF_y'] = None
-        DEFAULT_SETTINGS['TF_z'] = None
-        DEFAULT_SETTINGS['TF_rx'] = None
-        DEFAULT_SETTINGS['TF_ry'] = None
-        DEFAULT_SETTINGS['TF_rz'] = None
-
-        DEFAULT_SETTINGS['fine_cal_position'] = None
-
-        for i in range(6):
-            DEFAULT_SETTINGS[f'DH_r_{i + 1}'] = None
-        for i in range(6):
-            DEFAULT_SETTINGS[f'DH_a_{i + 1}'] = None
-        for i in range(6):
-            DEFAULT_SETTINGS[f'DH_d_{i + 1}'] = None
-        for i in range(6):
-            DEFAULT_SETTINGS[f'DH_t_{i + 1}'] = None
-
-        DEFAULT_SETTINGS['calibration_direction'] = None
-        DEFAULT_SETTINGS['Mot_Dir'] = None
-
-        DEFAULT_SETTINGS['Track_current'] = None
-        DEFAULT_SETTINGS['Track_length'] = None
-        DEFAULT_SETTINGS['Track_step_limit'] = None
-
-        DEFAULT_SETTINGS['Vis_file_location'] = None
-        # calibration.insert(tk.END, visoptions.get()) нужно узнать, что это такое
-        DEFAULT_SETTINGS['Vis_Pic_OxP'] = None
-        DEFAULT_SETTINGS['Vis_Pic_OxM'] = None
-        DEFAULT_SETTINGS['Vis_Pic_OyP'] = None
-        DEFAULT_SETTINGS['Vis_Pic_OyM'] = None
-
-        DEFAULT_SETTINGS['Vis_Pic_XPE'] = None
-        DEFAULT_SETTINGS['Vis_Pic_XME'] = None
-        DEFAULT_SETTINGS['Vis_Pic_YPE'] = None
-        DEFAULT_SETTINGS['Vis_Pic_YME'] = None
+    # def save_data(self):
+    #     for index, joint in enumerate(self.joints):
+    #         DEFAULT_SETTINGS[f'J{index + 1}_current_step'] = joint.current_joint_step
+    #         DEFAULT_SETTINGS[f'J{index + 1}_current_angle'] = joint.current_joint_angle
+    #         DEFAULT_SETTINGS[f'J{index + 1}_negative_angle_limit'] = joint.negative_angle_limit
+    #         DEFAULT_SETTINGS[f'J{index + 1}_positive_angle_limit'] = joint.positive_angle_limit
+    #         DEFAULT_SETTINGS[f'J{index + 1}_step_limit'] = joint.step_limit
+    #         DEFAULT_SETTINGS[f'J{index + 1}_open_loop_val'] = joint.open_loop_stat
+    #
+    #     DEFAULT_SETTINGS['servo_0_on'] = None
+    #     DEFAULT_SETTINGS['servo_0_off'] = None
+    #     DEFAULT_SETTINGS['servo_1_on'] = None
+    #     DEFAULT_SETTINGS['servo_1_off'] = None
+    #
+    #     DEFAULT_SETTINGS['program_name'] = None
+    #
+    #     DEFAULT_SETTINGS['DO_1_on'] = None
+    #     DEFAULT_SETTINGS['DO_1_off'] = None
+    #     DEFAULT_SETTINGS['DO_2_on'] = None
+    #     DEFAULT_SETTINGS['DO_2_off'] = None
+    #
+    #     DEFAULT_SETTINGS['UF_x'] = None
+    #     DEFAULT_SETTINGS['UF_y'] = None
+    #     DEFAULT_SETTINGS['UF_z'] = None
+    #     DEFAULT_SETTINGS['UF_rx'] = None
+    #     DEFAULT_SETTINGS['UF_ry'] = None
+    #     DEFAULT_SETTINGS['UF_rz'] = None
+    #
+    #     DEFAULT_SETTINGS['TF_x'] = None
+    #     DEFAULT_SETTINGS['TF_y'] = None
+    #     DEFAULT_SETTINGS['TF_z'] = None
+    #     DEFAULT_SETTINGS['TF_rx'] = None
+    #     DEFAULT_SETTINGS['TF_ry'] = None
+    #     DEFAULT_SETTINGS['TF_rz'] = None
+    #
+    #     DEFAULT_SETTINGS['fine_cal_position'] = None
+    #
+    #     for i in range(6):
+    #         DEFAULT_SETTINGS[f'DH_r_{i + 1}'] = None
+    #     for i in range(6):
+    #         DEFAULT_SETTINGS[f'DH_a_{i + 1}'] = None
+    #     for i in range(6):
+    #         DEFAULT_SETTINGS[f'DH_d_{i + 1}'] = None
+    #     for i in range(6):
+    #         DEFAULT_SETTINGS[f'DH_t_{i + 1}'] = None
+    #
+    #     DEFAULT_SETTINGS['calibration_direction'] = None
+    #     DEFAULT_SETTINGS['Mot_Dir'] = None
+    #
+    #     DEFAULT_SETTINGS['Track_current'] = None
+    #     DEFAULT_SETTINGS['Track_length'] = None
+    #     DEFAULT_SETTINGS['Track_step_limit'] = None
+    #
+    #     DEFAULT_SETTINGS['Vis_file_location'] = None
+    #     # calibration.insert(tk.END, visoptions.get()) нужно узнать, что это такое
+    #     DEFAULT_SETTINGS['Vis_Pic_OxP'] = None
+    #     DEFAULT_SETTINGS['Vis_Pic_OxM'] = None
+    #     DEFAULT_SETTINGS['Vis_Pic_OyP'] = None
+    #     DEFAULT_SETTINGS['Vis_Pic_OyM'] = None
+    #
+    #     DEFAULT_SETTINGS['Vis_Pic_XPE'] = None
+    #     DEFAULT_SETTINGS['Vis_Pic_XME'] = None
+    #     DEFAULT_SETTINGS['Vis_Pic_YPE'] = None
+    #     DEFAULT_SETTINGS['Vis_Pic_YME'] = None
 
     @staticmethod
     def create_joints():
         joints_name = ['A', 'B', 'C', 'D', 'E', 'F']
         joints = [Joint(i + 1,
-                        DEFAULT_SETTINGS2[f'J{i + 1}_angle_limit'],
                         DEFAULT_SETTINGS2[f'J{i + 1}_endstop_angle'],
+                        DEFAULT_SETTINGS2[f'J{i + 1}_angle_limit'],
                         DEFAULT_SETTINGS2[f'J{i + 1}_step_limit'])
                   for i in range(6)]
 
@@ -969,6 +980,23 @@ class Manipulator:
             joint.motor_dir = DEFAULT_SETTINGS[f'J{i + 1}_dir']
 
         return joints
+    # def create_joints():
+    #     joints_name = ['A', 'B', 'C', 'D', 'E', 'F']
+    #     joints = [Joint(i + 1,
+    #                     DEFAULT_SETTINGS2[f'J{i + 1}_angle_limit'],
+    #                     DEFAULT_SETTINGS2[f'J{i + 1}_endstop_angle'],
+    #                     DEFAULT_SETTINGS2[f'J{i + 1}_step_limit'])
+    #               for i in range(6)]
+    #
+    #     for joint, joint_name in zip(joints, joints_name):
+    #         joint.set_name_joint(joint_name)
+    #
+    #     for i, joint in enumerate(joints):
+    #         joint.current_joint_step = DEFAULT_SETTINGS[f'J{i + 1}_current_step']
+    #         joint.current_joint_angle = DEFAULT_SETTINGS[f'J{i + 1}_current_angle']
+    #         joint.motor_dir = DEFAULT_SETTINGS[f'J{i + 1}_dir']
+    #
+    #     return joints
 
     def get_calibration_drive(self):
         calibration_drive = []
@@ -988,11 +1016,78 @@ class Manipulator:
                 calibration_drive.append('0')
         return calibration_drive
 
+    # def calibrate(self, calibration_axes: str, speed: str):
+    #     val = False
+    #     if self.monitoringENC:
+    #         self.monitoringENC = False
+    #         val = True
+    #     axes = [axis for axis in calibration_axes]
+    #
+    #     steps = []
+    #     for i, axis in enumerate(axes):
+    #         if axis == '1':
+    #             steps.append(self.joints[i].step_limit)
+    #         else:
+    #             steps.append(0)
+    #
+    #     calibration_drive = self.get_calibration_drive()
+    #
+    #     joint_calibration_drive_and_step = [f"{joint.get_name_joint()}{cd}{step}"
+    #                                         for joint, cd, step in zip(self.joints, calibration_drive, steps)]
+    #     for i in range(6):
+    #         logger.debug(self.joints[i].step_limit)
+    #     command = f"LL{''.join(joint_calibration_drive_and_step)}S{speed}\n"
+    #     self.teensy_push(command)
+    #     if (self.logging == True):
+    #         logger.debug(f"Write to teensy: {command.strip()}")
+    #     self.serial_teensy.flushInput()
+    #     calibration_value = self.serial_teensy.read()
+    #     if calibration_value == b'P':
+    #         # calibration_status = 1
+    #         for joint, cd, axis in zip(self.joints, self.calibration_direction, axes):
+    #             if axis == '1':
+    #                 #print
+    #                 joint.current_joint_step = 0
+    #                 if joint.name_joint == 'C' or joint.name_joint == 'F':
+    #                     joint.current_joint_step = joint.step_limit
+    #                     #logger.debug("polka-------------------------")
+    #                 if cd == '0':
+    #                     if (joint.motor_dir == 1 or joint.motor_dir == 2):
+    #                         #joint.current_joint_step = 0
+    #                         joint.current_joint_angle = joint.positive_angle_limit
+    #                     else:
+    #                         #joint.current_joint_step = joint.step_limit
+    #                         joint.current_joint_angle = joint.negative_angle_limit
+    #                 else:
+    #                     if (joint.motor_dir == -1):
+    #                         #joint.current_joint_step = joint.step_limit
+    #                         joint.current_joint_angle = joint.negative_angle_limit
+    #                     else:
+    #                         #joint.current_joint_step = 0
+    #                         joint.current_joint_angle = joint.positive_angle_limit
+    #
+    #         logger.success('CALIBRATION SUCCESSFUL')
+    #     elif calibration_value == b'F':
+    #         # calibration_status = 0
+    #         logger.error('CALIBRATION FAILED')
+    #     else:
+    #         logger.warning('NO CAL FEEDBACK FROM ARDUINO')
+    #
+    #     self.calculate_direct_kinematics_problem()
+    #     self.save_data()
+    #     joints_current_steps = [f"{joint.get_name_joint()}{joint.current_joint_step}" for joint in self.joints]
+    #     command = f'LM{"".join(joints_current_steps)}\n'
+    #     self.teensy_push(command)
+    #     if (self.logging == True):
+    #         logger.debug(f"Write to teensy: {command.strip()}")
+    #     self.serial_teensy.flushInput()
+    #     if val:
+    #         self.monitoringENC = True
     def calibrate(self, calibration_axes: str, speed: str):
-        val = False
-        if self.monitoringENC:
-            self.monitoringENC = False
-            val = True
+        # val = False
+        # if self.monitoringENC:
+        #     self.monitoringENC = False
+        #     val = True
         axes = [axis for axis in calibration_axes]
 
         steps = []
@@ -1018,25 +1113,28 @@ class Manipulator:
             # calibration_status = 1
             for joint, cd, axis in zip(self.joints, self.calibration_direction, axes):
                 if axis == '1':
-                    #print
+                    # print
                     joint.current_joint_step = 0
                     if joint.name_joint == 'C' or joint.name_joint == 'F':
                         joint.current_joint_step = joint.step_limit
-                        #logger.debug("polka-------------------------")
-                    if cd == '0':
-                        if (joint.motor_dir == 1 or joint.motor_dir == 2):
-                            #joint.current_joint_step = 0
-                            joint.current_joint_angle = joint.positive_angle_limit
-                        else:
-                            #joint.current_joint_step = joint.step_limit
-                            joint.current_joint_angle = joint.negative_angle_limit
-                    else:
-                        if (joint.motor_dir == -1):
-                            #joint.current_joint_step = joint.step_limit
-                            joint.current_joint_angle = joint.negative_angle_limit
-                        else:
-                            #joint.current_joint_step = 0
-                            joint.current_joint_angle = joint.positive_angle_limit
+                        # logger.debug("polka-------------------------")
+                    joint.current_joint_angle = joint.endstop_angle
+                    # logger.debug("calib")
+                    # logger.debug(joint.endstop_angle)
+                    # if cd == '0':
+                    #     if (joint.motor_dir == 1):
+                    #         # joint.current_joint_step = 0
+                    #         joint.current_joint_angle = joint.endstop_angle
+                    #     else:
+                    #         # joint.current_joint_step = joint.step_limit
+                    #         joint.current_joint_angle = joint.angle_limit
+                    # else:
+                    #     if (joint.motor_dir == -1):
+                    #         # joint.current_joint_step = joint.step_limit
+                    #         joint.current_joint_angle = joint.negative_angle_lim
+                    #     else:
+                    #         # joint.current_joint_step = 0
+                    #         joint.current_joint_angle = joint.positive_angle_limit
 
             logger.success('CALIBRATION SUCCESSFUL')
         elif calibration_value == b'F':
@@ -1046,15 +1144,15 @@ class Manipulator:
             logger.warning('NO CAL FEEDBACK FROM ARDUINO')
 
         self.calculate_direct_kinematics_problem()
-        self.save_data()
+        # self.save_data()
         joints_current_steps = [f"{joint.get_name_joint()}{joint.current_joint_step}" for joint in self.joints]
         command = f'LM{"".join(joints_current_steps)}\n'
         self.teensy_push(command)
         if (self.logging == True):
             logger.debug(f"Write to teensy: {command.strip()}")
         self.serial_teensy.flushInput()
-        if val:
-            self.monitoringENC = True
+        # if val:
+        #     self.monitoringENC = True
 
     def auto_calibrate(self):
         self.monitoringENC = False
@@ -1080,6 +1178,8 @@ class Manipulator:
         #self.monitoringENC = True
         time.sleep(4)
         #self.jog_joints_test(angles)
+        self.jog_joints(angles)
+        self.print()
         self.calculate_direct_kinematics_problem()
         self.monitoringENC = True
 
@@ -1108,7 +1208,7 @@ class Manipulator:
                           np.radians(self.joints[4].current_joint_angle),
                           np.radians(self.joints[5].current_joint_angle)])
         robot = RobotSerial(self.dh_params)
-        robot.ws_lim = self.limits
+        # robot.ws_lim = self.limits
         f = robot.forward(theta)
         if (self.logging == True):
             logger.debug(f"xyz = {np.round(f.t_3_1.reshape([3, ]), 4)}, abc = {np.round(np.degrees(f.euler_3), 4)}")
@@ -1824,57 +1924,42 @@ class Manipulator:
             self.move_xyz(D1)
             time.sleep(0.1)
 
-    def camera_calibrate_s(self, number):
-        d = 0.03
-        xyz_0 = self.openCV(0, number)
-        current_coord = self.calculate_direct_kinematics_problem()
-        # координаты предварительно вычесленного центра
-        x0 = current_coord[0] + xyz_0[0]
-        y0 = current_coord[1] + xyz_0[1]
-        z0 = 0.280
-        a = pi / 2
-        b = pi
-        c = 0
-        logger.debug(f'x0 = {x0}, y0 = {y0}')
-        D1 = [x0, y0, z0, a, b, c]
-        self.move_xyz(D1)
-        time.sleep(2)
-        #######################
+    def camera_calibrate_s(self, number, hight, count=1, state=0, delta=None):  # state = 0 or 1
+        if delta is None:
+            delta = [0, 0, 0]
+        for i in range(count):
+            xyz_0 = self.openCV(0, number)
+            current_coord = self.calculate_direct_kinematics_problem()
+            # Смещение для выравнивания по центру
+            delta_x = float(delta[0])
+            delta_y = float(delta[1])
+            delta_z = float(delta[2])
+            # координаты предварительно вычесленного центра
 
-        # xyz_0 = self.openCV(0, number)
-        # current_coord = self.calculate_direct_kinematics_problem()
-        # # координаты предварительно вычесленного центра
-        # x0 = current_coord[0] + xyz_0[0]
-        # y0 = current_coord[1] + xyz_0[1]
-        # z0 = 0.15
-        # logger.debug(f'x0 = {x0}, y0 = {y0}')
-        # D1 = [x0, y0, z0]
-        # self.move_xyz(D1)
-        # time.sleep(2)
-        # #######################
-        #
-        # xyz_0 = self.openCV(0, number)
-        # current_coord = self.calculate_direct_kinematics_problem()
-        # # координаты предварительно вычесленного центра
-        # x0 = current_coord[0] + xyz_0[0]
-        # y0 = current_coord[1] + xyz_0[1]
-        # z0 = 0.05
-        # logger.debug(f'x0 = {x0}, y0 = {y0}')
-        # D1 = [x0, y0, z0]
-        # self.move_xyz(D1)
-        # time.sleep(2)
-        #
-        # for i in range(4):
-        #     xyz_0 = self.openCV(0, number)
-        #     current_coord = self.calculate_direct_kinematics_problem()
-        # # координаты предварительно вычесленного центра
-        #     x0 = current_coord[0] + xyz_0[0]
-        #     y0 = current_coord[1] + xyz_0[1]
-        #     z0 = 0.05
-        #     logger.debug(f'x0 = {x0}, y0 = {y0}')
-        #     D1 = [x0, y0, z0]
-        #     self.move_xyz(D1)
-        #     time.sleep(0.1)
+            if state == 0:
+                a = pi
+                b = pi
+                c = 0
+                x0 = current_coord[0] + xyz_0[0] + delta_x
+                y0 = current_coord[1] + xyz_0[1] + delta_y
+                z0 = hight / 1000
+            elif state == 1:
+                a = 0
+                b = pi
+                c = 0
+                x0 = current_coord[0] - xyz_0[0] - delta_x
+                y0 = current_coord[1] - xyz_0[1] - delta_y
+                z0 = hight / 1000
+            else:
+                a = pi
+                b = pi
+                c = 0
+                x0 = current_coord[0] + xyz_0[0] + delta_x
+                y0 = current_coord[1] + xyz_0[1] + delta_y
+                z0 = hight / 1000
+            logger.debug(f'x0 = {x0}, y0 = {y0}')
+            D1 = [x0, y0, z0, a, b, c]
+            self.move_xyz(D1)
 
     def camera_calibrate2(self):
         d = 0.003

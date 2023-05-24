@@ -15,5 +15,5 @@ arduino_port = 6
 ################# Конец настроек #################
 
 robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud, camera=False, controller_dualshock=False,
-                    continuouse_mesurement=True)
+                    continuouse_mesurement=False, checking_chanhing_of_angles=False)
 robot.start_program()

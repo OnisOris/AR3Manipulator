@@ -3,18 +3,18 @@ from loguru import logger
 
 class Joint:
 
-    def __init__(self, number_joint, positive_angle_limit, negative_angle_limit, step_limit):
+    def __init__(self, number_joint, endstop_angle, angle_limit, step_limit):
         self.name_joint = None
         self.motor_direction = 0
-        self.motor_dir = 1 # позже нужно удалить
+        self.motor_dir = 1  # позже нужно удалить
         self.number_joint = number_joint
-        self.positive_angle_limit = float(positive_angle_limit)
-        self.negative_angle_limit = float(negative_angle_limit)
+        self.angle_limit = float(angle_limit)
+        self.endstop_angle = float(endstop_angle)
         self.step_limit = int(step_limit)
         self.open_loop_stat = False
         self.current_joint_step = 0
         self.current_joint_angle = 0
-        self.degrees_per_step = (abs(self.positive_angle_limit) + abs(self.negative_angle_limit)) / self.step_limit  # град/шаг
+        self.degrees_per_step = (abs(self.endstop_angle) + abs(self.angle_limit)) / self.step_limit  # град/шаг
 
     def get_current_joint_step(self):
         return self.current_joint_step
