@@ -561,7 +561,7 @@ class Manipulator:
                 self.camera_calibrate(int(angles[1]))
             if (angles[0] == "camr"):
                 self.camera_calibrate_s(int(angles[1]), int(angles[2]), count=int(angles[3]), state=int(angles[4]),
-                                        delta=[0, angles[5], 0])
+                                        delta=[angles[5], angles[6], 0])
             if (angles[0] == "take"):
                 self.take_object()
             if (angles[0] == "dir"):
@@ -1204,7 +1204,7 @@ class Manipulator:
         #time.sleep(10)
         #self.getRobotPosition()
         #self.monitoringENC = True
-        time.sleep(4)
+        # time.sleep(4)
         #self.jog_joints_test(angles)
         #self.jog_joints(angles)
         self.print()
