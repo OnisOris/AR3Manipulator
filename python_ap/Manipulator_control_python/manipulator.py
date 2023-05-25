@@ -324,6 +324,8 @@ class Manipulator:
                         self.getRobotPosition()
                     elif (inp_c[0] == 'rotate_relative'):
                         self.rotate_relative([inp_c[1], inp_c[2], inp_c[3], inp_c[4], inp_c[5], inp_c[6]])
+                    elif (inp_c[0] == 'rot_joint'): # угол и номер джойнта
+                        self.joints_rot(inp_c[1], inp_c[2])
                     else:
                         print("Неправильная команда")
             except:
@@ -849,6 +851,28 @@ class Manipulator:
                 logger.debug(f"Запись шагов в джойнты: {steps}")
         else:
             logger.error("Команда не отправилась, превышен лимит одного из джойнтов")
+
+    def joints_rot(self, degree, number_of_joint):  # поворачивает джойнт на угол от текущего, degree - угол в градусах,
+        # number_of_joint - номер джойнта, начиная с 0
+        degree = float(degree)
+        steps = np.array([0, 0, 0, 0, 0, 0])
+        dir = np.array([0, 0, 0, 0, 0, 0])
+        j_jog_steps = abs(int(degree / self.joints[number_of_joint].degrees_per_step))
+        steps[number_of_joint] = j_jog_steps
+        if degree > 0.0:
+            direction = self.joints[number_of_joint].motor_direction
+        if degree < 0.0:
+            direction = self.inverse_one_zero(self.joints[number_of_joint].motor_direction)
+        else:
+            direction = 0
+        dir[number_of_joint] = direction
+        logger.debug(direction)
+        command = f"MJA{dir[0]}{steps[0]}B{dir[0]}{steps[1]}C{dir[0]}{steps[2]}D{dir[0]}{steps[3]}E{dir[0]}{steps[4]}F{dir[0]}{steps[5]}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
+        self.teensy_push(command)
+        self.joints[number_of_joint].current_joint_angle = self.joints[number_of_joint].current_joint_angle + degree
+        self.save_position()
+        self.calculate_direct_kinematics_problem()
+        # позже необходимо ввести проверку предельного угла
 
     def rotate_relative(self, steps):
         inverse_massive = np.array([-1, -1, -1, 1, -1, 1])
