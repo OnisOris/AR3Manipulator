@@ -16,7 +16,7 @@ arduino_port = 6
 r = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud, camera=False, controller_dualshock=False, continuouse_mesurement=False)
 r.print()
 # r.auto_calibrate()
-r.joints_rot(-90, 0)
+r.jog_joint_c(0, 0)
 r.print()
 # cap = cv2.VideoCapture(0)
 #r.auto_calibrate()

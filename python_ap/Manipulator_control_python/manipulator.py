@@ -93,7 +93,7 @@ class Manipulator:
         self.monitor = threading.Thread(target=self.monitorEnc, daemon=True)
         self.checking_chanhing_of_angles = checking_chanhing_of_angles
         self.console = True
-        self.monitoringENC = True
+        self.monitoringENC = False
         if camera:
             self.cap = cv2.VideoCapture(0)
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
@@ -590,8 +590,8 @@ class Manipulator:
 
     def info(self):
         for i in range(6):
-            print(f"Угол концевого переключателя {i + 1}го звена: {DEFAULT_SETTINGS2[f'J{i + 1}_endstop_angle']} \n"
-                  f"Предельный угол {i + 1}го звена: {DEFAULT_SETTINGS2[f'J{i + 1}_angle_limit']} \n"
+            print(f"Угол концевого переключателя {i + 1}го звена: {self.joints[i].endstop_angle} \n"
+                  f"Предельный угол {i + 1}го звена: {self.joints[i].angle_limit} \n"
                   f"\n")
 
     def calc_angle(self, angle, joint: Joint):
@@ -608,40 +608,24 @@ class Manipulator:
         x = joint.current_joint_angle  # joint.current_joint_step*joint.degrees_per_step + joint.negative_angle_limit
         #  logger.debug(x)
         arc = abs(angle - x)
-        drive_direction = None
-        if joint.endstop_angle > joint.angle_limit:
+        #drive_direction = None
+        logger.debug(joint.endstop_angle.__class__)
+        if joint.motor_dir == 1:
             if angle < x:
                 drive_direction = 1
             elif angle > x:
                 drive_direction = 0
-        elif joint.endstop_angle < joint.angle_limit:
+            else:
+                drive_direction = 0
+            # logger.debug("loip")
+        elif joint.motor_dir == -1:
             if angle > x:
                 drive_direction = 1
             elif angle < x:
                 drive_direction = 0
-
-        # logger.debug(arc)
-        # if (joint.motor_dir == 1):
-        #     if (angle > x):
-        #         drive_direction = 0
-        #     if (angle < x):
-        #         drive_direction = 1
-        #     if (angle == x):
-        #         logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
-        #         drive_direction = 1
-        #         arc = 0
-        # elif (joint.motor_dir == -1):
-        #     if (angle > x):
-        #         drive_direction = 1
-        #     if (angle < x):
-        #         drive_direction = 0
-        #     if (angle == x):
-        #         logger.error(f"Звено {joint.get_name_joint()} уже в этом положении")
-        #         drive_direction = 1
-        #         arc = 0
-        else:
-            drive_direction = 0
-            return None
+            else:
+                drive_direction = 0
+            # logger.debug("loip2")
         error = False
         return [arc, drive_direction, error]
 
@@ -729,9 +713,12 @@ class Manipulator:
             errors.append(d[2])
             angles.append(degrees[i])
         if (not errors[0] and not errors[1] and not errors[2] and not errors[3] and not errors[4] and not errors[5]):
-            if not self.monitoringENC:
-                for i in range(6):
-                    self.joints[i].current_joint_angle = angles[i]
+            # if not self.monitoringENC:
+            for i in range(6):
+                logger.debug(f"Changing angle {self.joints[i].current_joint_angle} - > {angles[i]}")
+                self.joints[i].current_joint_angle = angles[i]
+
+
             command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
             self.teensy_push(command)
             self.save_position()
@@ -861,7 +848,7 @@ class Manipulator:
         steps[number_of_joint] = j_jog_steps
         if degree > 0.0:
             direction = self.joints[number_of_joint].motor_direction
-        if degree < 0.0:
+        elif degree < 0.0:
             direction = self.inverse_one_zero(self.joints[number_of_joint].motor_direction)
         else:
             direction = 0
@@ -1005,12 +992,13 @@ class Manipulator:
     @staticmethod
     def create_joints():
         joints_name = ['A', 'B', 'C', 'D', 'E', 'F']
+        #logger.debug(float(DEFAULT_SETTINGS2[f'J{1}_endstop_angle'])+float(DEFAULT_SETTINGS2[f'J{1}_delta']))
         joints = [Joint(i + 1,
-                        DEFAULT_SETTINGS2[f'J{i + 1}_endstop_angle'],
-                        DEFAULT_SETTINGS2[f'J{i + 1}_angle_limit'],
+                        float(DEFAULT_SETTINGS2[f'J{i + 1}_endstop_angle'])+float(DEFAULT_SETTINGS2[f'J{i + 1}_delta']),
+                        float(DEFAULT_SETTINGS2[f'J{i + 1}_angle_limit']) + float(DEFAULT_SETTINGS2[f'J{i + 1}_delta']),
                         DEFAULT_SETTINGS2[f'J{i + 1}_step_limit'])
                   for i in range(6)]
-
+        #logger.debug(joints[0].endstop_angle)
         for joint, joint_name in zip(joints, joints_name):
             joint.set_name_joint(joint_name)
 
@@ -1218,7 +1206,7 @@ class Manipulator:
         #self.monitoringENC = True
         time.sleep(4)
         #self.jog_joints_test(angles)
-        self.jog_joints(angles)
+        #self.jog_joints(angles)
         self.print()
         self.calculate_direct_kinematics_problem()
         self.monitoringENC = True
