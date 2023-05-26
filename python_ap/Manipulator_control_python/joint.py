@@ -14,7 +14,7 @@ class Joint:
         self.open_loop_stat = False
         self.current_joint_step = 0
         self.current_joint_angle = 0
-        self.degrees_per_step = (abs(self.endstop_angle) + abs(self.angle_limit)) / self.step_limit  # град/шаг
+        self.degrees_per_step = 0#(abs(self.endstop_angle) + abs(self.angle_limit)) / self.step_limit  # град/шаг
 
     def get_current_joint_step(self):
         return self.current_joint_step

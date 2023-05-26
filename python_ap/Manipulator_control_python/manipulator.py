@@ -6,7 +6,7 @@ import numpy as np
 import serial
 from loguru import logger
 
-from config import DEFAULT_SETTINGS
+#from config import DEFAULT_SETTINGS
 from config2 import DEFAULT_SETTINGS2
 from joint import Joint
 from dataclasses import dataclass
@@ -1005,7 +1005,8 @@ class Manipulator:
         for i, joint in enumerate(joints):
             # joint.current_joint_step = DEFAULT_SETTINGS[f'J{i + 1}_current_step']
             # joint.current_joint_angle = DEFAULT_SETTINGS[f'J{i + 1}_current_angle']
-            joint.motor_dir = DEFAULT_SETTINGS[f'J{i + 1}_dir']
+            joint.motor_dir = int(DEFAULT_SETTINGS2[f'J{i + 1}_rot_dir'])
+            joint.degrees_per_step = float(DEFAULT_SETTINGS2[f'J{i + 1}_per_step'])
 
         return joints
     # def create_joints():
