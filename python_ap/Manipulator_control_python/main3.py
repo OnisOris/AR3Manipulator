@@ -24,15 +24,6 @@ zpoints = np.array([0.3, 0.4, 0.25, 0.3, 0.1])
 massive = np.vstack([xpoints, ypoints])
 massive = np.vstack([massive, zpoints])
 logger.debug(massive)
-
-# for i in range(len(xpoints)):
-#     inv = robot.calculate_inverse_kinematic_problem([xpoints[i], ypoints[i], 0.3, 0, pi, 0])
-# # inv = robot.calculate_inverse_kinematic_problem(
-# #     [float(inp_c[1]) / 1000, float(inp_c[2]) / 1000, float(inp_c[3]) / 1000, np.radians(float(inp_c[4])),
-# #      np.radians(float(inp_c[5])), np.radians(float(inp_c[6]))])
-# # logger.debug(inv)
-#     ang = np.degrees(inv)
-#     robot.jog_joints([ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]])
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.set_xlabel('x')
@@ -40,18 +31,3 @@ ax.set_ylabel('y')
 ax.set_ylabel('z')
 plt.plot(massive)
 plt.show()
-#
-#
-# Отрицательный лимит 4го звена: -164.5
-# Положительный лимит 4го звена: 164.5
-#
-#
-# Отрицательный лимит 5го звена: -104.15
-# Положительный лимит 5го звена: 104.15
-#
-#
-# Отрицательный лимит 6го звена: -148.1
-# Положительный лимит 6го звена: 148.1
-#
-#
-# Введите команду

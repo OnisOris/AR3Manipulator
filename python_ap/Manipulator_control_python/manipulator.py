@@ -1003,8 +1003,8 @@ class Manipulator:
             joint.set_name_joint(joint_name)
 
         for i, joint in enumerate(joints):
-            joint.current_joint_step = DEFAULT_SETTINGS[f'J{i + 1}_current_step']
-            joint.current_joint_angle = DEFAULT_SETTINGS[f'J{i + 1}_current_angle']
+            # joint.current_joint_step = DEFAULT_SETTINGS[f'J{i + 1}_current_step']
+            # joint.current_joint_angle = DEFAULT_SETTINGS[f'J{i + 1}_current_angle']
             joint.motor_dir = DEFAULT_SETTINGS[f'J{i + 1}_dir']
 
         return joints
@@ -1044,73 +1044,6 @@ class Manipulator:
                 calibration_drive.append('0')
         return calibration_drive
 
-    # def calibrate(self, calibration_axes: str, speed: str):
-    #     val = False
-    #     if self.monitoringENC:
-    #         self.monitoringENC = False
-    #         val = True
-    #     axes = [axis for axis in calibration_axes]
-    #
-    #     steps = []
-    #     for i, axis in enumerate(axes):
-    #         if axis == '1':
-    #             steps.append(self.joints[i].step_limit)
-    #         else:
-    #             steps.append(0)
-    #
-    #     calibration_drive = self.get_calibration_drive()
-    #
-    #     joint_calibration_drive_and_step = [f"{joint.get_name_joint()}{cd}{step}"
-    #                                         for joint, cd, step in zip(self.joints, calibration_drive, steps)]
-    #     for i in range(6):
-    #         logger.debug(self.joints[i].step_limit)
-    #     command = f"LL{''.join(joint_calibration_drive_and_step)}S{speed}\n"
-    #     self.teensy_push(command)
-    #     if (self.logging == True):
-    #         logger.debug(f"Write to teensy: {command.strip()}")
-    #     self.serial_teensy.flushInput()
-    #     calibration_value = self.serial_teensy.read()
-    #     if calibration_value == b'P':
-    #         # calibration_status = 1
-    #         for joint, cd, axis in zip(self.joints, self.calibration_direction, axes):
-    #             if axis == '1':
-    #                 #print
-    #                 joint.current_joint_step = 0
-    #                 if joint.name_joint == 'C' or joint.name_joint == 'F':
-    #                     joint.current_joint_step = joint.step_limit
-    #                     #logger.debug("polka-------------------------")
-    #                 if cd == '0':
-    #                     if (joint.motor_dir == 1 or joint.motor_dir == 2):
-    #                         #joint.current_joint_step = 0
-    #                         joint.current_joint_angle = joint.positive_angle_limit
-    #                     else:
-    #                         #joint.current_joint_step = joint.step_limit
-    #                         joint.current_joint_angle = joint.negative_angle_limit
-    #                 else:
-    #                     if (joint.motor_dir == -1):
-    #                         #joint.current_joint_step = joint.step_limit
-    #                         joint.current_joint_angle = joint.negative_angle_limit
-    #                     else:
-    #                         #joint.current_joint_step = 0
-    #                         joint.current_joint_angle = joint.positive_angle_limit
-    #
-    #         logger.success('CALIBRATION SUCCESSFUL')
-    #     elif calibration_value == b'F':
-    #         # calibration_status = 0
-    #         logger.error('CALIBRATION FAILED')
-    #     else:
-    #         logger.warning('NO CAL FEEDBACK FROM ARDUINO')
-    #
-    #     self.calculate_direct_kinematics_problem()
-    #     self.save_data()
-    #     joints_current_steps = [f"{joint.get_name_joint()}{joint.current_joint_step}" for joint in self.joints]
-    #     command = f'LM{"".join(joints_current_steps)}\n'
-    #     self.teensy_push(command)
-    #     if (self.logging == True):
-    #         logger.debug(f"Write to teensy: {command.strip()}")
-    #     self.serial_teensy.flushInput()
-    #     if val:
-    #         self.monitoringENC = True
     def calibrate(self, calibration_axes: str, speed: str):
         # val = False
         # if self.monitoringENC:
