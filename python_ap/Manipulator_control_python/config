@@ -16,8 +16,8 @@ J3_endstop_angle = -154.2
 J3_angle_limit = 127
 J3_step_limit = 7984
 J3_rot_dir = 1
-J3_delta = 15
-J3_per_step = 0.020503507014028054
+J3_delta = 0
+J3_per_step = 0.01812374749498998
 
 J4_endstop_angle = -164.5
 J4_angle_limit = 164.5

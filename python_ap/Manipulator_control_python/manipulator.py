@@ -1513,7 +1513,7 @@ class Manipulator:
         self.move_xyz(position)
 
     def grab(self):
-        command = f"SV{0}P{20}\n"
+        command = f"SV{0}P{0}\n"
        # if (self.logging == True):
             #logger.debug(command)
         self.arduino_push(command)
@@ -1922,6 +1922,7 @@ class Manipulator:
             logger.debug(f'x0 = {x0}, y0 = {y0}')
             D1 = [x0, y0, z0, a, b, c]
             self.move_xyz(D1)
+            time.sleep(1)
 
     def camera_calibrate2(self):
         d = 0.003
