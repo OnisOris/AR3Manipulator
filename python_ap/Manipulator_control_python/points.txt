@@ -4,7 +4,6 @@ sleep,7
 inv,-0.49,0.200,0.150,3.141592653589793,3.141592653589793,0
 sleep,15
 camr,17,150,10,0,-0.002,-0.016
-move_x,-0.002
 abs
 sleep,2
 move_z,-0.048
@@ -31,3 +30,12 @@ move_z,-0.01
 move_z,-0.01
 move_z,-0.01
 move_z,-0.01
+sleep,5
+abs
+move_z,0.04
+sleep,2
+grab
+move_z,-0.04
+sleep,2
+move_z,0.06
+speed,30

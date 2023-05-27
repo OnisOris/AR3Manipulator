@@ -609,7 +609,7 @@ class Manipulator:
         #  logger.debug(x)
         arc = abs(angle - x)
         #drive_direction = None
-        logger.debug(joint.endstop_angle.__class__)
+        #logger.debug(joint.endstop_angle.__class__)
         if joint.motor_dir == 1:
             if angle < x:
                 drive_direction = 1
@@ -708,7 +708,7 @@ class Manipulator:
             logger.debug(direction)
             if (DEFAULT_SETTINGS2['motor_inv'][i] == '1'):
                 direction = self.inverse_one_zero(direction)
-            logger.debug(direction)
+            #logger.debug(direction)
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
             errors.append(d[2])
             angles.append(degrees[i])
