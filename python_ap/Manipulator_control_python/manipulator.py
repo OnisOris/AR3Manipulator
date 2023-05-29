@@ -1060,18 +1060,19 @@ class Manipulator:
                 steps.append(0)
 
         calibration_drive = self.get_calibration_drive()
-        logger.debug(calibration_drive)
+        #logger.debug(calibration_drive)
         joint_calibration_drive_and_step = [f"{joint.get_name_joint()}{cd}{step}"
                                             for joint, cd, step in zip(self.joints, calibration_drive, steps)]
-        for i in range(6):
-            logger.debug(self.joints[i].step_limit)
+        #for i in range(6):
+            #logger.debug(self.joints[i].step_limit)
         command = f"LL{''.join(joint_calibration_drive_and_step)}S{speed}\n"
         self.teensy_push(command)
         if (self.logging == True):
             logger.debug(f"Write to teensy: {command.strip()}")
         self.serial_teensy.flushInput()
         calibration_value = self.serial_teensy.read()
-        if calibration_value == b'P':
+        # if calibration_value == b'P':
+        if True:
             # calibration_status = 1
             for joint, cd, axis in zip(self.joints, self.calibration_direction, axes):
                 if axis == '1':
@@ -1151,13 +1152,13 @@ class Manipulator:
         self.jog_joints(angles)
         self.calculate_direct_kinematics_problem()
 
-    def _check_axis_limit(self, angles) -> bool:
-        axis_limit = False
-        for joint, angle in zip(self.joints, angles):
-            if angle < joint.negative_angle_limit or angle > joint.positive_angle_limit:
-                logger.error(f'{joint} AXIS LIMIT')
-                axis_limit = True
-        return axis_limit
+    # def _check_axis_limit(self, angles) -> bool:
+    #     axis_limit = False
+    #     for joint, angle in zip(self.joints, angles):
+    #         if angle < joint.negative_angle_limit or angle > joint.positive_angle_limit:
+    #             logger.error(f'{joint} AXIS LIMIT')
+    #             axis_limit = True
+    #     return axis_limit
 
     def calculate_direct_kinematics_problem(self):
         for joint in self.joints:
@@ -1436,12 +1437,12 @@ class Manipulator:
         if len == 2:
             pos = np.hstack([pos, [self.position.z, 0, pi, 0]])
         if relative_angles == True:
-            logger.debug("---lll")
+           # logger.debug("---lll")
         # pos = np.array([pos[0] / 1000, pos[1] / 1000, pos[2] / 1000,
         #                0, pi, 0])
         if (self.logging == True):
             logger.debug(pos)
-        logger.debug(pos)
+        #logger.debug(pos)
         need_angles = self.calculate_inverse_kinematic_problem(pos)
         need_angles = np.degrees(need_angles)
         self.jog_joints(need_angles)
@@ -1459,7 +1460,8 @@ class Manipulator:
             position = [self.position.x, self.position.y, self.position.z,
                         self.position.theta, self.position.phi, self.position.psi]
             logger.debug(f"position in direct if = {position}")
-        logger.debug(position)
+        if self.logging:
+            logger.debug(f'position = {position}')
         position[0] = position[0] + lenth_x
         position[1] = position[1] + lenth_y
         self.move_xyz(position)
@@ -1467,64 +1469,64 @@ class Manipulator:
     def move_x(self, lenth_x):  # принимаем мм
         lenth_x = lenth_x / 1000
         position = self.last_inverse_pos
-        logger.debug(position)
         position[0] = position[0] + lenth_x
-        logger.debug(position)
+        if self.logging:
+            logger.debug(f'position = {position}')
         self.move_xyz(position)
 
     def move_y(self, lenth_y):
         lenth_y = lenth_y / 1000
         position = self.last_inverse_pos
-        logger.debug(position)
         position[1] = position[1] + lenth_y
-        logger.debug(position)
+        if self.logging:
+            logger.debug(f'position = {position}')
         self.move_xyz(position)
 
     def move_z(self, lenth_z):
         lenth_z = lenth_z / 1000
         position = self.last_inverse_pos
-        logger.debug(position)
         position[2] = position[2] + lenth_z
-        logger.debug(position)
+        if self.logging:
+            logger.debug(f'position = {position}')
         self.move_xyz(position)
 
     def move_theta(self, lenth_theta):
         lenth_theta = np.radians(lenth_theta)
         position = self.last_inverse_pos
-        logger.debug(position)
         position[3] = position[3] + lenth_theta
-        logger.debug(position)
+        if self.logging:
+            logger.debug(f'position = {position}')
         self.move_xyz(position)
 
     def move_phi(self, lenth_phi):
         lenth_theta = np.radians(lenth_phi)
         position = self.last_inverse_pos
-        logger.debug(position)
         position[4] = position[4] + lenth_phi
-        logger.debug(position)
+        if self.logging:
+            logger.debug(f'position = {position}')
         self.move_xyz(position)
 
     def move_psi(self, lenth_psi):
         lenth_theta = np.radians(lenth_psi)
         position = self.last_inverse_pos
-        logger.debug(position)
         position[5] = position[5] + lenth_psi
-        logger.debug(position)
+        if self.logging:
+            logger.debug(f'position = {position}')
         self.move_xyz(position)
 
     def grab(self):
         command = f"SV{0}P{20}\n"
-       # if (self.logging == True):
-            #logger.debug(command)
+        if self.logging == True:
+             logger.debug(command)
         self.arduino_push(command)
 
     def absolve(self):
         command = f"SV{0}P{170}\n"
-        #if (self.logging == True):
-           # logger.debug(command)
+        if self.logging == True:
+           logger.debug(command)
         self.arduino_push(command)
 
-    def rotate_3(self, vectors, axis, angle):  # [[1, 0, 0], [0, 1, 0], [0, 0, -1]]
+    def rotate_3(self, vectors, axis, angle):
         k = []
         v_norm = axis / np.linalg.norm(axis)
         R = Rotation.from_rotvec(angle * v_norm).as_matrix()
@@ -1691,7 +1693,7 @@ class Manipulator:
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         return cap
 
-    def openCV(self, id_camera, id_marker=0):
+    def openCV(self, id_camera, id_marker=0, max_wait_number=50):
         # self.move_xyz([0.28683, 0.1, 0.05, 0, pi, 0])
         aruco_marker_side_length = 0.0344
         aruco_dictionary_name = "DICT_4X4_50"
@@ -1709,7 +1711,8 @@ class Manipulator:
         cycle = 5
         array = np.array([0, 0, 0, 0, 0, 0])
         i = 0
-        logger.debug("begin cycle")
+        if self.logging:
+            logger.debug("begin cycle")
         waitnumber = 0
         while (True):
             ret, frame = cap.read()
@@ -1717,8 +1720,9 @@ class Manipulator:
             cv2.imshow("im", frame)
             cv2.waitKey(1)
             waitnumber += 1
-            logger.debug(f"waitkey = {waitnumber}")
-            if waitnumber > 100:
+            if self.logging:
+                logger.debug(f"waitkey = {waitnumber}")
+            if waitnumber > max_wait_number:
                 logger.debug("Маркер не обнаружен")
                 break
             # y -= 0.1
@@ -1744,15 +1748,15 @@ class Manipulator:
             return None
 
         array = np.delete(array, 0, 0)
-        logger.debug(array)
+        #logger.debug(array)
         mean_array = np.mean(array, axis=0)
-        logger.debug(mean_array)
+        #logger.debug(mean_array)
         # смещение по оси y камеры
         # mean_array[1] -= 0.02
         coord = self.trans(mean_array)
-        logger.debug(coord)
+        #logger.debug(coord)
         coord = np.hstack([coord, [a_x, a_y, a_z]])
-        logger.debug(coord)
+       # logger.debug(coord)
         # self.move_all_xyz([coord[0], coord[1], 0])
         # coord[0] += 0.05
         # coord[1] -= 0.013
@@ -1803,17 +1807,17 @@ class Manipulator:
         mean_array0 = np.mean(array0, axis=0)
         mean_array1 = np.mean(array1, axis=0)
         # смещение по оси y камеры
-        logger.debug(f'until = {mean_array0[1]}')
+        #logger.debug(f'until = {mean_array0[1]}')
         # mean_array0[1] += 0.04
         # mean_array1[1] += 0.04
-        logger.debug(f'after = {mean_array0[1]}')
+        #logger.debug(f'after = {mean_array0[1]}')
         coord0 = self.trans(mean_array0)
         coord1 = self.trans(mean_array1)
 
         coord0 = np.hstack([coord0, [mean_array0[3], mean_array0[4], mean_array0[5]]])
         coord1 = np.hstack([coord1, [mean_array1[3], mean_array1[4], mean_array1[5]]])
-        logger.debug(f'coord0 = {coord0}')
-        logger.debug(f'coord1 = {coord1}')
+        #logger.debug(f'coord0 = {coord0}')
+        #logger.debug(f'coord1 = {coord1}')
 
         coord0[0] += 0.05
         coord1[0] += 0.05
@@ -1835,7 +1839,7 @@ class Manipulator:
         x0 = current_coord[0] + xyz_0[0]
         y0 = current_coord[1] + xyz_0[1]
         z0 = 0.25
-        logger.debug(f'x0 = {x0}, y0 = {y0}')
+        #logger.debug(f'x0 = {x0}, y0 = {y0}')
         D1 = [x0, y0, z0]
         time.sleep(1)
         self.move_xyz(D1)
@@ -1850,7 +1854,7 @@ class Manipulator:
         x0 = current_coord[0] + xyz_0[0]
         y0 = current_coord[1] + xyz_0[1]
         z0 = 0.15
-        logger.debug(f'x0 = {x0}, y0 = {y0}')
+        #logger.debug(f'x0 = {x0}, y0 = {y0}')
         D1 = [x0, y0, z0]
         time.sleep(1)
         self.move_xyz(D1)
@@ -1865,7 +1869,7 @@ class Manipulator:
         x0 = current_coord[0] + xyz_0[0]
         y0 = current_coord[1] + xyz_0[1]
         z0 = 0.07
-        logger.debug(f'x0 = {x0}, y0 = {y0}')
+        #logger.debug(f'x0 = {x0}, y0 = {y0}')
         D1 = [x0, y0, z0]
         time.sleep(1)
         self.move_xyz(D1)
@@ -1880,7 +1884,7 @@ class Manipulator:
             x0 = current_coord[0] + xyz_0[0]
             y0 = current_coord[1] + xyz_0[1]
             z0 = 0.04
-            logger.debug(f'x0 = {x0}, y0 = {y0}')
+            #logger.debug(f'x0 = {x0}, y0 = {y0}')
             D1 = [x0, y0, z0]
             time.sleep(1)
             self.move_xyz(D1)
@@ -1919,7 +1923,7 @@ class Manipulator:
                 x0 = current_coord[0] + xyz_0[0] + delta_x
                 y0 = current_coord[1] + xyz_0[1] + delta_y
                 z0 = hight / 1000
-            logger.debug(f'x0 = {x0}, y0 = {y0}')
+            #logger.debug(f'x0 = {x0}, y0 = {y0}')
             D1 = [x0, y0, z0, a, b, c]
             self.move_xyz(D1)
 
@@ -1928,7 +1932,7 @@ class Manipulator:
         # Val = True
         for i in range(5):
             xyz_0, xyz_1 = self.openCV2(0, 11, 12)
-            logger.debug(xyz_0)
+            #logger.debug(xyz_0)
             # print(1)
             current_coord = self.calculate_direct_kinematics_problem()
             # # координаты предварительно вычесленного центра для двух арукомаркеров
@@ -2008,8 +2012,8 @@ class Manipulator:
             rot_m = self.rotate_from_angle(a_z, 'z')
 
             new_coord = np.dot(rot_m, vect)
-            logger.debug(f"xyz_0 = {xyz_0}")
-            logger.debug(f"new_coord = {new_coord}")
+            #logger.debug(f"xyz_0 = {xyz_0}")
+            #logger.debug(f"new_coord = {new_coord}")
             x0 = current_coord[0] + new_coord[0][0]
             y0 = current_coord[1] + new_coord[1][0]
 
