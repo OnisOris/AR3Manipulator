@@ -1074,7 +1074,8 @@ class Manipulator:
             logger.debug(f"Write to teensy: {command.strip()}")
         self.serial_teensy.flushInput()
         calibration_value = self.serial_teensy.read()
-        if calibration_value == b'P':
+        #if calibration_value == b'P':
+        if True:
             # calibration_status = 1
             for joint, cd, axis in zip(self.joints, self.calibration_direction, axes):
                 if axis == '1':
