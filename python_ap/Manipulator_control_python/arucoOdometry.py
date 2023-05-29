@@ -5,11 +5,13 @@ import math # Math library
 from math import sin,cos,radians
 from numpy import dot
 import time
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import pandas as pd
 from scipy.signal import savgol_filter
 from loguru import logger
+matplotlib.use('Agg')
 class arucoOdometry:
     arucoMarkers={"id":[],"coordinates":{"x":[],"y":[],"z":[],"theta":[],"phi":[],"psi":[]},"size":[]}
     #positionByMarkers={"id":[],"coordinates":{"x":[],"y":[],"z":[],"theta":[],"phi":[],"psi":[]}, "time":[]}
