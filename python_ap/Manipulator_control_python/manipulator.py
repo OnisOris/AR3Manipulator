@@ -570,7 +570,6 @@ class Manipulator:
                 drive_direction = 0
             else:
                 drive_direction = 0
-            # logger.debug("loip")
         elif joint.motor_dir == -1:
             if angle > x:
                 drive_direction = 1
@@ -722,16 +721,16 @@ class Manipulator:
         else:
             logger.error("Команда не отправилась, превышен лимит одного из джойнтов")
 
-    def check_angle(self, steps, arc_in_steps):
-        current_steps = []
-        for joint in self.joints:
-            current_steps.append(joint.current_joint_step)
-        steps[2] -= self.joints[2].step_limit
-        steps[5] -= self.joints[5].step_limit
-        steps_ = np.array(current_steps) - np.array(steps)
-        steps_tilda = arc_in_steps
-        error = steps_ - steps_tilda
-        return error
+    # def check_angle(self, steps, arc_in_steps):
+    #     current_steps = []
+    #     for joint in self.joints:
+    #         current_steps.append(joint.current_joint_step)
+    #     steps[2] -= self.joints[2].step_limit
+    #     steps[5] -= self.joints[5].step_limit
+    #     steps_ = np.array(current_steps) - np.array(steps)
+    #     steps_tilda = arc_in_steps
+    #     error = steps_ - steps_tilda
+    #     return error
     def jog_joints_steps(self, steps, degrees=False):
         if not degrees:
             steps = [int(x) for x in steps]
