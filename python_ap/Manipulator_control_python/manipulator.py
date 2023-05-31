@@ -5,7 +5,7 @@ from scipy.spatial.transform import Rotation
 import numpy as np
 import serial
 from loguru import logger
-from config2 import DEFAULT_SETTINGS
+from config import DEFAULT_SETTINGS
 from joint import Joint
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
