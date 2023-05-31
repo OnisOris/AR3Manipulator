@@ -454,33 +454,14 @@ class Manipulator:
     def read_config(self):
         file = open("config", "r")
         config_text = file.read()
-        # config_text.replace('\n', '')
-        # config_text.replace(' ', '')
-        #config_text.replace(' ', '')
         config_joints = config_text.split("\n")
-        #config_joints.remove('')
         while '' in config_joints: config_joints.remove('')
-
-        # while ' ' in config_joints: config_joints.remove(' ')
-        #logger.debug(config_joints)
         massive_val = []
         for el in config_joints:
             name_val = el.split(' = ')
             massive_val.append(name_val)
-           # logger.debug(name_val)
-        #logger.debug(massive_val)
         for com in massive_val:
             DEFAULT_SETTINGS2[com[0]] = com[1]
-
-        #logger.debug(DEFAULT_SETTINGS2)
-        # config = {}
-        # for index, joint in enumerate(self.joints):
-        #     DEFAULT_SETTINGS[f'J{index + 1}_current_step'] = joint.current_joint_step
-        #     DEFAULT_SETTINGS[f'J{index + 1}_current_angle'] = joint.current_joint_angle
-        #     DEFAULT_SETTINGS[f'J{index + 1}_negative_angle_limit'] = joint.negative_angle_limit
-        #     DEFAULT_SETTINGS[f'J{index + 1}_positive_angle_limit'] = joint.positive_angle_limit
-        #     DEFAULT_SETTINGS[f'J{index + 1}_step_limit'] = joint.step_limit
-        #     DEFAULT_SETTINGS[f'J{index + 1}_open_loop_val'] = joint.open_loop_stat
 
     def save_position(self):
         if (self.logging == True):
@@ -702,24 +683,18 @@ class Manipulator:
         for i in range(6):
             d = self.calc_angle(degrees[i], self.joints[i])
             arc = d[0]
-            # logger.debug(self.joints[i].motor_dir)
             direction = d[1]
             j_jog_steps = abs(int(arc / self.joints[i].degrees_per_step))
-            # logger.debug(direction)
             if (DEFAULT_SETTINGS2['motor_inv'][i] == '1'):
                 direction = self.inverse_one_zero(direction)
-            #logger.debug(direction)
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
             errors.append(d[2])
             angles.append(degrees[i])
         if (not errors[0] and not errors[1] and not errors[2] and not errors[3] and not errors[4] and not errors[5]):
-            # if not self.monitoringENC:
             for i in range(6):
                 if self.logging:
                     logger.debug(f"Changing angle {self.joints[i].current_joint_angle} - > {angles[i]}")
                 self.joints[i].current_joint_angle = angles[i]
-
-
             command = f"MJ{''.join(joint_commands)}S{self.position.speed}G{15}H{10}I{20}K{5}\n"
             self.teensy_push(command)
             self.save_position()
@@ -746,14 +721,12 @@ class Manipulator:
                 delta_angle = joint.negative_angle_limit
             else:
                 delta_angle = joint.positive_angle_limit
-            # delta = abs(joint.negative_angle_limit) + abs(joint.positive_angle_limit)
             degrees_in_steps.append((degrees[index] + abs(delta_angle))/joint.degrees_per_step)
         arc_m = []
         direction_m = []
         for i in range(6):
             d = self.calc_angle(degrees[i], self.joints[i])
             arc = d[0]
-            # logger.debug(self.joints[i].motor_dir)
             direction = d[1]
 
             direction_m.append(direction)
@@ -761,11 +734,7 @@ class Manipulator:
             arc_m.append(j_jog_steps)
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
             errors.append(d[2])
-            # if (d[2] != True):
-            #     logger.debug(f"Запись в джойнт {i+1}")
             angles.append(degrees[i])
-            # if i == 1:
-            #     self.joints[i].current_joint_angle = degrees[i]
         if (not errors[0] and not errors[1] and not errors[2] and not errors[3] and not errors[4] and not errors[5]):
             for i in range(6):
                 self.joints[i].current_joint_angle = angles[i]
@@ -776,9 +745,6 @@ class Manipulator:
             time.sleep(5)
             delta = self.check_angle(current_steps, arc_m)
             self.rotate_relative(delta) #=---------------------
-            # logger.debug(f"delta = {delta}")
-            # for joint in self.joints:
-            #     logger.debug(f'current_steps 2 = {joint.current_joint_step}')
             self.save_position()
             self.calculate_direct_kinematics_problem()
             if (self.logging == True):
@@ -790,13 +756,8 @@ class Manipulator:
         current_steps = []
         for joint in self.joints:
             current_steps.append(joint.current_joint_step)
-        # logger.debug("---------------------------------")
-        # logger.debug(current_steps)
-        # logger.debug(steps)
         steps[2] -= self.joints[2].step_limit
         steps[5] -= self.joints[5].step_limit
-        # logger.debug("---------------------------------")
-        # delta = abs(np.array(current_steps)-arc_in_steps)-np.array(steps)
         steps_ = np.array(current_steps) - np.array(steps)
         steps_tilda = arc_in_steps
         error = steps_ - steps_tilda
@@ -927,75 +888,9 @@ class Manipulator:
        # if not self.test_mode:
         self.serial_arduino.write(command.encode())
 
-    # def save_data(self):
-    #     for index, joint in enumerate(self.joints):
-    #         DEFAULT_SETTINGS[f'J{index + 1}_current_step'] = joint.current_joint_step
-    #         DEFAULT_SETTINGS[f'J{index + 1}_current_angle'] = joint.current_joint_angle
-    #         DEFAULT_SETTINGS[f'J{index + 1}_negative_angle_limit'] = joint.negative_angle_limit
-    #         DEFAULT_SETTINGS[f'J{index + 1}_positive_angle_limit'] = joint.positive_angle_limit
-    #         DEFAULT_SETTINGS[f'J{index + 1}_step_limit'] = joint.step_limit
-    #         DEFAULT_SETTINGS[f'J{index + 1}_open_loop_val'] = joint.open_loop_stat
-    #
-    #     DEFAULT_SETTINGS['servo_0_on'] = None
-    #     DEFAULT_SETTINGS['servo_0_off'] = None
-    #     DEFAULT_SETTINGS['servo_1_on'] = None
-    #     DEFAULT_SETTINGS['servo_1_off'] = None
-    #
-    #     DEFAULT_SETTINGS['program_name'] = None
-    #
-    #     DEFAULT_SETTINGS['DO_1_on'] = None
-    #     DEFAULT_SETTINGS['DO_1_off'] = None
-    #     DEFAULT_SETTINGS['DO_2_on'] = None
-    #     DEFAULT_SETTINGS['DO_2_off'] = None
-    #
-    #     DEFAULT_SETTINGS['UF_x'] = None
-    #     DEFAULT_SETTINGS['UF_y'] = None
-    #     DEFAULT_SETTINGS['UF_z'] = None
-    #     DEFAULT_SETTINGS['UF_rx'] = None
-    #     DEFAULT_SETTINGS['UF_ry'] = None
-    #     DEFAULT_SETTINGS['UF_rz'] = None
-    #
-    #     DEFAULT_SETTINGS['TF_x'] = None
-    #     DEFAULT_SETTINGS['TF_y'] = None
-    #     DEFAULT_SETTINGS['TF_z'] = None
-    #     DEFAULT_SETTINGS['TF_rx'] = None
-    #     DEFAULT_SETTINGS['TF_ry'] = None
-    #     DEFAULT_SETTINGS['TF_rz'] = None
-    #
-    #     DEFAULT_SETTINGS['fine_cal_position'] = None
-    #
-    #     for i in range(6):
-    #         DEFAULT_SETTINGS[f'DH_r_{i + 1}'] = None
-    #     for i in range(6):
-    #         DEFAULT_SETTINGS[f'DH_a_{i + 1}'] = None
-    #     for i in range(6):
-    #         DEFAULT_SETTINGS[f'DH_d_{i + 1}'] = None
-    #     for i in range(6):
-    #         DEFAULT_SETTINGS[f'DH_t_{i + 1}'] = None
-    #
-    #     DEFAULT_SETTINGS['calibration_direction'] = None
-    #     DEFAULT_SETTINGS['Mot_Dir'] = None
-    #
-    #     DEFAULT_SETTINGS['Track_current'] = None
-    #     DEFAULT_SETTINGS['Track_length'] = None
-    #     DEFAULT_SETTINGS['Track_step_limit'] = None
-    #
-    #     DEFAULT_SETTINGS['Vis_file_location'] = None
-    #     # calibration.insert(tk.END, visoptions.get()) нужно узнать, что это такое
-    #     DEFAULT_SETTINGS['Vis_Pic_OxP'] = None
-    #     DEFAULT_SETTINGS['Vis_Pic_OxM'] = None
-    #     DEFAULT_SETTINGS['Vis_Pic_OyP'] = None
-    #     DEFAULT_SETTINGS['Vis_Pic_OyM'] = None
-    #
-    #     DEFAULT_SETTINGS['Vis_Pic_XPE'] = None
-    #     DEFAULT_SETTINGS['Vis_Pic_XME'] = None
-    #     DEFAULT_SETTINGS['Vis_Pic_YPE'] = None
-    #     DEFAULT_SETTINGS['Vis_Pic_YME'] = None
-
     @staticmethod
     def create_joints():
         joints_name = ['A', 'B', 'C', 'D', 'E', 'F']
-        #logger.debug(float(DEFAULT_SETTINGS2[f'J{1}_endstop_angle'])+float(DEFAULT_SETTINGS2[f'J{1}_delta']))
         joints = [Joint(i + 1,
                         float(DEFAULT_SETTINGS2[f'J{i + 1}_endstop_angle'])+float(DEFAULT_SETTINGS2[f'J{i + 1}_delta']),
                         float(DEFAULT_SETTINGS2[f'J{i + 1}_angle_limit']) + float(DEFAULT_SETTINGS2[f'J{i + 1}_delta']),
@@ -1006,29 +901,10 @@ class Manipulator:
             joint.set_name_joint(joint_name)
 
         for i, joint in enumerate(joints):
-            # joint.current_joint_step = DEFAULT_SETTINGS[f'J{i + 1}_current_step']
-            # joint.current_joint_angle = DEFAULT_SETTINGS[f'J{i + 1}_current_angle']
             joint.motor_dir = int(DEFAULT_SETTINGS2[f'J{i + 1}_rot_dir'])
             joint.degrees_per_step = float(DEFAULT_SETTINGS2[f'J{i + 1}_per_step'])
 
         return joints
-    # def create_joints():
-    #     joints_name = ['A', 'B', 'C', 'D', 'E', 'F']
-    #     joints = [Joint(i + 1,
-    #                     DEFAULT_SETTINGS2[f'J{i + 1}_angle_limit'],
-    #                     DEFAULT_SETTINGS2[f'J{i + 1}_endstop_angle'],
-    #                     DEFAULT_SETTINGS2[f'J{i + 1}_step_limit'])
-    #               for i in range(6)]
-    #
-    #     for joint, joint_name in zip(joints, joints_name):
-    #         joint.set_name_joint(joint_name)
-    #
-    #     for i, joint in enumerate(joints):
-    #         joint.current_joint_step = DEFAULT_SETTINGS[f'J{i + 1}_current_step']
-    #         joint.current_joint_angle = DEFAULT_SETTINGS[f'J{i + 1}_current_angle']
-    #         joint.motor_dir = DEFAULT_SETTINGS[f'J{i + 1}_dir']
-    #
-    #     return joints
 
     def get_calibration_drive(self):
         calibration_drive = []
@@ -1136,18 +1012,10 @@ class Manipulator:
         self.calibrate('111111', '8')
         # TODO: узнать, что такое blockEncPosCal
         position = [68.944, 0.0, 733.607, -90.0, 1.05, -90.0]
-        # logger.debug(DEFAULT_SETTINGS['DH_r_1'])
         angles = [0, 90, -90, 0, -90, 0]
-        #logger.debug("getposition----------------------")
-        #time.sleep(10)
-        #self.getRobotPosition()
-        #self.monitoringENC = True
-        # time.sleep(4)
-        #self.jog_joints_test(angles)
-        #self.jog_joints(angles)
         self.print()
         self.calculate_direct_kinematics_problem()
-        self.monitoringENC = True
+        #self.monitoringENC = True
 
     def null_position(self):
         # self.move_z(100)

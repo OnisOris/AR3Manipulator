@@ -1,6 +1,5 @@
 import math
 import time
-from config import DEFAULT_SETTINGS
 from manipulator import Manipulator, Position
 import numpy as np
 from math import (pi)
