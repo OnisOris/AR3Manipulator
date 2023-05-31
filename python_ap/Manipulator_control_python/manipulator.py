@@ -65,7 +65,7 @@ class Manipulator:
         'd_3': 0,
         'd_4': 0.22263,
         'd_5': 0,
-        'd_6': 0.185,  # 0.125,  # 0.03625,
+        'd_6': 0.185,  # расстояние до конца схвата
         'displacement_theta_1': 0,
         'displacement_theta_2': 0,
         'displacement_theta_3': pi / 2,
@@ -84,7 +84,7 @@ class Manipulator:
 
     def __init__(self, teensy_port, arduino_port, baud, camera=False, controller_dualshock=False, checking_chanhing_of_angles=True, test_mode=False, continuouse_mesurement=False):
         self.read_config()
-        self.test_mode = test_mode
+        self.test_mode = test_mode # данное поле можно включить, если нет подключения по сериал порту
         self.continuouse_mesurement = continuouse_mesurement
         self.controller_dualshock = controller_dualshock
         self.program_console = threading.Thread(target=self.startConsole, daemon=True)
@@ -100,8 +100,6 @@ class Manipulator:
             self.dualshock = Controller()
             self.dualshock_thread = threading.Thread(target=self.start_controller)
             self.start_thread_controller()
-
-        #self.test_mode = False  # данное поле можно включить, если нет подключения по сериал порту
         self.last_inverse_pos = []  # хранит последние заданные координаты в обратную задачу кинематики
         self.logging = False  # включает вывод в консоль информацию
         self.showMode = False  # включает мод отображения в отдельном окне положения манипулятора
@@ -124,15 +122,6 @@ class Manipulator:
         self.motor_direction = DEFAULT_SETTINGS['motor_direction']
         self.position = Position()
         self.restore_position()
-        # self.limits = np.radians(
-        #     np.array([[self.joints[0].negative_angle_limit, self.joints[0].positive_angle_limit],
-        #               [self.joints[1].negative_angle_limit, self.joints[1].positive_angle_limit],
-        #               [self.joints[2].positive_angle_limit, self.joints[2].negative_angle_limit],
-        #               [self.joints[3].negative_angle_limit, self.joints[3].positive_angle_limit],
-        #               [self.joints[4].negative_angle_limit, self.joints[4].positive_angle_limit],
-        #               [self.joints[5].positive_angle_limit, self.joints[5].negative_angle_limit],
-        #               ]))
-        # self.robot.ws_lim = self.limits
         self.calculate_direct_kinematics_problem()
         try:
             self.serial_teensy: serial.Serial = serial.Serial(teensy_port, baud)
@@ -155,7 +144,7 @@ class Manipulator:
             if not self.dualshock_thread.is_alive():
                 self.dualshock_thread.start()
     def start_controller(self):
-        button_rigth = np.array([0, 0]) # 0 - new, 1 - old
+        button_rigth = np.array([0, 0])
         button_left = np.array([0, 0])
 
         button_upper = np.array([0, 0])
@@ -172,25 +161,21 @@ class Manipulator:
             button_rigth[0] = self.dualshock.abs_state['HX']
             if button_rigth[0] == 1 and button_rigth[1] == 0:
                 logger.debug("right")
-
             button_left[0] = self.dualshock.abs_state['HX']
             if button_left[0] == -1 and button_left[1] == 0:
                 logger.debug("left")
-
             button_upper[0] = self.dualshock.abs_state['HY']
             if button_upper[0] == -1 and button_upper[1] == 0:
                 logger.debug("upper")
             button_lower[0] = self.dualshock.abs_state['HY']
             if button_lower[0] == 1 and button_lower[1] == 0:
                 logger.debug("lower")
-
             button_up[0] = self.dualshock.btn_state['L1']
             if button_up[0] == 1 and button_up[1] == 0:
                 logger.debug("up")
             button_down[0] = self.dualshock.btn_state['R1']
             if button_down[0] == 1 and button_down[1] == 0:
                 logger.debug("down")
-
             grab[0] = self.dualshock.btn_state['S']
             if grab[0] == 1 and grab[1] == 0:
                 logger.debug("grab")
@@ -199,7 +184,6 @@ class Manipulator:
             if absolve[0] == 1 and absolve[1] == 0:
                 logger.debug("absolve")
                 self.absolve()
-
 
             button_rigth[1] = button_rigth[0]
             button_left[1] = button_left[0]
@@ -212,9 +196,6 @@ class Manipulator:
 
             grab[1] = grab[0]
             absolve[1] = absolve[0]
-
-            #logger.debug(self.dualshock.btn_state)
-
     def start_thread_controller(self):
         self.dualshock_thread.start()
         self.dualshock_thread.join()
@@ -230,9 +211,7 @@ class Manipulator:
                         self.auto_calibrate()
                     elif (inp == "conf"):
                         self.read_config()
-                        self.create_joints()
-                        logger.debug(self.joints[0].positive_angle_limit)
-                    elif (inp == "hel"):
+                    elif (inp == "help"):
                         print("move_x [расстояние в мм] - передвижение по оси x в [мм]\n ")
                         print("move_y [расстояние в мм] - передвижение по оси y в [мм]\n ")
                         print("move_z [расстояние в мм] - передвижение по оси z в [мм]\n ")
@@ -328,8 +307,6 @@ class Manipulator:
                         print("Неправильная команда")
             except:
                 logger.error("произошла ошибка")
-            # self.getRobotPosition()
-            # time.sleep(2)
     def monitorEnc(self):
         angles = np.round(np.array([self.joints[0].current_joint_step, self.joints[1].current_joint_step,
                             self.joints[2].current_joint_step, self.joints[3].current_joint_step,
@@ -372,8 +349,6 @@ class Manipulator:
                 self.joints[i].current_joint_angle = (-abs(self.joints[i].current_joint_step)
                                                       * self.joints[i].degrees_per_step + delta) * self.joints[
                                                          i].motor_dir*inv
-                # if i == 5:
-                #     delta = delta*-1
             else:
                 if i == 2:
                     inv = -1
@@ -382,21 +357,15 @@ class Manipulator:
                 delta = self.joints[i].negative_angle_limit
                 self.joints[i].current_joint_angle = -(-abs(self.joints[i].current_joint_step)
                                                       * self.joints[i].degrees_per_step + delta)*inv
-            # if i == 5: # Это костыль, в будущем необходимо это поправить!
-            #     inv = -1
 
     def getRobotPosition(self):
         commandCalc = "GP" + "U" + str(self.joints[0].current_joint_step) + "V" + str(
             self.joints[1].current_joint_step) + "W" + str(self.joints[2].current_joint_step) + "X" + str(
             self.joints[3].current_joint_step) + "Y" + str(self.joints[4].current_joint_step) + "Z" + str(
             self.joints[5].current_joint_step) + "\n"
-        # ser.write(commandCalc.encode())
         self.serial_teensy.write(commandCalc.encode())
         RobotCode = str(self.serial_teensy.readline())
-        # if not RobotCode.find('Done') == -1:
         RobotCode = RobotCode.replace('Done', '')
-        # logger.debug(RobotCode)
-        # Pcode = RobotCode[2:4]
         A = RobotCode.find('A')
         B = RobotCode.find('B')
         C = RobotCode.find('C')
@@ -404,13 +373,6 @@ class Manipulator:
         E = RobotCode.find('E')
         F = RobotCode.find('F')
         end = RobotCode.find('r')
-        # logger.debug(A)
-        # logger.debug(B)
-        # logger.debug(C)
-        # logger.debug(D)
-        # logger.debug(E)
-        # logger.debug(F)
-        #logger.debug(RobotCode)
         if A != -1 and not RobotCode[A + 1: B] == '':
             Asteps = int(RobotCode[A + 1: B])
         else:
@@ -573,6 +535,20 @@ class Manipulator:
                   f"Предельный угол {i + 1}го звена: {self.joints[i].angle_limit} \n"
                   f"\n")
 
+    def check_angle(self, angle, joint: Joint):
+        if joint.endstop_angle > joint.angle_limit:
+            if angle > joint.endstop_angle or angle < joint.angle_limit:
+                return False
+            else:
+                return True
+        elif joint.endstop_angle < joint.angle_limit:
+            if angle < joint.endstop_angle or angle > joint.angle_limit:
+                return False
+            else:
+                return True
+        else:
+            return False
+
     def calc_angle(self, angle, joint: Joint):
         angle = float(angle)
         # if (joint.positive_angle_limit > 0):
@@ -583,12 +559,10 @@ class Manipulator:
         #     if (angle < joint.positive_angle_limit or angle > joint.negative_angle_limit):
         #         logger.error(f"Угол звена {joint.get_name_joint()} превышает лимит")
         #         return [0, 0, True]
+        error = self.check_angle(angle, joint)
         # Расчет направления двигателей
         x = joint.current_joint_angle  # joint.current_joint_step*joint.degrees_per_step + joint.negative_angle_limit
-        #  logger.debug(x)
         arc = abs(angle - x)
-        #drive_direction = None
-        #logger.debug(joint.endstop_angle.__class__)
         if joint.motor_dir == 1:
             if angle < x:
                 drive_direction = 1
@@ -604,8 +578,6 @@ class Manipulator:
                 drive_direction = 0
             else:
                 drive_direction = 0
-            # logger.debug("loip2")
-        error = False
         return [arc, drive_direction, error]
 
     def inverse_one_zero(self, one_or_zero):
