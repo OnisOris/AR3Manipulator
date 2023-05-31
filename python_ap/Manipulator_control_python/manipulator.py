@@ -5,9 +5,7 @@ from scipy.spatial.transform import Rotation
 import numpy as np
 import serial
 from loguru import logger
-
-#from config import DEFAULT_SETTINGS
-from config2 import DEFAULT_SETTINGS2
+from config2 import DEFAULT_SETTINGS
 from joint import Joint
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
@@ -122,8 +120,8 @@ class Manipulator:
         self.JogStepsStat = False
         self.joint_jog_degrees = 10
         self.joints = self.create_joints()
-        self.calibration_direction = DEFAULT_SETTINGS2['calibration_direction']
-        self.motor_direction = DEFAULT_SETTINGS2['motor_direction']
+        self.calibration_direction = DEFAULT_SETTINGS['calibration_direction']
+        self.motor_direction = DEFAULT_SETTINGS['motor_direction']
         self.position = Position()
         self.restore_position()
         # self.limits = np.radians(
@@ -461,7 +459,7 @@ class Manipulator:
             name_val = el.split(' = ')
             massive_val.append(name_val)
         for com in massive_val:
-            DEFAULT_SETTINGS2[com[0]] = com[1]
+            DEFAULT_SETTINGS[com[0]] = com[1]
 
     def save_position(self):
         if (self.logging == True):
@@ -685,7 +683,7 @@ class Manipulator:
             arc = d[0]
             direction = d[1]
             j_jog_steps = abs(int(arc / self.joints[i].degrees_per_step))
-            if (DEFAULT_SETTINGS2['motor_inv'][i] == '1'):
+            if (DEFAULT_SETTINGS['motor_inv'][i] == '1'):
                 direction = self.inverse_one_zero(direction)
             joint_commands.append(f"{self.joints[i].get_name_joint()}{direction}{j_jog_steps}")
             errors.append(d[2])
@@ -892,17 +890,17 @@ class Manipulator:
     def create_joints():
         joints_name = ['A', 'B', 'C', 'D', 'E', 'F']
         joints = [Joint(i + 1,
-                        float(DEFAULT_SETTINGS2[f'J{i + 1}_endstop_angle'])+float(DEFAULT_SETTINGS2[f'J{i + 1}_delta']),
-                        float(DEFAULT_SETTINGS2[f'J{i + 1}_angle_limit']) + float(DEFAULT_SETTINGS2[f'J{i + 1}_delta']),
-                        DEFAULT_SETTINGS2[f'J{i + 1}_step_limit'])
+                        float(DEFAULT_SETTINGS[f'J{i + 1}_endstop_angle']) + float(DEFAULT_SETTINGS[f'J{i + 1}_delta']),
+                        float(DEFAULT_SETTINGS[f'J{i + 1}_angle_limit']) + float(DEFAULT_SETTINGS[f'J{i + 1}_delta']),
+                        DEFAULT_SETTINGS[f'J{i + 1}_step_limit'])
                   for i in range(6)]
         #logger.debug(joints[0].endstop_angle)
         for joint, joint_name in zip(joints, joints_name):
             joint.set_name_joint(joint_name)
 
         for i, joint in enumerate(joints):
-            joint.motor_dir = int(DEFAULT_SETTINGS2[f'J{i + 1}_rot_dir'])
-            joint.degrees_per_step = float(DEFAULT_SETTINGS2[f'J{i + 1}_per_step'])
+            joint.motor_dir = int(DEFAULT_SETTINGS[f'J{i + 1}_rot_dir'])
+            joint.degrees_per_step = float(DEFAULT_SETTINGS[f'J{i + 1}_per_step'])
 
         return joints
 
@@ -1010,26 +1008,12 @@ class Manipulator:
         self.serial_teensy.flushInput()
         time.sleep(2.5)
         self.calibrate('111111', '8')
-        # TODO: узнать, что такое blockEncPosCal
-        position = [68.944, 0.0, 733.607, -90.0, 1.05, -90.0]
-        angles = [0, 90, -90, 0, -90, 0]
-        self.print()
         self.calculate_direct_kinematics_problem()
-        #self.monitoringENC = True
 
     def null_position(self):
-        # self.move_z(100)
         angles = [0, 90, -90, 0, -90, 0]
         self.jog_joints(angles)
         self.calculate_direct_kinematics_problem()
-
-    # def _check_axis_limit(self, angles) -> bool:
-    #     axis_limit = False
-    #     for joint, angle in zip(self.joints, angles):
-    #         if angle < joint.negative_angle_limit or angle > joint.positive_angle_limit:
-    #             logger.error(f'{joint} AXIS LIMIT')
-    #             axis_limit = True
-    #     return axis_limit
 
     def calculate_direct_kinematics_problem(self):
         for joint in self.joints:

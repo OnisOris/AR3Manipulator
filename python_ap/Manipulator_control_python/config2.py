@@ -1,4 +1,4 @@
-DEFAULT_SETTINGS2 = {
+DEFAULT_SETTINGS = {
     'J1_endstop_angle': 0,
     'J1_angle_limit': 0,
     'J1_step_limit': 0,
