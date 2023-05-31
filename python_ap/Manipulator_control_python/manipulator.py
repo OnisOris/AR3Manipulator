@@ -531,12 +531,12 @@ class Manipulator:
 
     def check_angle(self, angle, joint: Joint):
         if joint.endstop_angle > joint.angle_limit:
-            if angle > joint.endstop_angle or angle < joint.angle_limit:
+            if joint.endstop_angle > angle > joint.angle_limit:
                 return False
             else:
                 return True
         elif joint.endstop_angle < joint.angle_limit:
-            if angle < joint.endstop_angle or angle > joint.angle_limit:
+            if joint.endstop_angle < angle < joint.angle_limit:
                 return False
             else:
                 return True
@@ -645,6 +645,7 @@ class Manipulator:
                 logger.debug(f"Запись углов в джойнты: {angles}")
         else:
             logger.error("Команда не отправилась, превышен лимит одного из джойнтов")
+            logger.debug(errors)
 
     def jog_joints_test(self, degrees, steps=False):
         degrees = [float(x) for x in degrees]
