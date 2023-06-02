@@ -83,24 +83,28 @@ class Manipulator:
                           [DH['d_6'], DH['a_6'], DH['alpha_6'], DH['displacement_theta_6']]
                           ])
 
-    def __init__(self, camera=False, controller_dualshock=False, checking_chanhing_of_angles=True, test_mode=False, continuouse_mesurement=False):
+    def __init__(self, test_mode=False):
+        print("Запуск программы")
         self.read_config()
         self.teensy_port = DEFAULT_SETTINGS['teensy_port']
         self.arduino_port = DEFAULT_SETTINGS['arduino_port']
         self.baud = DEFAULT_SETTINGS['baud']
+        self.camera = self.text_to_bool(DEFAULT_SETTINGS['camera'])
+        self.controller_dualshock = self.text_to_bool(DEFAULT_SETTINGS['controller_dualshock'])
+        self.checking_chanhing_of_angles = self.text_to_bool(DEFAULT_SETTINGS['checking_chanhing_of_angles'])
         self.test_mode = test_mode # данное поле можно включить, если нет подключения по сериал порту
-        self.continuouse_mesurement = continuouse_mesurement
-        self.controller_dualshock = controller_dualshock
+        self.continuouse_mesurement = self.text_to_bool(DEFAULT_SETTINGS['continuouse_mesurement'])
         self.program_console = threading.Thread(target=self.startConsole, daemon=True)
         self.monitor = threading.Thread(target=self.monitorEnc, daemon=True)
-        self.checking_chanhing_of_angles = checking_chanhing_of_angles
         self.console = True
         self.monitoringENC = False
-        if camera:
+        if self.camera:
+            print("Запуск камеры")
             self.cap = cv2.VideoCapture(0)
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-        if controller_dualshock:
+            print("Камера запустилась")
+        if self.controller_dualshock:
             self.dualshock = Controller()
             self.dualshock_thread = threading.Thread(target=self.start_controller)
             self.start_thread_controller()
@@ -133,6 +137,17 @@ class Manipulator:
             self.is_connected = True
         except serial.SerialException:
             logger.error("Serial port not defined")
+
+    def text_to_bool(self, text):
+        if text == 'True':
+            out = True
+        elif text == 'False':
+            out = False
+        else:
+            logger.error(f"Неправильное написание поля -> {text}")
+            return None
+        return out
+
 
     def restart_serial(self):
         self.finish()

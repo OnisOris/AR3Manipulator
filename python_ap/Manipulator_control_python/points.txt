@@ -131,7 +131,7 @@ move_z,-0.03
 sleep,2
 abs
 sleep,3
-move_z,0.1
+move_z,0.2
 rest
 sleep,2
 grab
