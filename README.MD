@@ -39,6 +39,30 @@ ManipulatorControl/python_ap/Manipulator_control_python/
   <img src="/img/device_manager.png" alt="">
 </div>
 
+## Стартовый код
+
+Импортируем класс Manipulator
+
+```from manipulator import Manipulator```
+
+Задаем скорость связи с микроконтроллерами
+
+```baud = 115200```
+
+Записываем порты микроконтроллеров (выяснить их номера можно по диспетчеру устройств)
+
+```teensy_port = 3```
+
+```arduino_port = 5```
+
+Создаем экземпляр класса
+
+```robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud, camera=True, controller_dualshock=False, continuouse_mesurement=False, checking_chanhing_of_angles=False)```
+
+Используем метод, запускающий консоль, в которую мы можем записывать команды (смотрите ниже пункт "Команды в консоли")
+
+```robot.start_program()```
+
 ## Кинематическая схема
 
 В проекте используется своя кинематическая схема, которая отличается от оригинальной. 

@@ -6,6 +6,7 @@ import numpy as np
 import serial
 from loguru import logger
 from config import DEFAULT_SETTINGS
+from help import help
 from joint import Joint
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
@@ -212,10 +213,7 @@ class Manipulator:
                     elif (inp == "conf"):
                         self.read_config()
                     elif (inp == "help"):
-                        print("move_x [расстояние в мм] - передвижение по оси x в [мм]\n ")
-                        print("move_y [расстояние в мм] - передвижение по оси y в [мм]\n ")
-                        print("move_z [расстояние в мм] - передвижение по оси z в [мм]\n ")
-                        print("calib - автокалибровка\n ")
+                        print(help)
                         self.info()
                     elif (inp_c[0] == "move_x"):
                         self.move_x(int(inp_c[1]))
