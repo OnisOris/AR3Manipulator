@@ -270,8 +270,6 @@ class Manipulator:
                         logger.debug(f'coord in main = {coord}')
                     elif (inp_c[0] == "cam"):
                         self.camera_calibrate(17)
-                    elif (inp_c[0] == "camm"):
-                        self.camera_calibrate_s(12)
                     elif (inp_c[0] == "cam2"):
                         self.camera_calibrate2()
                     elif (inp_c[0] == "take"):
@@ -333,6 +331,7 @@ class Manipulator:
             logger.debug(f"continuouse_mesurement = {self.continuouse_mesurement}")
 
     # Заменить негативные и позитивные лимиты
+    # Эта функция для реализации обработки данных с энкодеров, но пока мы работаем без них
     # def conversion_steps_angles(self):
     #     config_converse = [1, 0, 0, 1]
     #     for i in range(6):
@@ -378,7 +377,6 @@ class Manipulator:
             Bsteps = int(RobotCode[B + 1: C])
         else:
             Bsteps = self.joints[1].current_joint_step
-        # Csteps = int(RobotCode[C + 1: D])
         if C != -1 and not RobotCode[C + 1: D] == '':
             Csteps = int(RobotCode[C + 1: D])
         else:
