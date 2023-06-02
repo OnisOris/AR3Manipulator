@@ -83,8 +83,11 @@ class Manipulator:
                           [DH['d_6'], DH['a_6'], DH['alpha_6'], DH['displacement_theta_6']]
                           ])
 
-    def __init__(self, teensy_port, arduino_port, baud, camera=False, controller_dualshock=False, checking_chanhing_of_angles=True, test_mode=False, continuouse_mesurement=False):
+    def __init__(self, camera=False, controller_dualshock=False, checking_chanhing_of_angles=True, test_mode=False, continuouse_mesurement=False):
         self.read_config()
+        self.teensy_port = DEFAULT_SETTINGS['teensy_port']
+        self.arduino_port = DEFAULT_SETTINGS['arduino_port']
+        self.baud = DEFAULT_SETTINGS['baud']
         self.test_mode = test_mode # данное поле можно включить, если нет подключения по сериал порту
         self.continuouse_mesurement = continuouse_mesurement
         self.controller_dualshock = controller_dualshock
@@ -125,12 +128,20 @@ class Manipulator:
         self.restore_position()
         self.calculate_direct_kinematics_problem()
         try:
-            self.serial_teensy: serial.Serial = serial.Serial(teensy_port, baud)
-            self.serial_arduino: serial.Serial = serial.Serial(arduino_port, baud)
+            self.serial_teensy: serial.Serial = serial.Serial(f'COM{self.teensy_port}', self.baud)
+            self.serial_arduino: serial.Serial = serial.Serial(f'COM{self.arduino_port}', self.baud)
             self.is_connected = True
         except serial.SerialException:
             logger.error("Serial port not defined")
 
+    def restart_serial(self):
+        self.finish()
+        try:
+            self.serial_teensy: serial.Serial = serial.Serial(f'COM{self.teensy_port}', self.baud)
+            self.serial_arduino: serial.Serial = serial.Serial(f'COM{self.arduino_port}', self.baud)
+            self.is_connected = True
+        except serial.SerialException:
+            logger.error("Serial port not defined")
     def start_program(self):
         self.program_console.start()
         self.monitor.start()
@@ -208,6 +219,8 @@ class Manipulator:
                 if (True):
                     if (inp == "exit"):
                         break
+                    if (inp == "restart_serial"):
+                        self.restart_serial()
                     elif (inp == "c"):
                         self.auto_calibrate()
                     elif (inp == "conf"):

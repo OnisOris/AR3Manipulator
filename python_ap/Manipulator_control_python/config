@@ -1,3 +1,7 @@
+baud = 115200
+teensy_port = 3
+arduino_port = 5
+
 J1_endstop_angle = 185
 J1_angle_limit = -156
 J1_step_limit = 15110
