@@ -324,6 +324,8 @@ class Manipulator:
                         self.rotate_relative([inp_c[1], inp_c[2], inp_c[3], inp_c[4], inp_c[5], inp_c[6]])
                     elif (inp_c[0] == 'rot_joint'): # угол и номер джойнта
                         self.joints_rot(inp_c[1], inp_c[2])
+                    elif (inp_c[0] == 'cd'): # угол и номер джойнта
+                        self.calculate_direct2()
                     else:
                         print("Неправильная команда")
             except:
@@ -955,7 +957,9 @@ class Manipulator:
                   self.DH[f'a_{i + 1}'] * sin(cja[i] + d)],
                  [0, sin(self.DH[f'alpha_{i + 1}']), cos(self.DH[f'alpha_{i + 1}']), self.DH[f'd_{i + 1}']],
                  [0, 0, 0, 1]]))
-        self.last_matrix = T
+        #self.last_matrix = T
+        T0_6 = self.matrix_dot_all(T)
+        logger.debug(T0_6)
         return T
 
     def matrix_dot_all(self, array_matrix):
@@ -1627,10 +1631,7 @@ class Manipulator:
 
     def take_object(self):
         self.move_xyz([self.position.x - 0.04895, self.position.y - 0.001, self.position.z - 0.008])
-        # self.move_xyz([self.position.x, self.position.y, self.position.z - 0.12])
-        # self.move_xyz([0.24134, -0.12835, 0.03, 0, pi, 0])
 
-    # x = 0.24134393860523998 y = -0.12435046709099302 z = 0.030000000000000082
     def camera_calibrate_rot(self, number):
         for i in range(7):
             xyz_0 = self.openCV(0, number)
