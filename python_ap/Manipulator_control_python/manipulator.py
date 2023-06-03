@@ -943,7 +943,7 @@ class Manipulator:
                float(self.joints[2].current_joint_angle),
                float(self.joints[3].current_joint_angle), float(self.joints[4].current_joint_angle),
                float(self.joints[5].current_joint_angle)]
-        cja = [0.0, 0, 0, 0.0, 0, 0]
+        # cja = [0.0, 0, 0, 0.0, 0, 0]
         cja = list(map(radians, cja))
         T = []
         for i in range(6):
@@ -959,7 +959,10 @@ class Manipulator:
                  [0, 0, 0, 1]]))
         #self.last_matrix = T
         T0_6 = self.matrix_dot_all(T)
-        logger.debug(T0_6)
+        abc = self.angular_Euler_calculation(T0_6)
+        logger.debug(abc)
+        abc = np.degrees(abc)
+        logger.debug(abc)
         return T
 
     def matrix_dot_all(self, array_matrix):
