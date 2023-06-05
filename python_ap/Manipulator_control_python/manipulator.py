@@ -488,8 +488,8 @@ class Manipulator:
         file.write(string)
         file.close()
 
-    def read_points(self):
-        file = open("points.txt", "r")
+    def read_points(self, file_name="points.txt"):
+        file = open(file_name, "r")
         commands = file.read()
         command = commands.split("\n")
         for i in range(len(command)):
