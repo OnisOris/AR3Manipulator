@@ -2,7 +2,7 @@ baud = 115200
 teensy_port = 3
 arduino_port = 5
 
-camera = True
+camera = False
 controller_dualshock = False
 continuouse_mesurement = False
 checking_chanhing_of_angles = False
