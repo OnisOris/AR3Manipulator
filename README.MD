@@ -39,7 +39,9 @@ ManipulatorControl/python_ap/Manipulator_control_python/
   <img src="/img/device_manager.png" alt="">
 </div>
 
-## Стартовый код
+## Запуск консоли
+
+Данный пример находится в файле console.py 
 
 Импортируем класс Manipulator
 
@@ -64,6 +66,42 @@ ManipulatorControl/python_ap/Manipulator_control_python/
 ```robot.start_program()```
 
 ## Пример использования различных файлов со скриптами
+Файл с данным примером находится в main.py
+
+``` import time ```
+
+
+```from manipulator import Manipulator```
+
+
+```robot = Manipulator(test_mode=False)```
+
+
+```robot.auto_calibrate()```
+
+```robot.null_position()```
+
+```time.sleep(5)```
+
+```robot.read_points('./Scripts_UV/opening_cap.txt')```
+
+```robot.read_points('./Scripts_UV/calibration.txt')```
+
+```robot.read_points('./Scripts_UV/take_cuvette_1.txt')```
+
+```robot.read_points('./Scripts_UV/move_to_UV.txt')```
+
+```robot.read_points('./Scripts_UV/take_cuvette_2.txt')```
+
+```robot.read_points('./Scripts_UV/closing_cap.txt')```
+
+```robot.read_points('./Scripts_UV/calibration.txt')```
+
+```robot.read_points('./Scripts_UV/opening_cap.txt')```
+
+```robot.read_points('./Scripts_UV/calibration.txt')```
+
+```robot.read_points('./Scripts_UV/moving_to_base.txt')```
 
 ## Команды в консоли
 
