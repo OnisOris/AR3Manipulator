@@ -1,0 +1,20 @@
+//поиск маркера спектрофотометра
+camr,12,200,1,1,-0.005,-0.013
+move_z,-0.08
+sleep,4
+camr,12,120,10,1,-0.005,-0.013
+move_z,-0.005
+move_z,-0.005
+move_z,-0.005
+move_z,-0.005
+move_z,-0.005
+move_z,-0.005
+sleep,5
+abs
+move_z,0.04
+sleep,2
+grab
+move_z,-0.03
+sleep,2
+move_z,0.06
+sleep,2

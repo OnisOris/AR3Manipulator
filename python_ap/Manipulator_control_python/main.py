@@ -1,18 +1,33 @@
-import math
 import time
-from config import DEFAULT_SETTINGS
-from manipulator import Manipulator, Position
-import numpy as np
-from math import (pi)
-from loguru import logger
-from pynput import keyboard
-import threading
+from manipulator import Manipulator
 
-############## Настройки программы ##############
-baud = 115200
-teensy_port = 3
-arduino_port = 5
-################# Конец настроек #################
 
-robot = Manipulator(f'COM{teensy_port}', f'COM{arduino_port}', baud)
-robot.start_program()
+robot = Manipulator(test_mode=False)
+
+
+robot.auto_calibrate()
+
+robot.null_position()
+
+time.sleep(5)
+
+robot.read_points('./Scripts_UV/opening_cap.txt')
+
+robot.read_points('./Scripts_UV/calibration.txt')
+
+robot.read_points('./Scripts_UV/take_cuvette_1.txt')
+
+robot.read_points('./Scripts_UV/move_to_UV.txt')
+
+robot.read_points('./Scripts_UV/take_cuvette_2.txt')
+
+robot.read_points('./Scripts_UV/closing_cap.txt')
+
+robot.read_points('./Scripts_UV/calibration.txt')
+
+robot.read_points('./Scripts_UV/opening_cap.txt')
+
+robot.read_points('./Scripts_UV/calibration.txt')
+
+robot.read_points('./Scripts_UV/moving_to_base.txt')
+
